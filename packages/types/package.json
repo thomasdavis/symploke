@@ -1,0 +1,22 @@
+{
+  "name": "@symploke/types",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./schemas": "./src/schemas.ts",
+    "./api": "./src/api.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

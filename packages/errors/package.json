@@ -1,0 +1,19 @@
+{
+  "name": "@symploke/errors",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

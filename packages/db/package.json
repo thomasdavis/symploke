@@ -1,0 +1,26 @@
+{
+  "name": "@symploke/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "@prisma/extension-accelerate": "^1.2.1"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "@types/node": "latest",
+    "prisma": "^6.1.0",
+    "typescript": "latest"
+  }
+}

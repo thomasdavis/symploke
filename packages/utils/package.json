@@ -1,0 +1,23 @@
+{
+  "name": "@symploke/utils",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./cn": "./src/cn.ts",
+    "./format": "./src/format.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "latest",
+    "tailwind-merge": "latest"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

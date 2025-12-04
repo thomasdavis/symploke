@@ -1,0 +1,24 @@
+{
+  "name": "@symploke/ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./embeddings": "./src/embeddings.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "latest",
+    "ai": "latest"
+  },
+  "devDependencies": {
+    "@symploke/test": "workspace:*",
+    "@symploke/tsconfig": "workspace:*",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

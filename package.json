@@ -1,0 +1,23 @@
+{
+  "name": "symploke",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "format": "biome format --write .",
+    "type-check": "turbo type-check",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "publish-packages": "changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@changesets/cli": "latest",
+    "lefthook": "latest",
+    "turbo": "latest"
+  },
+  "packageManager": "pnpm@9.14.2"
+}

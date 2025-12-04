@@ -1,0 +1,17 @@
+{
+  "name": "@symploke/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build": "storybook build"
+  },
+  "devDependencies": {
+    "@storybook/react": "^10.1.4",
+    "@storybook/react-vite": "^10.1.4",
+    "react": "latest",
+    "react-dom": "latest",
+    "storybook": "^10.1.4",
+    "vite": "latest"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "extends": "@symploke/tsconfig/react-library.json",
+  "compilerOptions": {
+    "types": ["@testing-library/jest-dom/vitest"]
+  },
+  "include": ["src", "vitest.setup.ts"]
+}

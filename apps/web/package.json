@@ -1,0 +1,39 @@
+{
+  "name": "@symploke/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings 0",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "latest",
+    "@symploke/db": "workspace:*",
+    "@symploke/env": "workspace:*",
+    "@symploke/types": "workspace:*",
+    "@symploke/ui": "workspace:*",
+    "@symploke/utils": "workspace:*",
+    "@tanstack/react-query": "latest",
+    "next": "latest",
+    "next-auth": "beta",
+    "next-themes": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "sonner": "latest"
+  },
+  "devDependencies": {
+    "@symploke/eslint-config": "workspace:*",
+    "@symploke/tailwind-config": "workspace:*",
+    "@symploke/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

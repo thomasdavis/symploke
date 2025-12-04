@@ -1,0 +1,36 @@
+{
+  "name": "@symploke/ui",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./Button/Button": "./src/Button/Button.tsx",
+    "./Card/Card": "./src/Card/Card.tsx",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@base-ui-components/react": "latest"
+  },
+  "devDependencies": {
+    "@symploke/test": "workspace:*",
+    "@symploke/tsconfig": "workspace:*",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "jsdom": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

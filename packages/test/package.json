@@ -1,0 +1,10 @@
+{
+  "name": "@symploke/test",
+  "version": "0.0.0",
+  "private": true,
+  "main": "vitest.config.js",
+  "devDependencies": {
+    "vitest": "latest",
+    "@vitest/ui": "latest"
+  }
+}
