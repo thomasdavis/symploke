@@ -27,9 +27,25 @@ pnpm install
 # Generate Prisma client
 pnpm --filter @symploke/db db:generate
 
+# Push database schema (requires DATABASE_URL)
+pnpm --filter @symploke/db db:push
+
 # Start development server
 pnpm dev
 ```
+
+## Deployment
+
+**Production URL**: https://symploke.dev
+
+- Deployed on Vercel with automatic deployments from `main` branch
+- Environment variables configured in Vercel dashboard
+- Database hosted on Neon Postgres
+
+### CLI Access
+
+- **Vercel CLI**: Available for deployment management
+- **GitHub CLI**: Available for repository operations
 
 ## Project Structure
 
