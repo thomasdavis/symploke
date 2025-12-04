@@ -1,0 +1,48 @@
+.repos-table__repo-cell {
+  display: flex;
+  align-items: center;
+}
+
+.repos-table__repo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.repos-table__repo-link:hover {
+  color: var(--color-primary);
+}
+
+.repos-table__repo-link:hover .repos-table__repo-name {
+  text-decoration: underline;
+}
+
+.repos-table__repo-icon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.repos-table__repo-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.repos-table__repo-name {
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+.repos-table__repo-full-name {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+.repos-table__last-indexed,
+.repos-table__created {
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+}
