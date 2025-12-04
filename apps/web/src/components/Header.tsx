@@ -1,5 +1,6 @@
 import { auth, signOut, signIn } from '@/lib/auth'
 import { Button } from '@symploke/ui/Button/Button'
+import { ThemeToggle } from './ThemeToggle'
 
 export async function Header() {
   const session = await auth()
@@ -12,6 +13,7 @@ export async function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {session?.user ? (
             <>
               <div className="flex items-center gap-3">

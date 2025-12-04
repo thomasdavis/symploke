@@ -14,7 +14,7 @@
   --font-azeret-mono: var(--font-azeret-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+.dark {
   @theme {
     --color-background: oklch(5% 0 0);
     --color-foreground: oklch(98% 0 0);
