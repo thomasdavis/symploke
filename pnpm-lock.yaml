@@ -279,6 +279,9 @@ importers:
       '@symploke/design':
         specifier: workspace:*
         version: link:../design
+      '@tanstack/react-query':
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.2.1)
     devDependencies:
       '@symploke/test':
         specifier: workspace:*

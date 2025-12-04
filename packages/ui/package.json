@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./Accordion/Accordion": "./src/Accordion/Accordion.tsx",
+    "./AddRepoDialog/AddRepoDialog": "./src/AddRepoDialog/AddRepoDialog.tsx",
     "./AlertDialog/AlertDialog": "./src/AlertDialog/AlertDialog.tsx",
     "./Autocomplete/Autocomplete": "./src/Autocomplete/Autocomplete.tsx",
     "./Avatar/Avatar": "./src/Avatar/Avatar.tsx",
@@ -61,7 +62,8 @@
   "dependencies": {
     "@base-ui-components/react": "latest",
     "@symploke/api": "workspace:*",
-    "@symploke/design": "workspace:*"
+    "@symploke/design": "workspace:*",
+    "@tanstack/react-query": "^5.90.12"
   },
   "devDependencies": {
     "@symploke/test": "workspace:*",

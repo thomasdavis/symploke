@@ -27,8 +27,15 @@
 
 /* Dialog Popup */
 .dialog-popup {
-  width: 100%;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  width: calc(100% - var(--space-8));
   max-width: 32rem;
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -43,12 +50,12 @@
 
 .dialog-popup[data-open] {
   opacity: 1;
-  transform: scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .dialog-popup[data-closed] {
   opacity: 0;
-  transform: scale(0.95);
+  transform: translate(-50%, -50%) scale(0.95);
 }
 
 /* Dialog Title */

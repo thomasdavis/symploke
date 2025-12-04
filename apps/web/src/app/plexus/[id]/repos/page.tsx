@@ -1,7 +1,5 @@
 import { db } from '@symploke/db'
-import { Button } from '@symploke/ui/Button/Button'
-import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
-import { ReposTable } from '@symploke/ui/ReposTable/ReposTable'
+import { ReposPageClient } from './ReposPageClient'
 
 type ReposPageProps = {
   params: Promise<{ id: string }>
@@ -19,15 +17,7 @@ export default async function ReposPage({ params }: ReposPageProps) {
 
   return (
     <div style={{ padding: 'var(--space-8)' }}>
-      <PageHeader
-        title="Repositories"
-        actions={
-          <Button variant="primary" disabled>
-            Add Repository
-          </Button>
-        }
-      />
-      <ReposTable repos={repos} />
+      <ReposPageClient plexusId={id} repos={repos} />
     </div>
   )
 }

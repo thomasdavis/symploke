@@ -9,6 +9,7 @@
     "./themes": "./src/themes/index.css",
     "./utilities": "./src/utilities/layout.css",
     "./components/accordion.css": "./src/components/accordion.css",
+    "./components/add-repo-dialog.css": "./src/components/add-repo-dialog.css",
     "./components/alert-dialog.css": "./src/components/alert-dialog.css",
     "./components/autocomplete.css": "./src/components/autocomplete.css",
     "./components/avatar.css": "./src/components/avatar.css",
