@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${sora.variable} ${sen.variable} ${azeretMono.variable}`}
     >
-      <body className="font-sora">
+      <body className={sora.className}>
         <Providers>
           <Header />
           {children}

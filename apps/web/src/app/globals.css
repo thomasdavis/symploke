@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+@theme {
   --color-background: oklch(100% 0 0);
   --color-foreground: oklch(5% 0 0);
   --color-primary: oklch(58% 0.21 283);
@@ -8,10 +8,14 @@
   --color-muted: oklch(96% 0.01 240);
   --color-muted-foreground: oklch(47% 0.01 240);
   --color-border: oklch(91% 0.01 240);
+
+  --font-sora: var(--font-sora);
+  --font-sen: var(--font-sen);
+  --font-azeret-mono: var(--font-azeret-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  @theme {
     --color-background: oklch(5% 0 0);
     --color-foreground: oklch(98% 0 0);
     --color-primary: oklch(50% 0.18 283);

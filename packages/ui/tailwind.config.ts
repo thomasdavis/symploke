@@ -17,9 +17,9 @@ export default {
         border: 'var(--color-border)',
       },
       fontFamily: {
-        sora: ['var(--font-sora)', 'sans-serif'],
-        sen: ['var(--font-sen)', 'sans-serif'],
-        'azeret-mono': ['var(--font-azeret-mono)', 'monospace'],
+        sora: 'var(--font-sora)',
+        sen: 'var(--font-sen)',
+        'azeret-mono': 'var(--font-azeret-mono)',
       },
     },
   },
