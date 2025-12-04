@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { NavigationMenu as BaseNavigationMenu } from '@base-ui-components/react/navigation-menu'
+import '@symploke/design/components/navigation-menu.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Root
       ref={ref}
-      className={`relative z-10 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +25,11 @@ const List = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__list', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.List
       ref={ref}
-      className={`flex flex-row list-none space-x-1 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +42,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__item', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Item
       ref={ref}
-      className={`relative ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -55,10 +59,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__trigger', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Trigger
       ref={ref}
-      className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 data-[state=open]:bg-gray-100/50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -71,10 +76,11 @@ const Icon = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__icon', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Icon
       ref={ref}
-      className={`ml-1 h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -87,10 +93,11 @@ const Content = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__content', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Content
       ref={ref}
-      className={`w-full ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -103,10 +110,11 @@ const Link = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__link', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Link
       ref={ref}
-      className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gray-100/50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -121,10 +129,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__positioner', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Positioner
       ref={ref}
-      className={`absolute left-0 top-full ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -137,10 +146,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__popup', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Popup
       ref={ref}
-      className={`mt-2 overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-lg data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -153,10 +163,11 @@ const Viewport = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__viewport', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Viewport
       ref={ref}
-      className={`origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -169,10 +180,11 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__arrow', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Arrow
       ref={ref}
-      className={`fill-white ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -185,10 +197,11 @@ const Backdrop = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['navigation-menu__backdrop', className].filter(Boolean).join(' ')
   return (
     <BaseNavigationMenu.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

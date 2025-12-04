@@ -1,0 +1,90 @@
+/* Field Root */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Field Label */
+.field__label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-fg);
+}
+
+.field__label[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Field Control */
+.field__control {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  transition: border-color var(--duration-normal) var(--ease-in-out),
+              box-shadow var(--duration-normal) var(--ease-in-out);
+  box-sizing: border-box;
+}
+
+.field__control::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.field__control:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.field__control[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background: var(--color-bg-subtle);
+}
+
+.field__control[data-invalid] {
+  border-color: var(--color-error);
+}
+
+.field__control[data-invalid]:focus-visible {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px var(--color-error-light);
+}
+
+/* File input specific styles */
+.field__control::file-selector-button {
+  border: 0;
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-right: var(--space-2);
+}
+
+/* Field Description */
+.field__description {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  line-height: 1.5;
+}
+
+/* Field Error */
+.field__error {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-error);
+  line-height: 1.5;
+}
+
+/* Field Item (for checkbox/radio groups) */
+.field__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

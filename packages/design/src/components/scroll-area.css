@@ -1,0 +1,53 @@
+/* ScrollArea Root */
+.scroll-area {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ScrollArea Viewport */
+.scroll-area__viewport {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+}
+
+/* ScrollArea Content */
+.scroll-area__content {
+  /* Content inherits styles from children */
+}
+
+/* ScrollArea Scrollbar */
+.scroll-area__scrollbar {
+  display: flex;
+  touch-action: none;
+  user-select: none;
+  transition: background-color var(--duration-normal) var(--ease-in-out);
+}
+
+.scroll-area__scrollbar[data-orientation="vertical"] {
+  width: var(--space-2);
+  height: 100%;
+}
+
+.scroll-area__scrollbar[data-orientation="horizontal"] {
+  height: var(--space-2);
+  flex-direction: column;
+}
+
+/* ScrollArea Thumb */
+.scroll-area__thumb {
+  position: relative;
+  flex: 1;
+  border-radius: 9999px;
+  background: var(--color-border);
+  transition: background-color var(--duration-normal) var(--ease-in-out);
+}
+
+.scroll-area__thumb:hover {
+  background: var(--color-fg-muted);
+}
+
+/* ScrollArea Corner */
+.scroll-area__corner {
+  background: var(--color-bg-subtle);
+}

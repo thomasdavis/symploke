@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Slider as BaseSlider } from '@base-ui-components/react/slider'
+import '@symploke/design/components/slider.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider', className].filter(Boolean).join(' ')
   return (
     <BaseSlider.Root
       ref={ref}
-      className={`relative flex w-full touch-none select-none items-center ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +25,11 @@ const Control = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider__control', className].filter(Boolean).join(' ')
   return (
     <BaseSlider.Control
       ref={ref}
-      className={`relative flex w-full touch-none select-none items-center ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +42,11 @@ const Track = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider__track', className].filter(Boolean).join(' ')
   return (
     <BaseSlider.Track
       ref={ref}
-      className={`relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -55,10 +59,11 @@ const Indicator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider__indicator', className].filter(Boolean).join(' ')
   return (
     <BaseSlider.Indicator
       ref={ref}
-      className={`absolute h-full bg-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -71,10 +76,11 @@ const Thumb = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider__thumb', className].filter(Boolean).join(' ')
   return (
     <BaseSlider.Thumb
       ref={ref}
-      className={`block h-5 w-5 rounded-full border-2 border-gray-900 bg-white ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -87,8 +93,9 @@ const Value = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['slider__value', className].filter(Boolean).join(' ')
   return (
-    <BaseSlider.Value ref={ref} className={`text-sm text-gray-600 ${className || ''}`} {...props} />
+    <BaseSlider.Value ref={ref} className={classes} {...props} />
   )
 })
 Value.displayName = 'Slider.Value'

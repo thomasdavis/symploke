@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { RadioGroup as BaseRadioGroup } from '@base-ui-components/react/radio-group'
+import '@symploke/design/src/components/radio-group.css'
 
 export const RadioGroup = React.forwardRef<
   HTMLDivElement,
@@ -10,7 +11,7 @@ export const RadioGroup = React.forwardRef<
   return (
     <BaseRadioGroup
       ref={ref}
-      className={`flex flex-col gap-2 ${className || ''}`}
+      className={`radio-group ${className || ''}`}
       {...props}
     />
   )

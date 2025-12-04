@@ -13,6 +13,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "latest",
     "@symploke/db": "workspace:*",
+    "@symploke/design": "workspace:*",
     "@symploke/env": "workspace:*",
     "@symploke/types": "workspace:*",
     "@symploke/ui": "workspace:*",
@@ -27,13 +28,10 @@
   },
   "devDependencies": {
     "@symploke/eslint-config": "workspace:*",
-    "@symploke/tailwind-config": "workspace:*",
     "@symploke/tsconfig": "workspace:*",
-    "@tailwindcss/postcss": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "tailwindcss": "latest",
     "typescript": "latest"
   }
 }

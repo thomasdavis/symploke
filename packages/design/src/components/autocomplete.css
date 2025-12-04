@@ -1,0 +1,137 @@
+/* Autocomplete Input */
+.autocomplete-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-size: var(--text-sm);
+  transition: border-color var(--duration-fast) var(--ease-in-out),
+              box-shadow var(--duration-fast) var(--ease-in-out);
+}
+
+.autocomplete-input::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.autocomplete-input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.autocomplete-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.autocomplete-input::file-selector-button {
+  border: 0;
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Autocomplete Trigger */
+.autocomplete-trigger {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  padding: 0 var(--space-3);
+  color: var(--color-fg-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.autocomplete-trigger:hover {
+  color: var(--color-fg);
+}
+
+/* Autocomplete Positioner */
+.autocomplete-positioner {
+  z-index: 50;
+}
+
+/* Autocomplete Popup */
+.autocomplete-popup {
+  margin-top: var(--space-1);
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-bg);
+  padding: var(--space-1);
+  box-shadow: var(--shadow-md);
+  transition: opacity var(--duration-fast) var(--ease-in-out),
+              transform var(--duration-fast) var(--ease-in-out);
+}
+
+.autocomplete-popup[data-open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.autocomplete-popup[data-closed] {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* Autocomplete List */
+.autocomplete-list {
+  max-height: 240px;
+  overflow: auto;
+}
+
+/* Autocomplete Item */
+.autocomplete-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+
+.autocomplete-item[data-highlighted] {
+  background: var(--color-bg-subtle);
+}
+
+.autocomplete-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Autocomplete Empty */
+.autocomplete-empty {
+  padding: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+/* Autocomplete Status (for screen readers) */
+.autocomplete-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Autocomplete Icon */
+.autocomplete-icon {
+  color: var(--color-fg-muted);
+}

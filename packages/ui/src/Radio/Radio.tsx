@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Radio as BaseRadio } from '@base-ui-components/react/radio'
+import '@symploke/design/src/components/radio.css'
 
 const Root = React.forwardRef<
   HTMLSpanElement,
@@ -10,7 +11,7 @@ const Root = React.forwardRef<
   return (
     <BaseRadio.Root
       ref={ref}
-      className={`aspect-square h-4 w-4 rounded-full border border-gray-300 text-gray-900 ring-offset-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={`radio ${className || ''}`}
       {...props}
     />
   )
@@ -26,7 +27,7 @@ const Indicator = React.forwardRef<
   return (
     <BaseRadio.Indicator
       ref={ref}
-      className={`flex items-center justify-center ${className || ''}`}
+      className={`radio__indicator ${className || ''}`}
       {...props}
     >
       {children || (

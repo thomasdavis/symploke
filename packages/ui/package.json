@@ -16,9 +16,11 @@
     "./ContextMenu/ContextMenu": "./src/ContextMenu/ContextMenu.tsx",
     "./Dialog/Dialog": "./src/Dialog/Dialog.tsx",
     "./DirectionProvider/DirectionProvider": "./src/DirectionProvider/DirectionProvider.tsx",
+    "./EmptyState/EmptyState": "./src/EmptyState/EmptyState.tsx",
     "./Field/Field": "./src/Field/Field.tsx",
     "./Fieldset/Fieldset": "./src/Fieldset/Fieldset.tsx",
     "./Form/Form": "./src/Form/Form.tsx",
+    "./FormField/FormField": "./src/FormField/FormField.tsx",
     "./Input/Input": "./src/Input/Input.tsx",
     "./Menu/Menu": "./src/Menu/Menu.tsx",
     "./Menubar/Menubar": "./src/Menubar/Menubar.tsx",
@@ -40,8 +42,7 @@
     "./Toggle/Toggle": "./src/Toggle/Toggle.tsx",
     "./ToggleGroup/ToggleGroup": "./src/ToggleGroup/ToggleGroup.tsx",
     "./Toolbar/Toolbar": "./src/Toolbar/Toolbar.tsx",
-    "./Tooltip/Tooltip": "./src/Tooltip/Tooltip.tsx",
-    "./styles.css": "./src/styles.css"
+    "./Tooltip/Tooltip": "./src/Tooltip/Tooltip.tsx"
   },
   "scripts": {
     "build": "tsc",
@@ -53,7 +54,8 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@base-ui-components/react": "latest"
+    "@base-ui-components/react": "latest",
+    "@symploke/design": "workspace:*"
   },
   "devDependencies": {
     "@symploke/test": "workspace:*",

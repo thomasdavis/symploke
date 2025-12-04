@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Toast as BaseToast } from '@base-ui-components/react/toast'
+import '@symploke/design/components/toast.css'
 
 const Provider: typeof BaseToast.Provider = BaseToast.Provider
 
@@ -11,10 +12,11 @@ const Viewport = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__viewport', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Viewport
       ref={ref}
-      className={`fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px] ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -27,10 +29,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Root
       ref={ref}
-      className={`group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-gray-200 p-6 pr-8 shadow-lg transition-all data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-80 data-[open]:slide-in-from-top-full data-[open]:sm:slide-in-from-bottom-full ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -43,10 +46,11 @@ const Content = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__content', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Content
       ref={ref}
-      className={`flex-1 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -59,10 +63,11 @@ const Title = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__title', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Title
       ref={ref}
-      className={`text-sm font-semibold ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -75,10 +80,11 @@ const Description = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__description', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Description
       ref={ref}
-      className={`text-sm opacity-90 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -91,10 +97,11 @@ const Action = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__action', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Action
       ref={ref}
-      className={`inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-transparent px-3 text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -107,10 +114,11 @@ const Close = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['toast__close', className].filter(Boolean).join(' ')
   return (
     <BaseToast.Close
       ref={ref}
-      className={`absolute right-2 top-2 rounded-md p-1 text-gray-950/50 opacity-0 transition-opacity hover:text-gray-950 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

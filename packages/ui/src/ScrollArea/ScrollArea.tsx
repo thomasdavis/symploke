@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ScrollArea as BaseScrollArea } from '@base-ui-components/react/scroll-area'
+import '@symploke/design/components/scroll-area.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Root
       ref={ref}
-      className={`relative overflow-hidden ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +25,11 @@ const Viewport = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area__viewport', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Viewport
       ref={ref}
-      className={`h-full w-full rounded-[inherit] ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +42,11 @@ const Content = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area__content', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Content
       ref={ref}
-      className={className}
+      className={classes}
       {...props}
     />
   )
@@ -55,10 +59,11 @@ const Scrollbar = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area__scrollbar', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Scrollbar
       ref={ref}
-      className={`flex touch-none select-none transition-colors data-[orientation=vertical]:h-full data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -71,10 +76,11 @@ const Thumb = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area__thumb', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Thumb
       ref={ref}
-      className={`relative flex-1 rounded-full bg-gray-300 hover:bg-gray-400 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -87,10 +93,11 @@ const Corner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['scroll-area__corner', className].filter(Boolean).join(' ')
   return (
     <BaseScrollArea.Corner
       ref={ref}
-      className={`bg-gray-100 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

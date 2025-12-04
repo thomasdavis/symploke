@@ -1,0 +1,198 @@
+/* Menu Trigger */
+.menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: color var(--duration-normal) var(--ease-in-out);
+}
+
+.menu__trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-fg);
+}
+
+.menu__trigger[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Menu Backdrop */
+.menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Menu Positioner */
+.menu__positioner {
+  z-index: 50;
+}
+
+/* Menu Popup */
+.menu__popup {
+  z-index: 50;
+  min-width: 8rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-1);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-md);
+  transition: opacity var(--duration-normal) var(--ease-in-out),
+              transform var(--duration-normal) var(--ease-in-out);
+}
+
+/* Animation states */
+.menu__popup[data-open] {
+  animation: menuFadeIn var(--duration-normal) var(--ease-in-out);
+}
+
+.menu__popup[data-closed] {
+  animation: menuFadeOut var(--duration-normal) var(--ease-in-out);
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menuFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Menu Arrow */
+.menu__arrow {
+  fill: var(--color-bg);
+}
+
+/* Menu Item */
+.menu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: background var(--duration-fast) var(--ease-in-out),
+              color var(--duration-fast) var(--ease-in-out);
+}
+
+.menu__item[data-highlighted] {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.menu__item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Menu Separator */
+.menu__separator {
+  margin: var(--space-1) calc(-1 * var(--space-1));
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Menu Group Label */
+.menu__group-label {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+/* Menu Radio Item */
+.menu__radio-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: background var(--duration-fast) var(--ease-in-out),
+              color var(--duration-fast) var(--ease-in-out);
+}
+
+.menu__radio-item[data-highlighted] {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.menu__radio-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Menu Checkbox Item */
+.menu__checkbox-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: background var(--duration-fast) var(--ease-in-out),
+              color var(--duration-fast) var(--ease-in-out);
+}
+
+.menu__checkbox-item[data-highlighted] {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.menu__checkbox-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Menu Submenu Trigger */
+.menu__submenu-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: background var(--duration-fast) var(--ease-in-out),
+              color var(--duration-fast) var(--ease-in-out);
+}
+
+.menu__submenu-trigger[data-highlighted] {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.menu__submenu-trigger[data-disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}

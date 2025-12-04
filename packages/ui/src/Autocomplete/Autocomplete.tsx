@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Autocomplete as BaseAutocomplete } from '@base-ui-components/react/autocomplete'
+import '@symploke/design/components/autocomplete.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseAutocomplete.Root>) => {
   return <BaseAutocomplete.Root {...props} />
@@ -12,10 +13,11 @@ const Input = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-input', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Input
       ref={ref}
-      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -28,10 +30,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-trigger', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Trigger
       ref={ref}
-      className={`absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -46,10 +49,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-positioner', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -62,10 +66,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-popup', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Popup
       ref={ref}
-      className={`mt-1 w-full rounded-md border border-gray-200 bg-white p-1 shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -78,10 +83,11 @@ const List = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-list', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.List
       ref={ref}
-      className={`max-h-60 overflow-auto ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -94,10 +100,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-item', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Item
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -110,10 +117,11 @@ const Empty = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-empty', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Empty
       ref={ref}
-      className={`px-2 py-1.5 text-sm text-gray-500 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -126,10 +134,11 @@ const Status = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-status', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Status
       ref={ref}
-      className={`sr-only ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -142,10 +151,11 @@ const Icon = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['autocomplete-icon', className].filter(Boolean).join(' ')
   return (
     <BaseAutocomplete.Icon
       ref={ref}
-      className={`text-gray-500 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

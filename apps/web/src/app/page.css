@@ -1,0 +1,251 @@
+/* Home Page Styles */
+
+.home-main {
+  min-height: calc(100vh - 4rem);
+}
+
+.hero-section {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem;
+  padding: 6rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .hero-section {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.hero-content {
+  text-align: center;
+}
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-6xl);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-fg);
+}
+
+@media (min-width: 640px) {
+  .hero-title {
+    font-size: var(--text-7xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-title {
+    font-size: var(--text-8xl);
+  }
+}
+
+.hero-title-accent {
+  color: var(--color-primary);
+}
+
+.hero-description {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: var(--space-8);
+  max-width: 42rem;
+  font-size: var(--text-xl);
+  color: var(--color-fg-muted);
+}
+
+.hero-cta {
+  margin-top: var(--space-12);
+}
+
+.mission-section {
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-subtle) 30%, transparent);
+  padding: 6rem 0;
+}
+
+.mission-content {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 56rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .mission-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mission-content {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.mission-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  font-size: var(--text-lg);
+  line-height: 1.75;
+  color: var(--color-fg);
+}
+
+.features-section {
+  padding: 6rem 0;
+}
+
+.features-container {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .features-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .features-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.features-title {
+  font-family: var(--font-heading);
+  text-align: center;
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--color-fg);
+  margin-bottom: var(--space-16);
+}
+
+.features-grid {
+  display: grid;
+  gap: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.feature-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-6);
+}
+
+.feature-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-fg);
+  margin-bottom: var(--space-2);
+}
+
+.feature-description {
+  color: var(--color-fg-muted);
+}
+
+.etymology-section {
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-subtle) 30%, transparent);
+  padding: 4rem 0;
+}
+
+.etymology-content {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 48rem;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .etymology-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .etymology-content {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.etymology-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-muted);
+}
+
+.etymology-meaning {
+  margin-top: var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--color-fg);
+}
+
+.etymology-parts {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.etymology-definition {
+  margin-top: var(--space-4);
+  color: var(--color-fg);
+}
+
+.welcome-main {
+  display: flex;
+  min-height: calc(100vh - 4rem);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.welcome-content {
+  text-align: center;
+}
+
+.welcome-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--color-fg);
+  margin-bottom: var(--space-4);
+}
+
+.welcome-subtitle {
+  color: var(--color-fg-muted);
+  margin-bottom: var(--space-8);
+}

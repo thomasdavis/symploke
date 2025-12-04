@@ -9,6 +9,8 @@ datasource db {
   extensions = [vector]
 }
 
+// === Auth ===
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -18,9 +20,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  teams    TeamMember[]
+  accounts     Account[]
+  sessions     Session[]
+  plexusMember PlexusMember[]
+  comments     Comment[]
 
   @@map("users")
 }
@@ -53,66 +56,127 @@ model Session {
   @@map("sessions")
 }
 
-model Team {
+// === Plexus ===
+
+model Plexus {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
   createdAt DateTime @default(now())
 
-  members      TeamMember[]
-  repositories Repository[]
+  members PlexusMember[]
+  repos   Repo[]
+  weaves  Weave[]
 
-  @@map("teams")
+  @@map("plexuses")
 }
 
-model TeamMember {
-  userId String
-  teamId String
-  role   String @default("MEMBER")
+model PlexusMember {
+  userId   String
+  plexusId String
+  role     String @default("MEMBER")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plexus Plexus @relation(fields: [plexusId], references: [id], onDelete: Cascade)
 
-  @@id([userId, teamId])
-  @@map("team_members")
+  @@id([userId, plexusId])
+  @@map("plexus_members")
 }
 
-model Repository {
-  id          String   @id @default(cuid())
-  teamId      String
+// === Repositories ===
+
+model Repo {
+  id          String    @id @default(cuid())
+  plexusId    String
   name        String
   fullName    String
   url         String
-  createdAt   DateTime @default(now())
+  lastIndexed DateTime?
+  createdAt   DateTime  @default(now())
 
-  team  Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  files File[]
+  plexus       Plexus  @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  files        File[]
+  sourceWeaves Weave[] @relation("SourceRepo")
+  targetWeaves Weave[] @relation("TargetRepo")
 
-  @@unique([teamId, fullName])
-  @@map("repositories")
+  @@unique([plexusId, fullName])
+  @@map("repos")
 }
 
 model File {
-  id           String   @id @default(cuid())
-  repositoryId String
-  path         String
-  content      String
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  repoId    String
+  path      String
+  content   String   // full file content
+  sha       String   // git blob sha
+  language  String?  // detected language
+  loc       Int?     // lines of code
+  updatedAt DateTime @updatedAt
 
-  repository Repository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  embeddings Embedding[]
+  repo   Repo    @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  chunks Chunk[]
 
-  @@unique([repositoryId, path])
+  @@unique([repoId, path])
   @@map("files")
 }
 
-model Embedding {
-  id      String                      @id @default(cuid())
-  fileId  String
-  content String
-  vector  Unsupported("vector(1536)")
+// === Embeddings ===
+
+model Chunk {
+  id        String                      @id @default(cuid())
+  fileId    String
+  content   String
+  startLine Int
+  endLine   Int
+  embedding Unsupported("vector(3072)") // text-embedding-3-large
 
   file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
-  @@map("embeddings")
+  @@index([embedding])
+  @@map("chunks")
+}
+
+// === Weaves ===
+
+model Weave {
+  id           String    @id @default(cuid())
+  plexusId     String
+  sourceRepoId String
+  targetRepoId String
+  type         WeaveType
+  title        String    // "Shared auth implementation"
+  description  String    // AI-generated explanation
+  score        Float     // similarity score
+  dismissed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  plexus     Plexus    @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  sourceRepo Repo      @relation("SourceRepo", fields: [sourceRepoId], references: [id], onDelete: Cascade)
+  targetRepo Repo      @relation("TargetRepo", fields: [targetRepoId], references: [id], onDelete: Cascade)
+  comments   Comment[]
+
+  @@index([plexusId, createdAt])
+  @@map("weaves")
+}
+
+enum WeaveType {
+  shared_module // building the same thing separately
+  integration_opportunity
+  shared_dependency
+  api_compatibility
+  refactor_candidate
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  weaveId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  weave Weave @relation(fields: [weaveId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([weaveId, createdAt])
+  @@map("comments")
 }

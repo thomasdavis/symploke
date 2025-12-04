@@ -1,0 +1,121 @@
+/* AlertDialog Backdrop */
+.alert-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.8);
+  transition: opacity var(--duration-normal) var(--ease-in-out);
+}
+
+.alert-dialog__backdrop[data-open] {
+  animation: fadeIn var(--duration-normal) var(--ease-in-out);
+}
+
+.alert-dialog__backdrop[data-closed] {
+  animation: fadeOut var(--duration-normal) var(--ease-in-out);
+}
+
+/* AlertDialog Popup */
+.alert-dialog__popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 50;
+  width: 100%;
+  max-width: 32rem; /* 512px */
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  transition: opacity var(--duration-normal) var(--ease-in-out),
+              transform var(--duration-normal) var(--ease-in-out);
+}
+
+.alert-dialog__popup[data-open] {
+  animation: dialogEnter var(--duration-normal) var(--ease-in-out);
+}
+
+.alert-dialog__popup[data-closed] {
+  animation: dialogExit var(--duration-normal) var(--ease-in-out);
+}
+
+/* AlertDialog Title */
+.alert-dialog__title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-fg);
+  line-height: 1.5;
+}
+
+/* AlertDialog Description */
+.alert-dialog__description {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  line-height: 1.5;
+}
+
+/* AlertDialog Close */
+.alert-dialog__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--color-fg);
+  transition: background var(--duration-normal) var(--ease-in-out);
+}
+
+.alert-dialog__close:hover {
+  background: var(--color-bg-subtle);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialogEnter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialogExit {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}

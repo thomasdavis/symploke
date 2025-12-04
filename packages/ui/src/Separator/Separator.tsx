@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Separator as BaseSeparator } from '@base-ui-components/react/separator'
+import '@symploke/design/components/separator.css'
 
 export const Separator = React.forwardRef<
   HTMLDivElement,
@@ -8,13 +9,17 @@ export const Separator = React.forwardRef<
     orientation?: 'horizontal' | 'vertical'
   }
 >(({ className, orientation = 'horizontal', ...props }, ref) => {
+  const classes = [
+    'separator',
+    `separator--${orientation}`,
+    className
+  ].filter(Boolean).join(' ')
+
   return (
     <BaseSeparator
       ref={ref}
       orientation={orientation}
-      className={`shrink-0 bg-gray-200 ${
-        orientation === 'horizontal' ? 'h-[1px] w-full' : 'h-full w-[1px]'
-      } ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Meter as BaseMeter } from '@base-ui-components/react/meter'
+import '@symploke/design/components/meter.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['meter', className].filter(Boolean).join(' ')
   return (
     <BaseMeter.Root
       ref={ref}
-      className={`space-y-2 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +25,11 @@ const Label = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['meter__label', className].filter(Boolean).join(' ')
   return (
     <BaseMeter.Label
       ref={ref}
-      className={`text-sm font-medium ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +42,11 @@ const Track = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['meter__track', className].filter(Boolean).join(' ')
   return (
     <BaseMeter.Track
       ref={ref}
-      className={`relative h-2 w-full overflow-hidden rounded-full bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -55,10 +59,11 @@ const Indicator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['meter__indicator', className].filter(Boolean).join(' ')
   return (
     <BaseMeter.Indicator
       ref={ref}
-      className={`h-full w-full flex-1 bg-gray-900 transition-all ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -71,10 +76,11 @@ const Value = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['meter__value', className].filter(Boolean).join(' ')
   return (
     <BaseMeter.Value
       ref={ref}
-      className={`text-sm text-gray-600 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

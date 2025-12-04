@@ -1,12 +1,16 @@
 import * as React from 'react'
 import { Accordion as BaseAccordion } from '@base-ui-components/react/accordion'
+import '@symploke/design/components/accordion.css'
 
 // Re-export all subcomponents with styling
 const Root = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseAccordion.Root>
->((props, ref) => {
-  return <BaseAccordion.Root ref={ref} {...props} />
+  React.ComponentPropsWithoutRef<typeof BaseAccordion.Root> & {
+    className?: string
+  }
+>(({ className, ...props }, ref) => {
+  const classes = ['accordion', className].filter(Boolean).join(' ')
+  return <BaseAccordion.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Accordion.Root'
 
@@ -16,10 +20,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['accordion__item', className].filter(Boolean).join(' ')
   return (
     <BaseAccordion.Item
       ref={ref}
-      className={`border-b border-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -32,10 +37,11 @@ const Header = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['accordion__header', className].filter(Boolean).join(' ')
   return (
     <BaseAccordion.Header
       ref={ref}
-      className={`flex ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -48,10 +54,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['accordion__trigger', className].filter(Boolean).join(' ')
   return (
     <BaseAccordion.Trigger
       ref={ref}
-      className={`flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline text-left [&[data-panel-open]>svg]:rotate-180 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -64,10 +71,11 @@ const Panel = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['accordion__panel', className].filter(Boolean).join(' ')
   return (
     <BaseAccordion.Panel
       ref={ref}
-      className={`overflow-hidden text-sm data-[open]:animate-accordion-down data-[closed]:animate-accordion-up ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

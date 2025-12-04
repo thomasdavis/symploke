@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Sora, Sen, Azeret_Mono } from 'next/font/google'
 import './globals.css'
-import '@symploke/ui/styles.css'
 import { Providers } from './providers'
 import { Header } from '@/components/Header'
 

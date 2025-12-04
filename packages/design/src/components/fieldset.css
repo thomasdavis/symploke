@@ -1,0 +1,27 @@
+/* Fieldset Root */
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+.fieldset[data-disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Fieldset Legend */
+.fieldset__legend {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-fg);
+  line-height: 1.5;
+}
+
+.fieldset__legend[data-disabled] {
+  opacity: 0.7;
+}

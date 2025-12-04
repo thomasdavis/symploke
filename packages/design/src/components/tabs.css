@@ -1,0 +1,65 @@
+/* Tabs Root */
+.tabs {
+  width: 100%;
+}
+
+/* Tabs List */
+.tabs__list {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: var(--space-1);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-fg-muted);
+}
+
+/* Tab */
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+
+.tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-fg);
+}
+
+.tabs__tab[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.tabs__tab[data-selected] {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tabs Indicator */
+.tabs__indicator {
+  position: absolute;
+  background: var(--color-fg);
+}
+
+/* Tabs Panel */
+.tabs__panel {
+  margin-top: var(--space-2);
+}
+
+.tabs__panel:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-fg);
+}

@@ -1,0 +1,88 @@
+/* Accordion Root */
+.accordion {
+  /* No specific styles needed for root */
+}
+
+/* Accordion Item */
+.accordion__item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Accordion Header */
+.accordion__header {
+  display: flex;
+}
+
+/* Accordion Trigger */
+.accordion__trigger {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+  font-weight: 500;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-fg);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.accordion__trigger:hover {
+  text-decoration: underline;
+}
+
+.accordion__trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Icon rotation when panel is open */
+.accordion__trigger[data-panel-open] > svg {
+  transform: rotate(180deg);
+  transition: transform var(--duration-normal) var(--ease-in-out);
+}
+
+.accordion__trigger > svg {
+  transition: transform var(--duration-normal) var(--ease-in-out);
+}
+
+/* Accordion Panel */
+.accordion__panel {
+  overflow: hidden;
+  font-size: var(--text-sm);
+}
+
+/* Panel animations */
+.accordion__panel[data-open] {
+  animation: accordion-down var(--duration-slow) var(--ease-in-out);
+}
+
+.accordion__panel[data-closed] {
+  animation: accordion-up var(--duration-slow) var(--ease-in-out);
+}
+
+/* Keyframe animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--accordion-panel-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--accordion-panel-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}

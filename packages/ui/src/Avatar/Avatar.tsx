@@ -1,16 +1,19 @@
 import * as React from 'react'
 import { Avatar as BaseAvatar } from '@base-ui-components/react/avatar'
+import '@symploke/design/components/avatar.css'
 
 const Root = React.forwardRef<
   HTMLSpanElement,
   React.ComponentPropsWithoutRef<typeof BaseAvatar.Root> & {
     className?: string
+    size?: 'sm' | 'md' | 'lg'
   }
->(({ className, ...props }, ref) => {
+>(({ className, size = 'md', ...props }, ref) => {
+  const classes = ['avatar', `avatar--${size}`, className].filter(Boolean).join(' ')
   return (
     <BaseAvatar.Root
       ref={ref}
-      className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +26,11 @@ const Image = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['avatar__image', className].filter(Boolean).join(' ')
   return (
     <BaseAvatar.Image
       ref={ref}
-      className={`aspect-square h-full w-full object-cover ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +43,11 @@ const Fallback = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['avatar__fallback', className].filter(Boolean).join(' ')
   return (
     <BaseAvatar.Fallback
       ref={ref}
-      className={`flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-gray-600 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

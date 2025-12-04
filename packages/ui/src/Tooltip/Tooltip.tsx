@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Tooltip as BaseTooltip } from '@base-ui-components/react/tooltip'
+import '@symploke/design/components/tooltip.css'
 
 const Root = BaseTooltip.Root
 
@@ -27,10 +28,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['tooltip__positioner', className].filter(Boolean).join(' ')
   return (
     <BaseTooltip.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -43,10 +45,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['tooltip__popup', className].filter(Boolean).join(' ')
   return (
     <BaseTooltip.Popup
       ref={ref}
-      className={`z-50 overflow-hidden rounded-md border border-gray-200 bg-gray-900 px-3 py-1.5 text-xs text-white shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -59,10 +62,11 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['tooltip__arrow', className].filter(Boolean).join(' ')
   return (
     <BaseTooltip.Arrow
       ref={ref}
-      className={`fill-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

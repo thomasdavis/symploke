@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Input as BaseInput } from '@base-ui-components/react/input'
+import '@symploke/design/components/input.css'
 
 export const Input = React.forwardRef<
   HTMLInputElement,
@@ -7,10 +8,15 @@ export const Input = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = [
+    'input',
+    className,
+  ].filter(Boolean).join(' ')
+
   return (
     <BaseInput
       ref={ref}
-      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

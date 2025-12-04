@@ -1,0 +1,45 @@
+/* PreviewCard.Backdrop */
+.preview-card__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* PreviewCard.Positioner */
+.preview-card__positioner {
+  z-index: 50;
+}
+
+/* PreviewCard.Popup */
+.preview-card__popup {
+  z-index: 50;
+  width: 16rem; /* 256px / w-64 */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-4);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-md);
+  outline: none;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity var(--duration-normal) var(--ease-in-out),
+              transform var(--duration-normal) var(--ease-in-out);
+}
+
+/* Open state */
+.preview-card__popup[data-open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Closed state */
+.preview-card__popup[data-closed] {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* PreviewCard.Arrow */
+.preview-card__arrow {
+  fill: var(--color-bg);
+}

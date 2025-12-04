@@ -1,0 +1,85 @@
+/* Popover Backdrop */
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Popover Positioner */
+.popover-positioner {
+  z-index: 50;
+}
+
+/* Popover Popup */
+.popover-popup {
+  position: relative;
+  z-index: 50;
+  width: 18rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-4);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-md);
+  outline: none;
+  transition: opacity var(--duration-fast) var(--ease-in-out),
+              transform var(--duration-fast) var(--ease-in-out);
+}
+
+.popover-popup[data-open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.popover-popup[data-closed] {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* Popover Arrow */
+.popover-arrow {
+  fill: var(--color-bg);
+}
+
+/* Popover Title */
+.popover-title {
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+/* Popover Description */
+.popover-description {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+/* Popover Close */
+.popover-close {
+  position: absolute;
+  right: var(--space-4);
+  top: var(--space-4);
+  border-radius: var(--radius-sm);
+  opacity: 0.7;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1);
+  transition: opacity var(--duration-fast) var(--ease-in-out),
+              background var(--duration-fast) var(--ease-in-out);
+}
+
+.popover-close:hover {
+  opacity: 1;
+  background: var(--color-bg-subtle);
+}
+
+.popover-close:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-fg);
+}
+
+.popover-close[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}

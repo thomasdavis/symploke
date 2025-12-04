@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Combobox as BaseCombobox } from '@base-ui-components/react/combobox'
+import '@symploke/design/components/combobox.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseCombobox.Root>) => {
   return <BaseCombobox.Root {...props} />
@@ -12,10 +13,11 @@ const Input = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-input', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Input
       ref={ref}
-      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -28,10 +30,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-trigger', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Trigger
       ref={ref}
-      className={`absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -46,10 +49,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-positioner', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -62,10 +66,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-popup', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Popup
       ref={ref}
-      className={`mt-1 w-full rounded-md border border-gray-200 bg-white p-1 shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -78,10 +83,11 @@ const List = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-list', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.List
       ref={ref}
-      className={`max-h-60 overflow-auto ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -94,10 +100,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-item', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Item
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -110,10 +117,11 @@ const ItemIndicator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-item-indicator', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.ItemIndicator
       ref={ref}
-      className={`ml-auto flex h-4 w-4 items-center justify-center ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -126,10 +134,11 @@ const Group = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-group', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Group
       ref={ref}
-      className={`overflow-hidden p-1 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -142,10 +151,11 @@ const GroupLabel = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-group-label', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.GroupLabel
       ref={ref}
-      className={`px-2 py-1.5 text-xs font-semibold text-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -158,10 +168,11 @@ const Chips = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-chips', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Chips
       ref={ref}
-      className={`flex flex-wrap gap-1 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -174,10 +185,11 @@ const Chip = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-chip', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.Chip
       ref={ref}
-      className={`inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -190,10 +202,11 @@ const ChipRemove = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['combobox-chip-remove', className].filter(Boolean).join(' ')
   return (
     <BaseCombobox.ChipRemove
       ref={ref}
-      className={`rounded-full hover:bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

@@ -1,0 +1,29 @@
+.card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.card__title {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.card__body {
+  padding-top: 0;
+}
+
+.card__footer {
+  display: flex;
+  align-items: center;
+  padding-top: var(--space-6);
+}

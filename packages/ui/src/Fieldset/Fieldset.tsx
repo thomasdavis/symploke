@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Fieldset as BaseFieldset } from '@base-ui-components/react/fieldset'
+import '@symploke/design/src/components/fieldset.css'
 
 const Root = React.forwardRef<
   HTMLFieldSetElement,
@@ -10,7 +11,7 @@ const Root = React.forwardRef<
   return (
     <BaseFieldset.Root
       ref={ref}
-      className={`space-y-4 border border-gray-200 p-4 rounded-md ${className || ''}`}
+      className={`fieldset ${className || ''}`}
       {...props}
     />
   )
@@ -26,7 +27,7 @@ const Legend = React.forwardRef<
   return (
     <BaseFieldset.Legend
       ref={ref}
-      className={`text-sm font-semibold ${className || ''}`}
+      className={`fieldset__legend ${className || ''}`}
       {...props}
     />
   )

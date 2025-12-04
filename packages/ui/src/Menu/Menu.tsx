@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Menu as BaseMenu } from '@base-ui-components/react/menu'
+import '@symploke/design/components/menu.css'
 
 const Root = BaseMenu.Root
 
@@ -9,10 +10,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__trigger', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Trigger
       ref={ref}
-      className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -27,10 +29,11 @@ const Backdrop = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__backdrop', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -43,10 +46,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__positioner', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -59,10 +63,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__popup', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Popup
       ref={ref}
-      className={`z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -75,10 +80,11 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__arrow', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Arrow
       ref={ref}
-      className={`fill-white ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -91,10 +97,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__item', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Item
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -107,10 +114,11 @@ const Separator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__separator', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.Separator
       ref={ref}
-      className={`-mx-1 my-1 h-px bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -139,10 +147,11 @@ const GroupLabel = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__group-label', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.GroupLabel
       ref={ref}
-      className={`px-2 py-1.5 text-xs font-semibold text-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -171,10 +180,11 @@ const RadioItem = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__radio-item', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.RadioItem
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -187,10 +197,11 @@ const CheckboxItem = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__checkbox-item', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.CheckboxItem
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -205,10 +216,11 @@ const SubmenuTrigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['menu__submenu-trigger', className].filter(Boolean).join(' ')
   return (
     <BaseMenu.SubmenuTrigger
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

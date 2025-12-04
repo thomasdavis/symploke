@@ -1,18 +1,16 @@
 import * as React from 'react'
 import { ToggleGroup as BaseToggleGroup } from '@base-ui-components/react/toggle-group'
+import '@symploke/design/components/toggle-group.css'
 
-export const ToggleGroup = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseToggleGroup> & {
-    className?: string
+export interface ToggleGroupProps extends React.ComponentPropsWithoutRef<typeof BaseToggleGroup> {
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export const ToggleGroup = React.forwardRef<HTMLDivElement, ToggleGroupProps>(
+  ({ size = 'md', className, ...props }, ref) => {
+    const classes = ['toggle-group', `toggle-group--${size}`, className].filter(Boolean).join(' ')
+    return <BaseToggleGroup ref={ref} className={classes} {...props} />
   }
->(({ className, ...props }, ref) => {
-  return (
-    <BaseToggleGroup
-      ref={ref}
-      className={`inline-flex rounded-md shadow-sm ${className || ''}`}
-      {...props}
-    />
-  )
-})
+)
 ToggleGroup.displayName = 'ToggleGroup'

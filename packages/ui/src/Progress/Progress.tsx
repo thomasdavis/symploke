@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Progress as BaseProgress } from '@base-ui-components/react/progress'
+import '@symploke/design/components/progress.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,11 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['progress', className].filter(Boolean).join(' ')
   return (
     <BaseProgress.Root
       ref={ref}
-      className={`space-y-2 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -23,10 +25,11 @@ const Label = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['progress__label', className].filter(Boolean).join(' ')
   return (
     <BaseProgress.Label
       ref={ref}
-      className={`text-sm font-medium ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -39,10 +42,11 @@ const Track = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['progress__track', className].filter(Boolean).join(' ')
   return (
     <BaseProgress.Track
       ref={ref}
-      className={`relative h-2 w-full overflow-hidden rounded-full bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -55,10 +59,11 @@ const Indicator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['progress__indicator', className].filter(Boolean).join(' ')
   return (
     <BaseProgress.Indicator
       ref={ref}
-      className={`h-full w-full flex-1 bg-gray-900 transition-all data-[indeterminate]:animate-pulse ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -71,10 +76,11 @@ const Value = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['progress__value', className].filter(Boolean).join(' ')
   return (
     <BaseProgress.Value
       ref={ref}
-      className={`text-sm text-gray-600 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

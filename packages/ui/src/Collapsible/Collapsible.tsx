@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Collapsible as BaseCollapsible } from '@base-ui-components/react/collapsible'
+import '@symploke/design/components/collapsible.css'
 
 const Root = BaseCollapsible.Root
 
@@ -9,10 +10,11 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['collapsible__trigger', className].filter(Boolean).join(' ')
   return (
     <BaseCollapsible.Trigger
       ref={ref}
-      className={`flex w-full items-center justify-between py-2 font-medium transition-all hover:underline [&[data-panel-open]>svg]:rotate-180 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -25,10 +27,11 @@ const Panel = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['collapsible__panel', className].filter(Boolean).join(' ')
   return (
     <BaseCollapsible.Panel
       ref={ref}
-      className={`overflow-hidden text-sm data-[open]:animate-collapsible-down data-[closed]:animate-collapsible-up ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

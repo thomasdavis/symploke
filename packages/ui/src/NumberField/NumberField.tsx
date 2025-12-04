@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { NumberField as BaseNumberField } from '@base-ui-components/react/number-field'
+import '@symploke/design/src/components/number-field.css'
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -10,7 +11,7 @@ const Root = React.forwardRef<
   return (
     <BaseNumberField.Root
       ref={ref}
-      className={`relative ${className || ''}`}
+      className={`number-field ${className || ''}`}
       {...props}
     />
   )
@@ -26,7 +27,7 @@ const ScrubArea = React.forwardRef<
   return (
     <BaseNumberField.ScrubArea
       ref={ref}
-      className={`cursor-ew-resize ${className || ''}`}
+      className={`number-field__scrub-area ${className || ''}`}
       {...props}
     />
   )
@@ -58,7 +59,7 @@ const Group = React.forwardRef<
   return (
     <BaseNumberField.Group
       ref={ref}
-      className={`relative flex items-center ${className || ''}`}
+      className={`number-field__group ${className || ''}`}
       {...props}
     />
   )
@@ -74,7 +75,7 @@ const Decrement = React.forwardRef<
   return (
     <BaseNumberField.Decrement
       ref={ref}
-      className={`h-10 w-10 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:pointer-events-none disabled:opacity-50 ${className || ''}`}
+      className={`number-field__button number-field__decrement ${className || ''}`}
       {...props}
     />
   )
@@ -90,7 +91,7 @@ const Input = React.forwardRef<
   return (
     <BaseNumberField.Input
       ref={ref}
-      className={`flex h-10 w-full border-y border-gray-300 bg-white px-3 py-2 text-sm text-center ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={`number-field__input ${className || ''}`}
       {...props}
     />
   )
@@ -106,7 +107,7 @@ const Increment = React.forwardRef<
   return (
     <BaseNumberField.Increment
       ref={ref}
-      className={`h-10 w-10 rounded-r-md border border-l-0 border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:pointer-events-none disabled:opacity-50 ${className || ''}`}
+      className={`number-field__button number-field__increment ${className || ''}`}
       {...props}
     />
   )

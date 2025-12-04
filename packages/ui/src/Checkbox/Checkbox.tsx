@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Checkbox as BaseCheckbox } from '@base-ui-components/react/checkbox'
+import '@symploke/design/src/components/checkbox.css'
 
 const Root = React.forwardRef<
   HTMLSpanElement,
@@ -10,7 +11,7 @@ const Root = React.forwardRef<
   return (
     <BaseCheckbox.Root
       ref={ref}
-      className={`peer h-4 w-4 shrink-0 rounded-sm border border-gray-300 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[checked]:bg-gray-900 data-[checked]:text-white ${className || ''}`}
+      className={`checkbox-root ${className || ''}`}
       {...props}
     />
   )
@@ -26,7 +27,7 @@ const Indicator = React.forwardRef<
   return (
     <BaseCheckbox.Indicator
       ref={ref}
-      className={`flex items-center justify-center text-current ${className || ''}`}
+      className={`checkbox-indicator ${className || ''}`}
       {...props}
     >
       {children || (

@@ -3,6 +3,7 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { Button } from '@symploke/ui/Button/Button'
+import './ThemeToggle.css'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -15,9 +16,9 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="sm" className="h-9 w-9 px-0">
+      <Button variant="ghost" size="sm" className="theme-toggle">
         <span className="sr-only">Toggle theme</span>
-        <span className="h-5 w-5" />
+        <span className="theme-toggle-icon" />
       </Button>
     )
   }
@@ -27,7 +28,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="h-9 w-9 px-0"
+      className="theme-toggle"
     >
       <span className="sr-only">Toggle theme</span>
       {theme === 'dark' ? (
@@ -37,7 +38,7 @@ export function ThemeToggle() {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="h-5 w-5"
+          className="theme-toggle-icon"
         >
           <path
             strokeLinecap="round"
@@ -52,7 +53,7 @@ export function ThemeToggle() {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="h-5 w-5"
+          className="theme-toggle-icon"
         >
           <path
             strokeLinecap="round"

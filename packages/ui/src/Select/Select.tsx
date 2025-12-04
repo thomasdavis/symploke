@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Select as BaseSelect } from '@base-ui-components/react/select'
+import '@symploke/design/components/select.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseSelect.Root>) => {
   return <BaseSelect.Root {...props} />
@@ -15,7 +16,7 @@ const Trigger = React.forwardRef<
   return (
     <BaseSelect.Trigger
       ref={ref}
-      className={`flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={`select-trigger ${className || ''}`}
       {...props}
     />
   )
@@ -31,7 +32,7 @@ const Value = React.forwardRef<
   return (
     <BaseSelect.Value
       ref={ref}
-      className={`flex-1 text-left ${className || ''}`}
+      className={`select-value ${className || ''}`}
       {...props}
     />
   )
@@ -47,7 +48,7 @@ const Icon = React.forwardRef<
   return (
     <BaseSelect.Icon
       ref={ref}
-      className={`ml-2 h-4 w-4 opacity-50 ${className || ''}`}
+      className={`select-icon ${className || ''}`}
       {...props}
     />
   )
@@ -65,7 +66,7 @@ const Positioner = React.forwardRef<
   return (
     <BaseSelect.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={`select-positioner ${className || ''}`}
       {...props}
     />
   )
@@ -81,7 +82,7 @@ const Popup = React.forwardRef<
   return (
     <BaseSelect.Popup
       ref={ref}
-      className={`relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white text-gray-950 shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={`select-popup ${className || ''}`}
       {...props}
     />
   )
@@ -97,7 +98,7 @@ const List = React.forwardRef<
   return (
     <BaseSelect.List
       ref={ref}
-      className={`p-1 ${className || ''}`}
+      className={`select-list ${className || ''}`}
       {...props}
     />
   )
@@ -113,7 +114,7 @@ const Item = React.forwardRef<
   return (
     <BaseSelect.Item
       ref={ref}
-      className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={`select-item ${className || ''}`}
       {...props}
     />
   )
@@ -145,7 +146,7 @@ const ItemIndicator = React.forwardRef<
   return (
     <BaseSelect.ItemIndicator
       ref={ref}
-      className={`absolute left-2 flex h-3.5 w-3.5 items-center justify-center ${className || ''}`}
+      className={`select-item-indicator ${className || ''}`}
       {...props}
     />
   )
@@ -161,7 +162,7 @@ const Group = React.forwardRef<
   return (
     <BaseSelect.Group
       ref={ref}
-      className={`overflow-hidden p-1 ${className || ''}`}
+      className={`select-group ${className || ''}`}
       {...props}
     />
   )
@@ -177,7 +178,7 @@ const GroupLabel = React.forwardRef<
   return (
     <BaseSelect.GroupLabel
       ref={ref}
-      className={`py-1.5 pl-8 pr-2 text-xs font-semibold text-gray-900 ${className || ''}`}
+      className={`select-group-label ${className || ''}`}
       {...props}
     />
   )
@@ -193,7 +194,7 @@ const ScrollUpArrow = React.forwardRef<
   return (
     <BaseSelect.ScrollUpArrow
       ref={ref}
-      className={`flex cursor-default items-center justify-center py-1 ${className || ''}`}
+      className={`select-scroll-arrow ${className || ''}`}
       {...props}
     />
   )
@@ -209,7 +210,7 @@ const ScrollDownArrow = React.forwardRef<
   return (
     <BaseSelect.ScrollDownArrow
       ref={ref}
-      className={`flex cursor-default items-center justify-center py-1 ${className || ''}`}
+      className={`select-scroll-arrow ${className || ''}`}
       {...props}
     />
   )
@@ -225,7 +226,7 @@ const Separator = React.forwardRef<
   return (
     <BaseSelect.Separator
       ref={ref}
-      className={`-mx-1 my-1 h-px bg-gray-200 ${className || ''}`}
+      className={`select-separator ${className || ''}`}
       {...props}
     />
   )
@@ -241,7 +242,7 @@ const Arrow = React.forwardRef<
   return (
     <BaseSelect.Arrow
       ref={ref}
-      className={`fill-white ${className || ''}`}
+      className={`select-arrow ${className || ''}`}
       {...props}
     />
   )
@@ -257,7 +258,7 @@ const Backdrop = React.forwardRef<
   return (
     <BaseSelect.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 ${className || ''}`}
+      className={`select-backdrop ${className || ''}`}
       {...props}
     />
   )

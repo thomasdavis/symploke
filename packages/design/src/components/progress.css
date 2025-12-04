@@ -1,0 +1,52 @@
+/* Progress.Root */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Progress.Label */
+.progress__label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+/* Progress.Track */
+.progress__track {
+  position: relative;
+  height: 0.5rem; /* 8px / h-2 */
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px; /* rounded-full */
+  background: var(--color-border);
+}
+
+/* Progress.Indicator */
+.progress__indicator {
+  height: 100%;
+  width: 100%;
+  flex: 1 1 0%;
+  background: var(--color-fg);
+  transition: transform var(--duration-normal) var(--ease-in-out);
+}
+
+/* Indeterminate state */
+.progress__indicator[data-indeterminate] {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Progress.Value */
+.progress__value {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}

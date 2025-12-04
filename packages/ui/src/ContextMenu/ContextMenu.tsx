@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ContextMenu as BaseContextMenu } from '@base-ui-components/react/context-menu'
+import '@symploke/design/components/context-menu.css'
 
 const Root = BaseContextMenu.Root
 
@@ -27,10 +28,11 @@ const Backdrop = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-backdrop', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -43,10 +45,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-positioner', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -59,10 +62,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-popup', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Popup
       ref={ref}
-      className={`z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -75,10 +79,11 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-arrow', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Arrow
       ref={ref}
-      className={`fill-white ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -91,10 +96,11 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-item', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Item
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -107,10 +113,11 @@ const Separator = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-separator', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.Separator
       ref={ref}
-      className={`-mx-1 my-1 h-px bg-gray-200 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -139,10 +146,11 @@ const GroupLabel = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-group-label', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.GroupLabel
       ref={ref}
-      className={`px-2 py-1.5 text-xs font-semibold text-gray-900 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -171,10 +179,11 @@ const RadioItem = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-radio-item', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.RadioItem
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -187,10 +196,11 @@ const CheckboxItem = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-checkbox-item', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.CheckboxItem
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -205,10 +215,11 @@ const SubmenuTrigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['context-menu-submenu-trigger', className].filter(Boolean).join(' ')
   return (
     <BaseContextMenu.SubmenuTrigger
       ref={ref}
-      className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

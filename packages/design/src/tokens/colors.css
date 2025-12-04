@@ -1,0 +1,24 @@
+:root {
+  /* Background colors */
+  --color-bg: oklch(100% 0 0);
+  --color-bg-subtle: oklch(98% 0 0);
+  --color-bg-raised: oklch(99% 0 0);
+
+  /* Foreground colors */
+  --color-fg: oklch(10% 0 0);
+  --color-fg-muted: oklch(35% 0.01 240);
+
+  /* Primary brand color */
+  --color-primary: oklch(90.17% 0.187 104.93);
+  --color-primary-hover: oklch(85% 0.187 104.93);
+  --color-primary-fg: oklch(10% 0 0);
+
+  /* Semantic colors */
+  --color-success: oklch(55% 0.15 145);
+  --color-warning: oklch(65% 0.18 75);
+  --color-danger: oklch(55% 0.22 25);
+
+  /* Border colors */
+  --color-border: oklch(85% 0.01 240);
+  --color-border-subtle: oklch(92% 0.01 240);
+}

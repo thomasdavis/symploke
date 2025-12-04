@@ -1,0 +1,55 @@
+/* Tooltip Positioner */
+.tooltip__positioner {
+  z-index: 50;
+}
+
+/* Tooltip Popup */
+.tooltip__popup {
+  z-index: 50;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: oklch(15% 0 0);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  color: oklch(100% 0 0);
+  box-shadow: var(--shadow-md);
+  transition: opacity var(--duration-normal) var(--ease-in-out),
+              transform var(--duration-normal) var(--ease-in-out);
+}
+
+/* Animation states */
+.tooltip__popup[data-open] {
+  animation: tooltipFadeIn var(--duration-normal) var(--ease-in-out);
+}
+
+.tooltip__popup[data-closed] {
+  animation: tooltipFadeOut var(--duration-normal) var(--ease-in-out);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltipFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Tooltip Arrow */
+.tooltip__arrow {
+  fill: oklch(15% 0 0);
+}

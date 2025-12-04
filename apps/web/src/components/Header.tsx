@@ -1,33 +1,34 @@
 import { auth, signOut, signIn } from '@/lib/auth'
 import { Button } from '@symploke/ui/Button/Button'
 import { ThemeToggle } from './ThemeToggle'
+import './Header.css'
 
 export async function Header() {
   const session = await auth()
 
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <h1 className="font-sen text-xl font-bold text-foreground">Symploke</h1>
+    <header className="header">
+      <div className="header-container">
+        <div className="header-logo">
+          <h1 className="header-title">Symploke</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="header-actions">
           <ThemeToggle />
           {session?.user ? (
             <>
-              <div className="flex items-center gap-3">
+              <div className="header-user">
                 {session.user.image && (
                   <img
                     src={session.user.image}
                     alt={session.user.name || 'User'}
-                    className="h-8 w-8 rounded-full"
+                    className="header-avatar"
                   />
                 )}
-                <span className="text-sm text-foreground">{session.user.name}</span>
+                <span className="header-username">{session.user.name}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="header-buttons">
                 <Button variant="ghost" size="sm">
                   Settings
                 </Button>

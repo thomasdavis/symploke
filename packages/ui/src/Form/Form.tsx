@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Form as BaseForm } from '@base-ui-components/react/form'
+import '@symploke/design/src/components/form.css'
 
 export const Form = React.forwardRef<
   HTMLFormElement,
@@ -10,7 +11,7 @@ export const Form = React.forwardRef<
   return (
     <BaseForm
       ref={ref}
-      className={`space-y-6 ${className || ''}`}
+      className={`form ${className || ''}`}
       {...props}
     />
   )

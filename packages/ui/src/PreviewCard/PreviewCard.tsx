@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { PreviewCard as BasePreviewCard } from '@base-ui-components/react/preview-card'
+import '@symploke/design/components/preview-card.css'
 
 const Root = BasePreviewCard.Root
 
@@ -27,10 +28,11 @@ const Backdrop = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['preview-card__backdrop', className].filter(Boolean).join(' ')
   return (
     <BasePreviewCard.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -43,10 +45,11 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['preview-card__positioner', className].filter(Boolean).join(' ')
   return (
     <BasePreviewCard.Positioner
       ref={ref}
-      className={`z-50 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -59,10 +62,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['preview-card__popup', className].filter(Boolean).join(' ')
   return (
     <BasePreviewCard.Popup
       ref={ref}
-      className={`z-50 w-64 rounded-md border border-gray-200 bg-white p-4 text-gray-950 shadow-md outline-none data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -75,10 +79,11 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['preview-card__arrow', className].filter(Boolean).join(' ')
   return (
     <BasePreviewCard.Arrow
       ref={ref}
-      className={`fill-white ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

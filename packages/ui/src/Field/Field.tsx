@@ -1,5 +1,8 @@
+'use client'
+
 import * as React from 'react'
 import { Field as BaseField } from '@base-ui-components/react/field'
+import '@symploke/design/components/field.css'
 
 type RootProps = React.ComponentPropsWithoutRef<typeof BaseField.Root> & {
   className?: string
@@ -7,7 +10,7 @@ type RootProps = React.ComponentPropsWithoutRef<typeof BaseField.Root> & {
 
 const Root: React.ForwardRefExoticComponent<RootProps & React.RefAttributes<HTMLDivElement>> =
   React.forwardRef<HTMLDivElement, RootProps>(({ className, ...props }, ref) => {
-    return <BaseField.Root ref={ref} className={`space-y-2 ${className || ''}`} {...props} />
+    return <BaseField.Root ref={ref} className={`field ${className || ''}`} {...props} />
   })
 Root.displayName = 'Field.Root'
 
@@ -20,7 +23,7 @@ const Label: React.ForwardRefExoticComponent<LabelProps & React.RefAttributes<HT
     return (
       <BaseField.Label
         ref={ref}
-        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className || ''}`}
+        className={`field__label ${className || ''}`}
         {...props}
       />
     )
@@ -37,7 +40,7 @@ const Control: React.ForwardRefExoticComponent<
   return (
     <BaseField.Control
       ref={ref}
-      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
+      className={`field__control ${className || ''}`}
       {...props}
     />
   )
@@ -54,7 +57,7 @@ const Description: React.ForwardRefExoticComponent<
   return (
     <BaseField.Description
       ref={ref}
-      className={`text-sm text-gray-500 ${className || ''}`}
+      className={`field__description ${className || ''}`}
       {...props}
     />
   )
@@ -70,7 +73,7 @@ const Error: React.ForwardRefExoticComponent<ErrorProps & React.RefAttributes<HT
     return (
       <BaseField.Error
         ref={ref}
-        className={`text-sm font-medium text-red-500 ${className || ''}`}
+        className={`field__error ${className || ''}`}
         {...props}
       />
     )
@@ -86,7 +89,7 @@ const Item: React.ForwardRefExoticComponent<ItemProps & React.RefAttributes<HTML
     return (
       <BaseField.Item
         ref={ref}
-        className={`flex items-center space-x-2 ${className || ''}`}
+        className={`field__item ${className || ''}`}
         {...props}
       />
     )

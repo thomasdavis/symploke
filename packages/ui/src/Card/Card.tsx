@@ -1,24 +1,45 @@
 import * as React from 'react'
+import '@symploke/design/components/card.css'
 
 export type CardProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Card({ className, ...props }: CardProps) {
+  const classes = [
+    'card',
+    className,
+  ].filter(Boolean).join(' ')
+
   return (
     <div
-      className={`rounded-lg border bg-background p-6 shadow-sm ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
 }
 
 export function CardHeader({ className, ...props }: CardProps) {
-  return <div className={`flex flex-col space-y-1.5 ${className || ''}`} {...props} />
+  const classes = [
+    'card__header',
+    className,
+  ].filter(Boolean).join(' ')
+
+  return <div className={classes} {...props} />
 }
 
 export function CardTitle({ className, ...props }: CardProps) {
-  return <h3 className={`text-2xl font-semibold ${className || ''}`} {...props} />
+  const classes = [
+    'card__title',
+    className,
+  ].filter(Boolean).join(' ')
+
+  return <h3 className={classes} {...props} />
 }
 
 export function CardContent({ className, ...props }: CardProps) {
-  return <div className={`pt-0 ${className || ''}`} {...props} />
+  const classes = [
+    'card__body',
+    className,
+  ].filter(Boolean).join(' ')
+
+  return <div className={classes} {...props} />
 }

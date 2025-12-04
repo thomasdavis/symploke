@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { AlertDialog as BaseAlertDialog } from '@base-ui-components/react/alert-dialog'
+import '@symploke/design/components/alert-dialog.css'
 
 const Root = BaseAlertDialog.Root
 const Trigger = React.forwardRef<
@@ -20,10 +21,11 @@ const Backdrop = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['alert-dialog__backdrop', className].filter(Boolean).join(' ')
   return (
     <BaseAlertDialog.Backdrop
       ref={ref}
-      className={`fixed inset-0 z-50 bg-black/80 data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -36,10 +38,11 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['alert-dialog__popup', className].filter(Boolean).join(' ')
   return (
     <BaseAlertDialog.Popup
       ref={ref}
-      className={`fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg rounded-lg ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -52,10 +55,11 @@ const Title = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['alert-dialog__title', className].filter(Boolean).join(' ')
   return (
     <BaseAlertDialog.Title
       ref={ref}
-      className={`text-lg font-semibold ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -68,10 +72,11 @@ const Description = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['alert-dialog__description', className].filter(Boolean).join(' ')
   return (
     <BaseAlertDialog.Description
       ref={ref}
-      className={`text-sm text-gray-500 ${className || ''}`}
+      className={classes}
       {...props}
     />
   )
@@ -84,10 +89,11 @@ const Close = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
+  const classes = ['alert-dialog__close', className].filter(Boolean).join(' ')
   return (
     <BaseAlertDialog.Close
       ref={ref}
-      className={`inline-flex items-center justify-center px-4 py-2 rounded-md font-medium ${className || ''}`}
+      className={classes}
       {...props}
     />
   )

@@ -1,0 +1,45 @@
+.create-plexus-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: var(--space-8);
+}
+
+.create-plexus-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.create-plexus-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.create-plexus-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-fg);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.create-plexus-description {
+  font-size: var(--text-base);
+  color: var(--color-fg-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.create-plexus-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.create-plexus-actions {
+  display: flex;
+  justify-content: flex-end;
+}
