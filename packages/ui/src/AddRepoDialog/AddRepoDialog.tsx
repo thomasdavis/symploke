@@ -27,6 +27,10 @@ type Repository = {
   fork: boolean
 }
 
+type ApiError = Error & {
+  code?: string
+}
+
 export type AddRepoDialogProps = {
   plexusId: string
   open: boolean
@@ -52,7 +56,11 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
   })
 
   // Fetch repositories for selected org
-  const { data: reposData, isLoading: isLoadingRepos } = useQuery({
+  const {
+    data: reposData,
+    isLoading: isLoadingRepos,
+    error: reposError,
+  } = useQuery({
     queryKey: ['github-repositories', selectedOrg, plexusId],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -61,11 +69,17 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
       })
       const response = await fetch(`/api/github/repositories?${params}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch repositories')
+        const errorData = await response.json()
+        const error: ApiError = new Error(
+          errorData.error?.message || 'Failed to fetch repositories',
+        )
+        error.code = errorData.error?.code
+        throw error
       }
       return response.json() as Promise<{ repositories: Repository[] }>
     },
     enabled: open && !!selectedOrg,
+    retry: false,
   })
 
   // Add repository mutation
@@ -184,60 +198,92 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
                   <label htmlFor="repo-select" className="add-repo-dialog__label">
                     Repository
                   </label>
-                  <Select.Root
-                    value={selectedRepo ? [selectedRepo.toString()] : []}
-                    onValueChange={(value) => {
-                      const repoValue = value as string[]
-                      setSelectedRepo(repoValue[0] ? Number(repoValue[0]) : null)
-                    }}
-                    disabled={isLoadingRepos || addRepoMutation.isPending}
-                  >
-                    <Select.Trigger id="repo-select" className="add-repo-dialog__select-trigger">
-                      <Select.Value />
-                    </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Positioner>
-                        <Select.Popup className="add-repo-dialog__select-popup">
-                          {isLoadingRepos ? (
-                            <div className="add-repo-dialog__loading">Loading repositories...</div>
-                          ) : reposData?.repositories.length === 0 ? (
-                            <div className="add-repo-dialog__empty">
-                              All repositories from this organization have been added.
-                            </div>
-                          ) : (
-                            reposData?.repositories.map((repo) => (
-                              <Select.Item
-                                key={repo.id}
-                                value={repo.id.toString()}
-                                className="add-repo-dialog__select-option"
-                              >
-                                <Select.ItemText>
-                                  <div className="add-repo-dialog__repo-option">
-                                    <div className="add-repo-dialog__repo-name">{repo.name}</div>
-                                    {repo.description && (
-                                      <div className="add-repo-dialog__repo-description">
-                                        {repo.description}
+                  {reposError && (reposError as ApiError).code === 'NO_INSTALLATION' ? (
+                    <div className="add-repo-dialog__install-prompt">
+                      <div className="add-repo-dialog__install-message">
+                        The Symploke GitHub App is not installed for <strong>{selectedOrg}</strong>.
+                        <br />
+                        Install it to grant access to repositories.
+                      </div>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        onClick={() => {
+                          window.open(
+                            `https://github.com/apps/symploke/installations/new?state=${encodeURIComponent(
+                              JSON.stringify({ org: selectedOrg, plexusId }),
+                            )}`,
+                            '_blank',
+                          )
+                        }}
+                      >
+                        Install GitHub App
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select.Root
+                      value={selectedRepo ? [selectedRepo.toString()] : []}
+                      onValueChange={(value) => {
+                        const repoValue = value as string[]
+                        setSelectedRepo(repoValue[0] ? Number(repoValue[0]) : null)
+                      }}
+                      disabled={isLoadingRepos || addRepoMutation.isPending}
+                    >
+                      <Select.Trigger id="repo-select" className="add-repo-dialog__select-trigger">
+                        <Select.Value />
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Positioner>
+                          <Select.Popup className="add-repo-dialog__select-popup">
+                            {isLoadingRepos ? (
+                              <div className="add-repo-dialog__loading">
+                                Loading repositories...
+                              </div>
+                            ) : reposError ? (
+                              <div className="add-repo-dialog__error">
+                                {(reposError as Error).message}
+                              </div>
+                            ) : reposData?.repositories.length === 0 ? (
+                              <div className="add-repo-dialog__empty">
+                                All repositories from this organization have been added.
+                              </div>
+                            ) : (
+                              reposData?.repositories.map((repo) => (
+                                <Select.Item
+                                  key={repo.id}
+                                  value={repo.id.toString()}
+                                  className="add-repo-dialog__select-option"
+                                >
+                                  <Select.ItemText>
+                                    <div className="add-repo-dialog__repo-option">
+                                      <div className="add-repo-dialog__repo-name">{repo.name}</div>
+                                      {repo.description && (
+                                        <div className="add-repo-dialog__repo-description">
+                                          {repo.description}
+                                        </div>
+                                      )}
+                                      <div className="add-repo-dialog__repo-meta">
+                                        {repo.language && (
+                                          <span className="add-repo-dialog__repo-language">
+                                            {repo.language}
+                                          </span>
+                                        )}
+                                        {repo.private && (
+                                          <span className="add-repo-dialog__repo-badge">
+                                            Private
+                                          </span>
+                                        )}
                                       </div>
-                                    )}
-                                    <div className="add-repo-dialog__repo-meta">
-                                      {repo.language && (
-                                        <span className="add-repo-dialog__repo-language">
-                                          {repo.language}
-                                        </span>
-                                      )}
-                                      {repo.private && (
-                                        <span className="add-repo-dialog__repo-badge">Private</span>
-                                      )}
                                     </div>
-                                  </div>
-                                </Select.ItemText>
-                              </Select.Item>
-                            ))
-                          )}
-                        </Select.Popup>
-                      </Select.Positioner>
-                    </Select.Portal>
-                  </Select.Root>
+                                  </Select.ItemText>
+                                </Select.Item>
+                              ))
+                            )}
+                          </Select.Popup>
+                        </Select.Positioner>
+                      </Select.Portal>
+                    </Select.Root>
+                  )}
                 </div>
               )}
 

@@ -20,10 +20,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts     Account[]
-  sessions     Session[]
-  plexusMember PlexusMember[]
-  comments     Comment[]
+  accounts              Account[]
+  sessions              Session[]
+  plexusMember          PlexusMember[]
+  comments              Comment[]
+  githubAppInstallations GitHubAppInstallation[]
 
   @@map("users")
 }
@@ -54,6 +55,22 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model GitHubAppInstallation {
+  installationId Int      @id
+  userId         String
+  accountLogin   String // GitHub org or user login
+  accountType    String // "Organization" or "User"
+  accountId      Int // GitHub account ID
+  suspended      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("github_app_installations")
 }
 
 // === Plexus ===

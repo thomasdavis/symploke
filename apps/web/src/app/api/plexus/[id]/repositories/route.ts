@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { db } from '@symploke/db'
 import { z } from 'zod'
-
-// TODO: Import auth to check user permissions
-// import { auth } from '@/auth'
+import { auth } from '@/lib/auth'
+import { getInstallationOctokit } from '@/lib/github-app'
 
 const addRepoSchema = z.object({
   githubId: z.number(),
@@ -14,30 +13,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id: plexusId } = await params
 
-    // TODO: Check user has access to this plexus
-    // const session = await auth()
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: { code: 'NOT_AUTHENTICATED', message: 'Not authenticated' } },
-    //     { status: 401 }
-    //   )
-    // }
+    // Check user authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: { code: 'NOT_AUTHENTICATED', message: 'Not authenticated' } },
+        { status: 401 },
+      )
+    }
 
-    // const member = await db.plexusMember.findUnique({
-    //   where: {
-    //     userId_plexusId: {
-    //       userId: session.user.id,
-    //       plexusId,
-    //     },
-    //   },
-    // })
+    // Check user is a member of this plexus
+    const member = await db.plexusMember.findUnique({
+      where: {
+        userId_plexusId: {
+          userId: session.user.id,
+          plexusId,
+        },
+      },
+    })
 
-    // if (!member) {
-    //   return NextResponse.json(
-    //     { error: { code: 'NOT_PLEXUS_MEMBER', message: 'Not a member of this plexus' } },
-    //     { status: 403 }
-    //   )
-    // }
+    if (!member) {
+      return NextResponse.json(
+        { error: { code: 'NOT_PLEXUS_MEMBER', message: 'Not a member of this plexus' } },
+        { status: 403 },
+      )
+    }
 
     // Parse and validate request body
     const body = await request.json()
@@ -52,42 +52,52 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { githubId } = validation.data
 
-    // TODO: Fetch repo metadata from GitHub to verify it exists and user has access
-    // const githubToken = session.user.githubAccessToken
-    // const repoResponse = await fetch(`https://api.github.com/repositories/${githubId}`, {
-    //   headers: {
-    //     Authorization: `Bearer ${githubToken}`,
-    //     Accept: 'application/vnd.github.v3+json',
-    //   },
-    // })
+    // Find all user's GitHub App installations
+    const installations = await db.gitHubAppInstallation.findMany({
+      where: { userId: session.user.id },
+    })
 
-    // if (!repoResponse.ok) {
-    //   if (repoResponse.status === 404) {
-    //     return NextResponse.json(
-    //       { error: { code: 'REPO_NOT_FOUND', message: 'Repository not found' } },
-    //       { status: 404 }
-    //     )
-    //   }
-    //   if (repoResponse.status === 401 || repoResponse.status === 403) {
-    //     return NextResponse.json(
-    //       { error: { code: 'GITHUB_FORBIDDEN', message: 'No access to this repository' } },
-    //       { status: 403 }
-    //     )
-    //   }
-    //   return NextResponse.json(
-    //     { error: { code: 'GITHUB_API_ERROR', message: 'Failed to fetch repository' } },
-    //     { status: repoResponse.status }
-    //   )
-    // }
+    if (installations.length === 0) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'NO_INSTALLATIONS',
+            message: 'No GitHub App installations found. Please install the app first.',
+          },
+        },
+        { status: 404 },
+      )
+    }
 
-    // const githubRepo = await repoResponse.json()
+    // Try to fetch the repo from each installation until we find it
+    let githubRepo: { name: string; full_name: string; html_url: string } | null = null
 
-    // TEMPORARY: Use mock data
-    const githubRepo = {
-      id: githubId,
-      name: 'mock-repo',
-      full_name: 'user/mock-repo',
-      html_url: `https://github.com/user/mock-repo`,
+    for (const installation of installations) {
+      try {
+        const octokit = await getInstallationOctokit(installation.installationId)
+        // Fetch repository by ID
+        const { data: repoById } = await octokit.request('GET /repositories/{id}', {
+          id: githubId,
+        })
+
+        githubRepo = repoById
+        break
+      } catch {
+        // If error (404 or other), try next installation
+      }
+    }
+
+    if (!githubRepo) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'REPO_NOT_FOUND',
+            message:
+              'Repository not found or not accessible. Make sure the GitHub App is installed for this repository.',
+          },
+        },
+        { status: 404 },
+      )
     }
 
     // Check if repository already exists in this plexus

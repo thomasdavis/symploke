@@ -116,6 +116,22 @@
   font-size: var(--text-sm);
 }
 
+.add-repo-dialog__install-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: oklch(70% 0.15 260 / 0.08);
+  border: 1px solid oklch(70% 0.15 260 / 0.2);
+  border-radius: var(--radius-md);
+}
+
+.add-repo-dialog__install-message {
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  line-height: 1.5;
+}
+
 .add-repo-dialog__actions {
   display: flex;
   justify-content: flex-end;

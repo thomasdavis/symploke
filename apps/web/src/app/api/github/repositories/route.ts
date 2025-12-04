@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { db } from '@symploke/db'
-
-// TODO: Import auth to get GitHub access token
-// import { auth } from '@/auth'
+import { auth } from '@/lib/auth'
+import { getInstallationOctokit } from '@/lib/github-app'
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: { code: 'NOT_AUTHENTICATED', message: 'Not authenticated' } },
+        { status: 401 },
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const org = searchParams.get('org')
     const plexusId = searchParams.get('plexusId')
@@ -18,44 +25,45 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // TODO: Get user's GitHub access token from session
-    // const session = await auth()
-    // const githubToken = session?.user?.githubAccessToken
+    // Find GitHub App installation for this org/user
+    const installation = await db.gitHubAppInstallation.findFirst({
+      where: {
+        userId: session.user.id,
+        accountLogin: org,
+      },
+    })
 
-    // if (!githubToken) {
-    //   return NextResponse.json(
-    //     { error: { code: 'NOT_AUTHENTICATED', message: 'GitHub account not connected' } },
-    //     { status: 401 }
-    //   )
-    // }
+    if (!installation) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'NO_INSTALLATION',
+            message: `GitHub App not installed for ${org}. Please install the app first.`,
+          },
+        },
+        { status: 404 },
+      )
+    }
 
-    // Determine if personal or org repos
-    // const isPersonal = org === session.user.githubLogin
-    // const endpoint = isPersonal
-    //   ? 'https://api.github.com/user/repos?affiliation=owner&sort=updated&per_page=100'
-    //   : `https://api.github.com/orgs/${org}/repos?sort=updated&per_page=100`
+    if (installation.suspended) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'INSTALLATION_SUSPENDED',
+            message: 'GitHub App installation is suspended',
+          },
+        },
+        { status: 403 },
+      )
+    }
 
-    // const response = await fetch(endpoint, {
-    //   headers: {
-    //     Authorization: `Bearer ${githubToken}`,
-    //     Accept: 'application/vnd.github.v3+json',
-    //   },
-    // })
+    // Get installation-scoped Octokit
+    const octokit = await getInstallationOctokit(installation.installationId)
 
-    // if (!response.ok) {
-    //   if (response.status === 401) {
-    //     return NextResponse.json(
-    //       { error: { code: 'GITHUB_TOKEN_EXPIRED', message: 'GitHub token expired' } },
-    //       { status: 401 }
-    //     )
-    //   }
-    //   return NextResponse.json(
-    //     { error: { code: 'GITHUB_API_ERROR', message: 'Failed to fetch repositories' } },
-    //     { status: response.status }
-    //     )
-    // }
-
-    // const allRepos = await response.json()
+    // Fetch repositories the app has access to
+    const { data: installationRepos } = await octokit.rest.apps.listReposAccessibleToInstallation({
+      per_page: 100,
+    })
 
     // Get existing repos in this plexus
     const existingRepos = await db.repo.findMany({
@@ -64,50 +72,22 @@ export async function GET(request: NextRequest) {
     })
     const existingFullNames = new Set(existingRepos.map((r: { fullName: string }) => r.fullName))
 
-    // Filter out already-added repos
-    // const repositories = allRepos
-    //   .filter((repo: any) => !existingFullNames.has(repo.full_name))
-    //   .map((repo: any) => ({
-    //     id: repo.id,
-    //     name: repo.name,
-    //     full_name: repo.full_name,
-    //     description: repo.description,
-    //     html_url: repo.html_url,
-    //     private: repo.private,
-    //     language: repo.language,
-    //     stargazers_count: repo.stargazers_count,
-    //     fork: repo.fork,
-    //   }))
+    // Filter and map repositories
+    const repositories = installationRepos.repositories
+      .filter((repo) => !existingFullNames.has(repo.full_name))
+      .map((repo) => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        html_url: repo.html_url,
+        private: repo.private,
+        language: repo.language,
+        stargazers_count: repo.stargazers_count,
+        fork: repo.fork,
+      }))
 
-    // return NextResponse.json({ repositories })
-
-    // TEMPORARY: Return mock data for development
-    const mockRepos = [
-      {
-        id: 111111,
-        name: 'symploke',
-        full_name: `${org}/symploke`,
-        description: 'Code search and analysis platform',
-        html_url: `https://github.com/${org}/symploke`,
-        private: false,
-        language: 'TypeScript',
-        stargazers_count: 42,
-        fork: false,
-      },
-      {
-        id: 222222,
-        name: 'example-repo',
-        full_name: `${org}/example-repo`,
-        description: 'An example repository',
-        html_url: `https://github.com/${org}/example-repo`,
-        private: true,
-        language: 'JavaScript',
-        stargazers_count: 10,
-        fork: false,
-      },
-    ].filter((repo) => !existingFullNames.has(repo.full_name))
-
-    return NextResponse.json({ repositories: mockRepos })
+    return NextResponse.json({ repositories })
   } catch (error) {
     console.error('Error fetching GitHub repositories:', error)
     return NextResponse.json(
