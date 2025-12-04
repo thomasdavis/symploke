@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
       authorization: {
         params: {
-          scope: 'read:user user:email read:org repo',
+          scope: 'read:user user:email read:org',
         },
       },
     }),
@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       // Add the GitHub access token to the session
-      if (token.accessToken) {
+      if (token?.accessToken) {
         session.accessToken = token.accessToken as string
       }
       return session
