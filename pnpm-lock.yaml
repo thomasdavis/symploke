@@ -71,6 +71,9 @@ importers:
       sonner:
         specifier: latest
         version: 2.0.7(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@symploke/eslint-config':
         specifier: workspace:*

@@ -26,7 +26,8 @@
     "next-themes": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "sonner": "latest"
+    "sonner": "latest",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@symploke/eslint-config": "workspace:*",
