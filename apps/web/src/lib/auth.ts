@@ -3,7 +3,21 @@ import GitHub from 'next-auth/providers/github'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { db } from '@symploke/db'
 
-export const { handlers, auth } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
-  providers: [GitHub],
+  providers: [
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  pages: {
+    signIn: '/',
+  },
+  callbacks: {
+    authorized: async ({ auth: session }) => {
+      // Allow access if user is authenticated
+      return !!session
+    },
+  },
 })
