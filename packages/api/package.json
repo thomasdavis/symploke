@@ -1,0 +1,22 @@
+{
+  "name": "@symploke/api",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./schemas": "./src/schemas/index.ts",
+    "./responses": "./src/responses.ts",
+    "./errors": "./src/errors.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "@types/node": "^24.10.1",
+    "typescript": "latest"
+  }
+}

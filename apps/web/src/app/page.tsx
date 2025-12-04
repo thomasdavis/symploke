@@ -36,9 +36,7 @@ export default async function Home() {
     return (
       <main className="welcome-main">
         <div className="welcome-content">
-          <h1 className="welcome-title">
-            Welcome back, {session.user.name}!
-          </h1>
+          <h1 className="welcome-title">Welcome back, {session.user.name}!</h1>
           <p className="welcome-subtitle">Your dashboard is coming soon.</p>
         </div>
       </main>
@@ -79,15 +77,16 @@ export default async function Home() {
         <div className="mission-content">
           <div className="mission-text">
             <p>
-              Developers shouldn't have to reinvent what their teammates already solved. When
-              you're deep in your own work, you can't see that someone two repos over is wrestling
-              with the same auth flow, building the same date picker, or solving the same edge case
-              you'll hit next week.
+              Developers shouldn't have to reinvent what their teammates already solved. When you're
+              deep in your own work, you can't see that someone two repos over is wrestling with the
+              same auth flow, building the same date picker, or solving the same edge case you'll
+              hit next week.
             </p>
             <p>
-              <span style={{ fontWeight: 600 }}>Symploke</span> weaves your team's projects together,
-              using AI to surface the connections hiding in plain sight — the shared modules worth
-              extracting, the integrations waiting to happen, the patterns that want to converge.
+              <span style={{ fontWeight: 600 }}>Symploke</span> weaves your team's projects
+              together, using AI to surface the connections hiding in plain sight — the shared
+              modules worth extracting, the integrations waiting to happen, the patterns that want
+              to converge.
             </p>
             <p>
               It's not about tracking or managing; it's about making the invisible threads between
@@ -100,9 +99,7 @@ export default async function Home() {
       {/* Features Grid */}
       <section className="features-section">
         <div className="features-container">
-          <h2 className="features-title">
-            Find what you're both building
-          </h2>
+          <h2 className="features-title">Find what you're both building</h2>
           <div className="features-grid">
             <Feature
               title="Shared modules"
@@ -135,9 +132,7 @@ export default async function Home() {
       {/* Etymology */}
       <section className="etymology-section">
         <div className="etymology-content">
-          <p className="etymology-label">
-            συμπλοκή (symplokē)
-          </p>
+          <p className="etymology-label">συμπλοκή (symplokē)</p>
           <p className="etymology-meaning">Greek for "interweaving, entanglement"</p>
           <p className="etymology-parts">
             From <span style={{ fontStyle: 'italic' }}>sym-</span> (together) +{' '}

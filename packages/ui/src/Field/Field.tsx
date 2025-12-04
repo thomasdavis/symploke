@@ -20,13 +20,7 @@ type LabelProps = React.ComponentPropsWithoutRef<typeof BaseField.Label> & {
 
 const Label: React.ForwardRefExoticComponent<LabelProps & React.RefAttributes<HTMLLabelElement>> =
   React.forwardRef<HTMLLabelElement, LabelProps>(({ className, ...props }, ref) => {
-    return (
-      <BaseField.Label
-        ref={ref}
-        className={`field__label ${className || ''}`}
-        {...props}
-      />
-    )
+    return <BaseField.Label ref={ref} className={`field__label ${className || ''}`} {...props} />
   })
 Label.displayName = 'Field.Label'
 
@@ -37,13 +31,7 @@ type ControlProps = React.ComponentPropsWithoutRef<typeof BaseField.Control> & {
 const Control: React.ForwardRefExoticComponent<
   ControlProps & React.RefAttributes<HTMLInputElement>
 > = React.forwardRef<HTMLInputElement, ControlProps>(({ className, ...props }, ref) => {
-  return (
-    <BaseField.Control
-      ref={ref}
-      className={`field__control ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseField.Control ref={ref} className={`field__control ${className || ''}`} {...props} />
 })
 Control.displayName = 'Field.Control'
 
@@ -68,17 +56,12 @@ type ErrorProps = React.ComponentPropsWithoutRef<typeof BaseField.Error> & {
   className?: string
 }
 
-const Error: React.ForwardRefExoticComponent<ErrorProps & React.RefAttributes<HTMLDivElement>> =
-  React.forwardRef<HTMLDivElement, ErrorProps>(({ className, ...props }, ref) => {
-    return (
-      <BaseField.Error
-        ref={ref}
-        className={`field__error ${className || ''}`}
-        {...props}
-      />
-    )
-  })
-Error.displayName = 'Field.Error'
+const FieldError: React.ForwardRefExoticComponent<
+  ErrorProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ErrorProps>(({ className, ...props }, ref) => {
+  return <BaseField.Error ref={ref} className={`field__error ${className || ''}`} {...props} />
+})
+FieldError.displayName = 'Field.Error'
 
 type ItemProps = React.ComponentPropsWithoutRef<typeof BaseField.Item> & {
   className?: string
@@ -86,13 +69,7 @@ type ItemProps = React.ComponentPropsWithoutRef<typeof BaseField.Item> & {
 
 const Item: React.ForwardRefExoticComponent<ItemProps & React.RefAttributes<HTMLDivElement>> =
   React.forwardRef<HTMLDivElement, ItemProps>(({ className, ...props }, ref) => {
-    return (
-      <BaseField.Item
-        ref={ref}
-        className={`field__item ${className || ''}`}
-        {...props}
-      />
-    )
+    return <BaseField.Item ref={ref} className={`field__item ${className || ''}`} {...props} />
   })
 Item.displayName = 'Field.Item'
 
@@ -103,7 +80,7 @@ export const Field: {
   Label: typeof Label
   Control: typeof Control
   Description: typeof Description
-  Error: typeof Error
+  Error: typeof FieldError
   Item: typeof Item
   Validity: typeof Validity
 } = {
@@ -111,7 +88,7 @@ export const Field: {
   Label,
   Control,
   Description,
-  Error,
+  Error: FieldError,
   Item,
   Validity,
 }

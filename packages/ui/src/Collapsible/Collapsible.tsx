@@ -11,13 +11,7 @@ const Trigger = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['collapsible__trigger', className].filter(Boolean).join(' ')
-  return (
-    <BaseCollapsible.Trigger
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseCollapsible.Trigger ref={ref} className={classes} {...props} />
 })
 Trigger.displayName = 'Collapsible.Trigger'
 
@@ -28,13 +22,7 @@ const Panel = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['collapsible__panel', className].filter(Boolean).join(' ')
-  return (
-    <BaseCollapsible.Panel
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseCollapsible.Panel ref={ref} className={classes} {...props} />
 })
 Panel.displayName = 'Collapsible.Panel'
 

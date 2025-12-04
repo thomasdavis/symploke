@@ -14,13 +14,7 @@ const Input = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-input', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Input
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Input ref={ref} className={classes} {...props} />
 })
 Input.displayName = 'Autocomplete.Input'
 
@@ -31,13 +25,7 @@ const Trigger = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-trigger', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Trigger
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Trigger ref={ref} className={classes} {...props} />
 })
 Trigger.displayName = 'Autocomplete.Trigger'
 
@@ -50,13 +38,7 @@ const Positioner = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-positioner', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Positioner
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Positioner ref={ref} className={classes} {...props} />
 })
 Positioner.displayName = 'Autocomplete.Positioner'
 
@@ -67,13 +49,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-popup', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'Autocomplete.Popup'
 
@@ -84,13 +60,7 @@ const List = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-list', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.List
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.List ref={ref} className={classes} {...props} />
 })
 List.displayName = 'Autocomplete.List'
 
@@ -101,13 +71,7 @@ const Item = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-item', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Item
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Item ref={ref} className={classes} {...props} />
 })
 Item.displayName = 'Autocomplete.Item'
 
@@ -118,13 +82,7 @@ const Empty = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-empty', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Empty
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Empty ref={ref} className={classes} {...props} />
 })
 Empty.displayName = 'Autocomplete.Empty'
 
@@ -135,13 +93,7 @@ const Status = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-status', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Status
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Status ref={ref} className={classes} {...props} />
 })
 Status.displayName = 'Autocomplete.Status'
 
@@ -152,13 +104,7 @@ const Icon = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['autocomplete-icon', className].filter(Boolean).join(' ')
-  return (
-    <BaseAutocomplete.Icon
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAutocomplete.Icon ref={ref} className={classes} {...props} />
 })
 Icon.displayName = 'Autocomplete.Icon'
 

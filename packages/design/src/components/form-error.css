@@ -1,0 +1,21 @@
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: color-mix(in srgb, red 8%, transparent);
+  border: 1px solid color-mix(in srgb, red 30%, transparent);
+  border-radius: var(--radius-md);
+  color: color-mix(in srgb, red 90%, white);
+}
+
+.form-error__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.form-error__message {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}

@@ -1,19 +1,22 @@
-'use server'
-
-import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@symploke/db'
+import { jsonOk, jsonError } from '@symploke/api/responses'
+import { CreatePlexusSchema, PlexusSchema } from '@symploke/api/schemas'
 
-export async function createPlexus(formData: FormData) {
+export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) {
-    throw new Error('Unauthorized')
+    return jsonError('Unauthorized', 401)
   }
 
-  const name = formData.get('name') as string
-  if (!name) {
-    throw new Error('Name is required')
+  const body = await req.json()
+  const parsed = CreatePlexusSchema.safeParse(body)
+
+  if (!parsed.success) {
+    return jsonError('Invalid request body', 422)
   }
+
+  const { name } = parsed.data
 
   // Generate slug from name
   const slug = name
@@ -35,5 +38,5 @@ export async function createPlexus(formData: FormData) {
     },
   })
 
-  redirect('/')
+  return jsonOk(PlexusSchema.parse(plexus))
 }

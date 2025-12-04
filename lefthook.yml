@@ -4,7 +4,10 @@ pre-commit:
     format:
       glob: "*.{ts,tsx,js,jsx,json,md}"
       run: pnpm biome format --write {staged_files}
+      stage_fixed: true
     lint:
-      run: pnpm lint
+      glob: "*.{ts,tsx,js,jsx}"
+      run: pnpm biome lint {staged_files}
     type-check:
-      run: pnpm type-check
+      glob: "*.{ts,tsx}"
+      run: pnpm turbo type-check --filter=...[HEAD]

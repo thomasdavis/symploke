@@ -10,13 +10,7 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BasePreviewCard.Trigger
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BasePreviewCard.Trigger ref={ref} className={className} {...props} />
 })
 Trigger.displayName = 'PreviewCard.Trigger'
 
@@ -29,13 +23,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['preview-card__backdrop', className].filter(Boolean).join(' ')
-  return (
-    <BasePreviewCard.Backdrop
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePreviewCard.Backdrop ref={ref} className={classes} {...props} />
 })
 Backdrop.displayName = 'PreviewCard.Backdrop'
 
@@ -46,13 +34,7 @@ const Positioner = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['preview-card__positioner', className].filter(Boolean).join(' ')
-  return (
-    <BasePreviewCard.Positioner
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePreviewCard.Positioner ref={ref} className={classes} {...props} />
 })
 Positioner.displayName = 'PreviewCard.Positioner'
 
@@ -63,13 +45,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['preview-card__popup', className].filter(Boolean).join(' ')
-  return (
-    <BasePreviewCard.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePreviewCard.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'PreviewCard.Popup'
 
@@ -80,13 +56,7 @@ const Arrow = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['preview-card__arrow', className].filter(Boolean).join(' ')
-  return (
-    <BasePreviewCard.Arrow
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePreviewCard.Arrow ref={ref} className={classes} {...props} />
 })
 Arrow.displayName = 'PreviewCard.Arrow'
 

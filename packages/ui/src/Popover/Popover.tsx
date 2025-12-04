@@ -14,13 +14,7 @@ const Trigger: React.ForwardRefExoticComponent<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BasePopover.Trigger
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BasePopover.Trigger ref={ref} className={className} {...props} />
 })
 Trigger.displayName = 'Popover.Trigger'
 
@@ -33,13 +27,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-backdrop', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Backdrop
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Backdrop ref={ref} className={classes} {...props} />
 })
 Backdrop.displayName = 'Popover.Backdrop'
 
@@ -50,13 +38,7 @@ const Positioner = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-positioner', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Positioner
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Positioner ref={ref} className={classes} {...props} />
 })
 Positioner.displayName = 'Popover.Positioner'
 
@@ -67,13 +49,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-popup', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'Popover.Popup'
 
@@ -84,13 +60,7 @@ const Arrow = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-arrow', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Arrow
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Arrow ref={ref} className={classes} {...props} />
 })
 Arrow.displayName = 'Popover.Arrow'
 
@@ -100,13 +70,7 @@ const Viewport = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BasePopover.Viewport
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BasePopover.Viewport ref={ref} className={className} {...props} />
 })
 Viewport.displayName = 'Popover.Viewport'
 
@@ -117,13 +81,7 @@ const Title = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-title', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Title
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Title ref={ref} className={classes} {...props} />
 })
 Title.displayName = 'Popover.Title'
 
@@ -134,13 +92,7 @@ const Description = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-description', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Description
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Description ref={ref} className={classes} {...props} />
 })
 Description.displayName = 'Popover.Description'
 
@@ -151,13 +103,7 @@ const Close = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['popover-close', className].filter(Boolean).join(' ')
-  return (
-    <BasePopover.Close
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BasePopover.Close ref={ref} className={classes} {...props} />
 })
 Close.displayName = 'Popover.Close'
 

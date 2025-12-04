@@ -8,12 +8,6 @@ export const CheckboxGroup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseCheckboxGroup
-      ref={ref}
-      className={`checkbox-group ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseCheckboxGroup ref={ref} className={`checkbox-group ${className || ''}`} {...props} />
 })
 CheckboxGroup.displayName = 'CheckboxGroup'

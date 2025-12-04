@@ -22,13 +22,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['alert-dialog__backdrop', className].filter(Boolean).join(' ')
-  return (
-    <BaseAlertDialog.Backdrop
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAlertDialog.Backdrop ref={ref} className={classes} {...props} />
 })
 Backdrop.displayName = 'AlertDialog.Backdrop'
 
@@ -39,13 +33,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['alert-dialog__popup', className].filter(Boolean).join(' ')
-  return (
-    <BaseAlertDialog.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAlertDialog.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'AlertDialog.Popup'
 
@@ -56,13 +44,7 @@ const Title = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['alert-dialog__title', className].filter(Boolean).join(' ')
-  return (
-    <BaseAlertDialog.Title
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAlertDialog.Title ref={ref} className={classes} {...props} />
 })
 Title.displayName = 'AlertDialog.Title'
 
@@ -73,13 +55,7 @@ const Description = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['alert-dialog__description', className].filter(Boolean).join(' ')
-  return (
-    <BaseAlertDialog.Description
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAlertDialog.Description ref={ref} className={classes} {...props} />
 })
 Description.displayName = 'AlertDialog.Description'
 
@@ -90,13 +66,7 @@ const Close = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['alert-dialog__close', className].filter(Boolean).join(' ')
-  return (
-    <BaseAlertDialog.Close
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAlertDialog.Close ref={ref} className={classes} {...props} />
 })
 Close.displayName = 'AlertDialog.Close'
 

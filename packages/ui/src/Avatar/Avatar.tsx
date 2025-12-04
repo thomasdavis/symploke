@@ -10,13 +10,7 @@ const Root = React.forwardRef<
   }
 >(({ className, size = 'md', ...props }, ref) => {
   const classes = ['avatar', `avatar--${size}`, className].filter(Boolean).join(' ')
-  return (
-    <BaseAvatar.Root
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAvatar.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Avatar.Root'
 
@@ -27,13 +21,7 @@ const Image = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['avatar__image', className].filter(Boolean).join(' ')
-  return (
-    <BaseAvatar.Image
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAvatar.Image ref={ref} className={classes} {...props} />
 })
 Image.displayName = 'Avatar.Image'
 
@@ -44,13 +32,7 @@ const Fallback = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['avatar__fallback', className].filter(Boolean).join(' ')
-  return (
-    <BaseAvatar.Fallback
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseAvatar.Fallback ref={ref} className={classes} {...props} />
 })
 Fallback.displayName = 'Avatar.Fallback'
 

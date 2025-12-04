@@ -23,13 +23,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-backdrop', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Backdrop
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Backdrop ref={ref} className={classes} {...props} />
 })
 Backdrop.displayName = 'Dialog.Backdrop'
 
@@ -40,13 +34,7 @@ const Viewport = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-viewport', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Viewport
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Viewport ref={ref} className={classes} {...props} />
 })
 Viewport.displayName = 'Dialog.Viewport'
 
@@ -57,13 +45,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-popup', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'Dialog.Popup'
 
@@ -74,13 +56,7 @@ const Title = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-title', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Title
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Title ref={ref} className={classes} {...props} />
 })
 Title.displayName = 'Dialog.Title'
 
@@ -91,13 +67,7 @@ const Description = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-description', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Description
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Description ref={ref} className={classes} {...props} />
 })
 Description.displayName = 'Dialog.Description'
 
@@ -108,13 +78,7 @@ const Close = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['dialog-close', className].filter(Boolean).join(' ')
-  return (
-    <BaseDialog.Close
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseDialog.Close ref={ref} className={classes} {...props} />
 })
 Close.displayName = 'Dialog.Close'
 

@@ -8,13 +8,7 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseCheckbox.Root
-      ref={ref}
-      className={`checkbox-root ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseCheckbox.Root ref={ref} className={`checkbox-root ${className || ''}`} {...props} />
 })
 Root.displayName = 'Checkbox.Root'
 
@@ -38,6 +32,7 @@ const Indicator = React.forwardRef<
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
+          <title>Checkmark</title>
           <path
             d="M1 4L3.5 6.5L9 1"
             stroke="currentColor"

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "latest",
+    "@symploke/api": "workspace:*",
     "@symploke/db": "workspace:*",
     "@symploke/design": "workspace:*",
     "@symploke/env": "workspace:*",
@@ -19,6 +20,7 @@
     "@symploke/ui": "workspace:*",
     "@symploke/utils": "workspace:*",
     "@tanstack/react-query": "latest",
+    "@tanstack/react-query-devtools": "latest",
     "next": "latest",
     "next-auth": "beta",
     "next-themes": "latest",

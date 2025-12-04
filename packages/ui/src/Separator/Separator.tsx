@@ -9,19 +9,8 @@ export const Separator = React.forwardRef<
     orientation?: 'horizontal' | 'vertical'
   }
 >(({ className, orientation = 'horizontal', ...props }, ref) => {
-  const classes = [
-    'separator',
-    `separator--${orientation}`,
-    className
-  ].filter(Boolean).join(' ')
+  const classes = ['separator', `separator--${orientation}`, className].filter(Boolean).join(' ')
 
-  return (
-    <BaseSeparator
-      ref={ref}
-      orientation={orientation}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSeparator ref={ref} orientation={orientation} className={classes} {...props} />
 })
 Separator.displayName = 'Separator'

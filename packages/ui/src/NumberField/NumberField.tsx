@@ -8,13 +8,7 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseNumberField.Root
-      ref={ref}
-      className={`number-field ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseNumberField.Root ref={ref} className={`number-field ${className || ''}`} {...props} />
 })
 Root.displayName = 'NumberField.Root'
 
@@ -40,13 +34,7 @@ const ScrubAreaCursor = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseNumberField.ScrubAreaCursor
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseNumberField.ScrubAreaCursor ref={ref} className={className} {...props} />
 })
 ScrubAreaCursor.displayName = 'NumberField.ScrubAreaCursor'
 

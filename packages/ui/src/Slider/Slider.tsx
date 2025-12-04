@@ -9,13 +9,7 @@ const Root = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Root
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSlider.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Slider.Root'
 
@@ -26,13 +20,7 @@ const Control = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider__control', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Control
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSlider.Control ref={ref} className={classes} {...props} />
 })
 Control.displayName = 'Slider.Control'
 
@@ -43,13 +31,7 @@ const Track = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider__track', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Track
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSlider.Track ref={ref} className={classes} {...props} />
 })
 Track.displayName = 'Slider.Track'
 
@@ -60,13 +42,7 @@ const Indicator = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider__indicator', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Indicator
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSlider.Indicator ref={ref} className={classes} {...props} />
 })
 Indicator.displayName = 'Slider.Indicator'
 
@@ -77,13 +53,7 @@ const Thumb = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider__thumb', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Thumb
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseSlider.Thumb ref={ref} className={classes} {...props} />
 })
 Thumb.displayName = 'Slider.Thumb'
 
@@ -94,9 +64,7 @@ const Value = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['slider__value', className].filter(Boolean).join(' ')
-  return (
-    <BaseSlider.Value ref={ref} className={classes} {...props} />
-  )
+  return <BaseSlider.Value ref={ref} className={classes} {...props} />
 })
 Value.displayName = 'Slider.Value'
 

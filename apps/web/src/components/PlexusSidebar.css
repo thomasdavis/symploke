@@ -1,0 +1,8 @@
+.plexus-sidebar {
+  width: 240px;
+  background: var(--color-bg-subtle);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

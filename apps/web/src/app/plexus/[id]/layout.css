@@ -1,0 +1,11 @@
+.plexus-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.plexus-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-bg);
+}

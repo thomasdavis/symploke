@@ -9,13 +9,7 @@ const Root = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['meter', className].filter(Boolean).join(' ')
-  return (
-    <BaseMeter.Root
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseMeter.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Meter.Root'
 
@@ -26,13 +20,7 @@ const Label = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['meter__label', className].filter(Boolean).join(' ')
-  return (
-    <BaseMeter.Label
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseMeter.Label ref={ref} className={classes} {...props} />
 })
 Label.displayName = 'Meter.Label'
 
@@ -43,13 +31,7 @@ const Track = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['meter__track', className].filter(Boolean).join(' ')
-  return (
-    <BaseMeter.Track
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseMeter.Track ref={ref} className={classes} {...props} />
 })
 Track.displayName = 'Meter.Track'
 
@@ -60,13 +42,7 @@ const Indicator = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['meter__indicator', className].filter(Boolean).join(' ')
-  return (
-    <BaseMeter.Indicator
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseMeter.Indicator ref={ref} className={classes} {...props} />
 })
 Indicator.displayName = 'Meter.Indicator'
 
@@ -77,13 +53,7 @@ const Value = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['meter__value', className].filter(Boolean).join(' ')
-  return (
-    <BaseMeter.Value
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseMeter.Value ref={ref} className={classes} {...props} />
 })
 Value.displayName = 'Meter.Value'
 

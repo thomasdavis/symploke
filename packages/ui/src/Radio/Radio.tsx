@@ -8,13 +8,7 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseRadio.Root
-      ref={ref}
-      className={`radio ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseRadio.Root ref={ref} className={`radio ${className || ''}`} {...props} />
 })
 Root.displayName = 'Radio.Root'
 
@@ -25,19 +19,10 @@ const Indicator = React.forwardRef<
   }
 >(({ className, children, ...props }, ref) => {
   return (
-    <BaseRadio.Indicator
-      ref={ref}
-      className={`radio__indicator ${className || ''}`}
-      {...props}
-    >
+    <BaseRadio.Indicator ref={ref} className={`radio__indicator ${className || ''}`} {...props}>
       {children || (
-        <svg
-          width="8"
-          height="8"
-          viewBox="0 0 8 8"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <title>Radio indicator</title>
           <circle cx="4" cy="4" r="4" fill="currentColor" />
         </svg>
       )}

@@ -11,7 +11,7 @@ const Root = React.forwardRef<HTMLDivElement, ToolbarRootProps>(
   ({ size = 'md', className, ...props }, ref) => {
     const classes = ['toolbar', `toolbar--${size}`, className].filter(Boolean).join(' ')
     return <BaseToolbar.Root ref={ref} className={classes} {...props} />
-  }
+  },
 )
 Root.displayName = 'Toolbar.Root'
 

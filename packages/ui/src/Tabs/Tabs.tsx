@@ -9,13 +9,7 @@ const Root = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tabs', className].filter(Boolean).join(' ')
-  return (
-    <BaseTabs.Root
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTabs.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Tabs.Root'
 
@@ -26,13 +20,7 @@ const List = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tabs__list', className].filter(Boolean).join(' ')
-  return (
-    <BaseTabs.List
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTabs.List ref={ref} className={classes} {...props} />
 })
 List.displayName = 'Tabs.List'
 
@@ -43,13 +31,7 @@ const Tab = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tabs__tab', className].filter(Boolean).join(' ')
-  return (
-    <BaseTabs.Tab
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTabs.Tab ref={ref} className={classes} {...props} />
 })
 Tab.displayName = 'Tabs.Tab'
 
@@ -60,13 +42,7 @@ const Indicator = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tabs__indicator', className].filter(Boolean).join(' ')
-  return (
-    <BaseTabs.Indicator
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTabs.Indicator ref={ref} className={classes} {...props} />
 })
 Indicator.displayName = 'Tabs.Indicator'
 
@@ -77,13 +53,7 @@ const Panel = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tabs__panel', className].filter(Boolean).join(' ')
-  return (
-    <BaseTabs.Panel
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTabs.Panel ref={ref} className={classes} {...props} />
 })
 Panel.displayName = 'Tabs.Panel'
 

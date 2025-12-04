@@ -8,13 +8,7 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseFieldset.Root
-      ref={ref}
-      className={`fieldset ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseFieldset.Root ref={ref} className={`fieldset ${className || ''}`} {...props} />
 })
 Root.displayName = 'Fieldset.Root'
 
@@ -25,11 +19,7 @@ const Legend = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   return (
-    <BaseFieldset.Legend
-      ref={ref}
-      className={`fieldset__legend ${className || ''}`}
-      {...props}
-    />
+    <BaseFieldset.Legend ref={ref} className={`fieldset__legend ${className || ''}`} {...props} />
   )
 })
 Legend.displayName = 'Fieldset.Legend'

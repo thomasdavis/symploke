@@ -10,13 +10,7 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseTooltip.Trigger
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseTooltip.Trigger ref={ref} className={className} {...props} />
 })
 Trigger.displayName = 'Tooltip.Trigger'
 
@@ -29,13 +23,7 @@ const Positioner = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tooltip__positioner', className].filter(Boolean).join(' ')
-  return (
-    <BaseTooltip.Positioner
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTooltip.Positioner ref={ref} className={classes} {...props} />
 })
 Positioner.displayName = 'Tooltip.Positioner'
 
@@ -46,13 +34,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tooltip__popup', className].filter(Boolean).join(' ')
-  return (
-    <BaseTooltip.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTooltip.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'Tooltip.Popup'
 
@@ -63,13 +45,7 @@ const Arrow = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['tooltip__arrow', className].filter(Boolean).join(' ')
-  return (
-    <BaseTooltip.Arrow
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseTooltip.Arrow ref={ref} className={classes} {...props} />
 })
 Arrow.displayName = 'Tooltip.Arrow'
 
@@ -79,13 +55,7 @@ const Viewport = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseTooltip.Viewport
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseTooltip.Viewport ref={ref} className={className} {...props} />
 })
 Viewport.displayName = 'Tooltip.Viewport'
 

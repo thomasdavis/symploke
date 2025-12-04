@@ -8,17 +8,8 @@ export const Input = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  const classes = [
-    'input',
-    className,
-  ].filter(Boolean).join(' ')
+  const classes = ['input', className].filter(Boolean).join(' ')
 
-  return (
-    <BaseInput
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseInput ref={ref} className={classes} {...props} />
 })
 Input.displayName = 'Input'

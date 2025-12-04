@@ -20,6 +20,7 @@
     "./Field/Field": "./src/Field/Field.tsx",
     "./Fieldset/Fieldset": "./src/Fieldset/Fieldset.tsx",
     "./Form/Form": "./src/Form/Form.tsx",
+    "./FormError/FormError": "./src/FormError/FormError.tsx",
     "./FormField/FormField": "./src/FormField/FormField.tsx",
     "./Input/Input": "./src/Input/Input.tsx",
     "./Menu/Menu": "./src/Menu/Menu.tsx",
@@ -55,6 +56,7 @@
   },
   "dependencies": {
     "@base-ui-components/react": "latest",
+    "@symploke/api": "workspace:*",
     "@symploke/design": "workspace:*"
   },
   "devDependencies": {

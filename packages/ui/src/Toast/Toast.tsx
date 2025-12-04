@@ -13,13 +13,7 @@ const Viewport = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__viewport', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Viewport
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Viewport ref={ref} className={classes} {...props} />
 })
 Viewport.displayName = 'Toast.Viewport'
 
@@ -30,13 +24,7 @@ const Root = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Root
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Root ref={ref} className={classes} {...props} />
 })
 Root.displayName = 'Toast.Root'
 
@@ -47,13 +35,7 @@ const Content = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__content', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Content
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Content ref={ref} className={classes} {...props} />
 })
 Content.displayName = 'Toast.Content'
 
@@ -64,13 +46,7 @@ const Title = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__title', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Title
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Title ref={ref} className={classes} {...props} />
 })
 Title.displayName = 'Toast.Title'
 
@@ -81,13 +57,7 @@ const Description = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__description', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Description
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Description ref={ref} className={classes} {...props} />
 })
 Description.displayName = 'Toast.Description'
 
@@ -98,13 +68,7 @@ const Action = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__action', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Action
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Action ref={ref} className={classes} {...props} />
 })
 Action.displayName = 'Toast.Action'
 
@@ -115,13 +79,7 @@ const Close = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['toast__close', className].filter(Boolean).join(' ')
-  return (
-    <BaseToast.Close
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseToast.Close ref={ref} className={classes} {...props} />
 })
 Close.displayName = 'Toast.Close'
 
@@ -131,13 +89,7 @@ const Positioner = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseToast.Positioner
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseToast.Positioner ref={ref} className={className} {...props} />
 })
 Positioner.displayName = 'Toast.Positioner'
 

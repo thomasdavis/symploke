@@ -8,12 +8,6 @@ export const Form = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseForm
-      ref={ref}
-      className={`form ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseForm ref={ref} className={`form ${className || ''}`} {...props} />
 })
 Form.displayName = 'Form'

@@ -8,13 +8,7 @@ const Root = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSwitch.Root
-      ref={ref}
-      className={`switch-root ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSwitch.Root ref={ref} className={`switch-root ${className || ''}`} {...props} />
 })
 Root.displayName = 'Switch.Root'
 
@@ -24,13 +18,7 @@ const Thumb = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSwitch.Thumb
-      ref={ref}
-      className={`switch-thumb ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSwitch.Thumb ref={ref} className={`switch-thumb ${className || ''}`} {...props} />
 })
 Thumb.displayName = 'Switch.Thumb'
 

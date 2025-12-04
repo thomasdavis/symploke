@@ -13,13 +13,7 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Trigger
-      ref={ref}
-      className={`select-trigger ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Trigger ref={ref} className={`select-trigger ${className || ''}`} {...props} />
 })
 Trigger.displayName = 'Select.Trigger'
 
@@ -29,13 +23,7 @@ const Value = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Value
-      ref={ref}
-      className={`select-value ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Value ref={ref} className={`select-value ${className || ''}`} {...props} />
 })
 Value.displayName = 'Select.Value'
 
@@ -45,13 +33,7 @@ const Icon = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Icon
-      ref={ref}
-      className={`select-icon ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Icon ref={ref} className={`select-icon ${className || ''}`} {...props} />
 })
 Icon.displayName = 'Select.Icon'
 
@@ -79,13 +61,7 @@ const Popup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Popup
-      ref={ref}
-      className={`select-popup ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Popup ref={ref} className={`select-popup ${className || ''}`} {...props} />
 })
 Popup.displayName = 'Select.Popup'
 
@@ -95,13 +71,7 @@ const List = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.List
-      ref={ref}
-      className={`select-list ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.List ref={ref} className={`select-list ${className || ''}`} {...props} />
 })
 List.displayName = 'Select.List'
 
@@ -111,13 +81,7 @@ const Item = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Item
-      ref={ref}
-      className={`select-item ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Item ref={ref} className={`select-item ${className || ''}`} {...props} />
 })
 Item.displayName = 'Select.Item'
 
@@ -127,13 +91,7 @@ const ItemText = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.ItemText
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseSelect.ItemText ref={ref} className={className} {...props} />
 })
 ItemText.displayName = 'Select.ItemText'
 
@@ -159,13 +117,7 @@ const Group = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Group
-      ref={ref}
-      className={`select-group ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Group ref={ref} className={`select-group ${className || ''}`} {...props} />
 })
 Group.displayName = 'Select.Group'
 
@@ -224,11 +176,7 @@ const Separator = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   return (
-    <BaseSelect.Separator
-      ref={ref}
-      className={`select-separator ${className || ''}`}
-      {...props}
-    />
+    <BaseSelect.Separator ref={ref} className={`select-separator ${className || ''}`} {...props} />
   )
 })
 Separator.displayName = 'Select.Separator'
@@ -239,13 +187,7 @@ const Arrow = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseSelect.Arrow
-      ref={ref}
-      className={`select-arrow ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseSelect.Arrow ref={ref} className={`select-arrow ${className || ''}`} {...props} />
 })
 Arrow.displayName = 'Select.Arrow'
 
@@ -256,11 +198,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   return (
-    <BaseSelect.Backdrop
-      ref={ref}
-      className={`select-backdrop ${className || ''}`}
-      {...props}
-    />
+    <BaseSelect.Backdrop ref={ref} className={`select-backdrop ${className || ''}`} {...props} />
   )
 })
 Backdrop.displayName = 'Select.Backdrop'

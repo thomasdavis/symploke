@@ -11,6 +11,6 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
   ({ size = 'md', className, ...props }, ref) => {
     const classes = ['toggle', `toggle--${size}`, className].filter(Boolean).join(' ')
     return <BaseToggle ref={ref} className={classes} {...props} />
-  }
+  },
 )
 Toggle.displayName = 'Toggle'

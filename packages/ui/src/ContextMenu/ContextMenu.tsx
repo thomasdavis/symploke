@@ -10,13 +10,7 @@ const Trigger = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseContextMenu.Trigger
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Trigger ref={ref} className={className} {...props} />
 })
 Trigger.displayName = 'ContextMenu.Trigger'
 
@@ -29,13 +23,7 @@ const Backdrop = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-backdrop', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Backdrop
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Backdrop ref={ref} className={classes} {...props} />
 })
 Backdrop.displayName = 'ContextMenu.Backdrop'
 
@@ -46,13 +34,7 @@ const Positioner = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-positioner', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Positioner
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Positioner ref={ref} className={classes} {...props} />
 })
 Positioner.displayName = 'ContextMenu.Positioner'
 
@@ -63,13 +45,7 @@ const Popup = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-popup', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Popup
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Popup ref={ref} className={classes} {...props} />
 })
 Popup.displayName = 'ContextMenu.Popup'
 
@@ -80,13 +56,7 @@ const Arrow = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-arrow', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Arrow
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Arrow ref={ref} className={classes} {...props} />
 })
 Arrow.displayName = 'ContextMenu.Arrow'
 
@@ -97,13 +67,7 @@ const Item = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-item', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Item
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Item ref={ref} className={classes} {...props} />
 })
 Item.displayName = 'ContextMenu.Item'
 
@@ -114,13 +78,7 @@ const Separator = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-separator', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.Separator
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Separator ref={ref} className={classes} {...props} />
 })
 Separator.displayName = 'ContextMenu.Separator'
 
@@ -130,13 +88,7 @@ const Group = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseContextMenu.Group
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.Group ref={ref} className={className} {...props} />
 })
 Group.displayName = 'ContextMenu.Group'
 
@@ -147,13 +99,7 @@ const GroupLabel = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-group-label', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.GroupLabel
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.GroupLabel ref={ref} className={classes} {...props} />
 })
 GroupLabel.displayName = 'ContextMenu.GroupLabel'
 
@@ -163,13 +109,7 @@ const RadioGroup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseContextMenu.RadioGroup
-      ref={ref}
-      className={className}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.RadioGroup ref={ref} className={className} {...props} />
 })
 RadioGroup.displayName = 'ContextMenu.RadioGroup'
 
@@ -180,13 +120,7 @@ const RadioItem = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-radio-item', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.RadioItem
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.RadioItem ref={ref} className={classes} {...props} />
 })
 RadioItem.displayName = 'ContextMenu.RadioItem'
 
@@ -197,13 +131,7 @@ const CheckboxItem = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-checkbox-item', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.CheckboxItem
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.CheckboxItem ref={ref} className={classes} {...props} />
 })
 CheckboxItem.displayName = 'ContextMenu.CheckboxItem'
 
@@ -216,13 +144,7 @@ const SubmenuTrigger = React.forwardRef<
   }
 >(({ className, ...props }, ref) => {
   const classes = ['context-menu-submenu-trigger', className].filter(Boolean).join(' ')
-  return (
-    <BaseContextMenu.SubmenuTrigger
-      ref={ref}
-      className={classes}
-      {...props}
-    />
-  )
+  return <BaseContextMenu.SubmenuTrigger ref={ref} className={classes} {...props} />
 })
 SubmenuTrigger.displayName = 'ContextMenu.SubmenuTrigger'
 

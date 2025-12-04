@@ -8,12 +8,6 @@ export const RadioGroup = React.forwardRef<
     className?: string
   }
 >(({ className, ...props }, ref) => {
-  return (
-    <BaseRadioGroup
-      ref={ref}
-      className={`radio-group ${className || ''}`}
-      {...props}
-    />
-  )
+  return <BaseRadioGroup ref={ref} className={`radio-group ${className || ''}`} {...props} />
 })
 RadioGroup.displayName = 'RadioGroup'
