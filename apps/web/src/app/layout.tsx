@@ -24,7 +24,7 @@ const azeretMono = Azeret_Mono({
 
 export const metadata: Metadata = {
   title: 'Symploke',
-  description: 'AI finds connections between your friend group's projects',
+  description: "AI finds connections between your friend group's projects",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
