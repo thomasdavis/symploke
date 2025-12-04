@@ -2,14 +2,15 @@ import { Button } from '@symploke/ui/Button/Button'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
 import { auth, signIn } from '@/lib/auth'
 import { db } from '@symploke/db'
+import Link from 'next/link'
 import './page.css'
 
 export default async function Home() {
   const session = await auth()
 
   if (session?.user) {
-    // Check if user belongs to any plexus
-    const userPlexus = await db.plexusMember.findFirst({
+    // Get all plexuses the user belongs to
+    const userPlexuses = await db.plexusMember.findMany({
       where: {
         userId: session.user.id,
       },
@@ -18,8 +19,8 @@ export default async function Home() {
       },
     })
 
-    // If user doesn't have a plexus, show empty state
-    if (!userPlexus) {
+    // If user doesn't have any plexuses, show empty state
+    if (userPlexuses.length === 0) {
       return (
         <main>
           <EmptyState
@@ -32,12 +33,33 @@ export default async function Home() {
       )
     }
 
-    // User has a plexus, show dashboard
+    // User has plexuses, show list
     return (
       <main className="welcome-main">
         <div className="welcome-content">
           <h1 className="welcome-title">Welcome back, {session.user.name}!</h1>
-          <p className="welcome-subtitle">Your dashboard is coming soon.</p>
+          <div className="plexus-list">
+            <h2 className="plexus-list-title">Your Plexuses</h2>
+            <div className="plexus-items">
+              {userPlexuses.map((member: any) => (
+                <a
+                  key={member.plexus.id}
+                  href={`/plexus/${member.plexus.id}/repos`}
+                  className="plexus-link"
+                >
+                  <h3 className="plexus-name">{member.plexus.name}</h3>
+                  {member.plexus.description && (
+                    <p className="plexus-description">{member.plexus.description}</p>
+                  )}
+                </a>
+              ))}
+            </div>
+            <div className="plexus-actions">
+              <Link href="/plexus/create">
+                <Button variant="secondary">Create New Plexus</Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
     )

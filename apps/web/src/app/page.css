@@ -249,3 +249,50 @@
   color: var(--color-fg-muted);
   margin-bottom: var(--space-8);
 }
+
+.plexus-list {
+  margin-top: 2rem;
+}
+
+.plexus-list-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-fg);
+}
+
+.plexus-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.plexus-link {
+  display: block;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s;
+}
+
+.plexus-link:hover {
+  border-color: var(--color-border-hover, #9ca3af);
+}
+
+.plexus-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-fg);
+}
+
+.plexus-description {
+  color: var(--color-fg-muted);
+  font-size: 0.875rem;
+}
+
+.plexus-actions {
+  margin-top: 1.5rem;
+}

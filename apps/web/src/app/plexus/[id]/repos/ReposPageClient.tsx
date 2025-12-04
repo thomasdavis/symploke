@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { ReposTable } from '@symploke/ui/ReposTable/ReposTable'
@@ -13,12 +13,20 @@ export type ReposPageClientProps = {
   repos: Repo[]
 }
 
-export function ReposPageClient({ plexusId, repos }: ReposPageClientProps) {
+export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClientProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const queryClient = useQueryClient()
 
-  // Pre-populate the cache with the server-fetched repos
-  queryClient.setQueryData(['plexus-repos', plexusId], repos)
+  // Use React Query with server data as initial data
+  const { data: repos } = useQuery({
+    queryKey: ['plexus-repos', plexusId],
+    queryFn: async () => {
+      const response = await fetch(`/api/plexus/${plexusId}/repositories`)
+      if (!response.ok) throw new Error('Failed to fetch repositories')
+      return response.json() as Promise<Repo[]>
+    },
+    initialData: initialRepos,
+    staleTime: 0, // Always refetch on invalidation
+  })
 
   return (
     <>

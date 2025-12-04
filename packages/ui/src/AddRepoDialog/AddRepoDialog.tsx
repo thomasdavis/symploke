@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dialog } from '../Dialog/Dialog'
 import { Button } from '../Button/Button'
-import { Select } from '../Select/Select'
 import '@symploke/design/components/add-repo-dialog.css'
 
 type Organization = {
@@ -139,160 +138,166 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
             </Dialog.Description>
 
             <div className="add-repo-dialog__content">
-              <div className="add-repo-dialog__field">
-                <label htmlFor="org-select" className="add-repo-dialog__label">
-                  Organization
-                </label>
-                <Select.Root
-                  value={selectedOrg ? [selectedOrg] : []}
-                  onValueChange={(value) => {
-                    const orgValue = value as string[]
-                    setSelectedOrg(orgValue[0] || '')
-                    setSelectedRepo(null)
-                  }}
-                  disabled={isLoadingOrgs || addRepoMutation.isPending}
-                >
-                  <Select.Trigger id="org-select" className="add-repo-dialog__select-trigger">
-                    <Select.Value />
-                  </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Positioner>
-                      <Select.Popup className="add-repo-dialog__select-popup">
-                        {isLoadingOrgs ? (
-                          <div className="add-repo-dialog__loading">Loading organizations...</div>
-                        ) : (
-                          orgsData?.organizations.map((org) => (
-                            <Select.Item
-                              key={org.login}
-                              value={org.login}
-                              className="add-repo-dialog__select-option"
-                            >
-                              <Select.ItemText>
-                                <div className="add-repo-dialog__org-option">
-                                  <img
-                                    src={org.avatar_url}
-                                    alt=""
-                                    className="add-repo-dialog__org-avatar"
-                                  />
-                                  <div>
-                                    <div className="add-repo-dialog__org-name">{org.login}</div>
-                                    {org.description && (
-                                      <div className="add-repo-dialog__org-description">
-                                        {org.description}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </Select.ItemText>
-                            </Select.Item>
-                          ))
-                        )}
-                      </Select.Popup>
-                    </Select.Positioner>
-                  </Select.Portal>
-                </Select.Root>
-              </div>
+              {!selectedOrg ? (
+                <>
+                  <div className="add-repo-dialog__section-label">Select a GitHub organization</div>
+                  {isLoadingOrgs ? (
+                    <div className="add-repo-dialog__loading">Loading organizations...</div>
+                  ) : (
+                    <div className="add-repo-dialog__org-list">
+                      {orgsData?.organizations.map((org) => (
+                        <button
+                          key={org.login}
+                          type="button"
+                          className="add-repo-dialog__org-card"
+                          onClick={() => {
+                            setSelectedOrg(org.login)
+                            setSelectedRepo(null)
+                          }}
+                          disabled={addRepoMutation.isPending}
+                        >
+                          <img
+                            src={org.avatar_url}
+                            alt=""
+                            className="add-repo-dialog__org-avatar"
+                          />
+                          <div className="add-repo-dialog__org-info">
+                            <div className="add-repo-dialog__org-name">{org.login}</div>
+                            {org.description && (
+                              <div className="add-repo-dialog__org-description">
+                                {org.description}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="add-repo-dialog__selected-org">
+                    <div className="add-repo-dialog__org-card add-repo-dialog__org-card--selected">
+                      <img
+                        src={
+                          orgsData?.organizations.find((o) => o.login === selectedOrg)?.avatar_url
+                        }
+                        alt=""
+                        className="add-repo-dialog__org-avatar"
+                      />
+                      <div className="add-repo-dialog__org-info">
+                        <div className="add-repo-dialog__org-name">{selectedOrg}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="add-repo-dialog__clear-button"
+                        onClick={() => {
+                          setSelectedOrg('')
+                          setSelectedRepo(null)
+                        }}
+                        disabled={addRepoMutation.isPending}
+                        aria-label="Clear selection"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
 
-              {selectedOrg && (
-                <div className="add-repo-dialog__field">
-                  <label htmlFor="repo-select" className="add-repo-dialog__label">
-                    Repository
-                  </label>
+                  <div className="add-repo-dialog__section-label">Select a repository</div>
+
                   {reposError && (reposError as ApiError).code === 'NO_INSTALLATION' ? (
                     <div className="add-repo-dialog__install-prompt">
                       <div className="add-repo-dialog__install-message">
                         The Symploke GitHub App is not installed for <strong>{selectedOrg}</strong>.
                         <br />
                         Install it to grant access to repositories.
+                        {(reposError as ApiError & { availableInstallations?: string[] })
+                          .availableInstallations?.length ? (
+                          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                            Available installations:{' '}
+                            {(
+                              reposError as ApiError & { availableInstallations?: string[] }
+                            ).availableInstallations?.join(', ')}
+                          </div>
+                        ) : null}
                       </div>
                       <Button
                         type="button"
                         variant="primary"
                         onClick={() => {
-                          window.open(
-                            `https://github.com/apps/symploke/installations/new?state=${encodeURIComponent(
-                              JSON.stringify({ org: selectedOrg, plexusId }),
-                            )}`,
-                            '_blank',
+                          const appSlug = 'symploke-dev'
+
+                          const state = encodeURIComponent(
+                            JSON.stringify({
+                              org: selectedOrg,
+                              plexusId,
+                            }),
                           )
+
+                          const orgData = orgsData?.organizations.find(
+                            (o) => o.login === selectedOrg,
+                          )
+
+                          const targetId = orgData?.id ? `&target_id=${orgData.id}` : ''
+                          const account = orgData?.login ? `&account=${orgData.login}` : ''
+
+                          window.location.href = `https://github.com/apps/${appSlug}/installations/new?state=${state}${targetId}${account}`
                         }}
                       >
                         Install GitHub App
                       </Button>
                     </div>
+                  ) : isLoadingRepos ? (
+                    <div className="add-repo-dialog__loading">Loading repositories...</div>
+                  ) : reposError ? (
+                    <div className="add-repo-dialog__error">{(reposError as Error).message}</div>
+                  ) : reposData?.repositories.length === 0 ? (
+                    <div className="add-repo-dialog__empty">
+                      All repositories from this organization have been added.
+                    </div>
                   ) : (
-                    <Select.Root
-                      value={selectedRepo ? [selectedRepo.toString()] : []}
-                      onValueChange={(value) => {
-                        const repoValue = value as string[]
-                        setSelectedRepo(repoValue[0] ? Number(repoValue[0]) : null)
-                      }}
-                      disabled={isLoadingRepos || addRepoMutation.isPending}
-                    >
-                      <Select.Trigger id="repo-select" className="add-repo-dialog__select-trigger">
-                        <Select.Value />
-                      </Select.Trigger>
-                      <Select.Portal>
-                        <Select.Positioner>
-                          <Select.Popup className="add-repo-dialog__select-popup">
-                            {isLoadingRepos ? (
-                              <div className="add-repo-dialog__loading">
-                                Loading repositories...
+                    <div className="add-repo-dialog__repo-list">
+                      {reposData?.repositories.map((repo) => (
+                        <button
+                          key={repo.id}
+                          type="button"
+                          className={`add-repo-dialog__repo-card ${
+                            selectedRepo === repo.id ? 'add-repo-dialog__repo-card--selected' : ''
+                          }`}
+                          onClick={() => setSelectedRepo(repo.id)}
+                          disabled={addRepoMutation.isPending}
+                        >
+                          <div className="add-repo-dialog__repo-info">
+                            <div className="add-repo-dialog__repo-name">{repo.name}</div>
+                            {repo.description && (
+                              <div className="add-repo-dialog__repo-description">
+                                {repo.description}
                               </div>
-                            ) : reposError ? (
-                              <div className="add-repo-dialog__error">
-                                {(reposError as Error).message}
-                              </div>
-                            ) : reposData?.repositories.length === 0 ? (
-                              <div className="add-repo-dialog__empty">
-                                All repositories from this organization have been added.
-                              </div>
-                            ) : (
-                              reposData?.repositories.map((repo) => (
-                                <Select.Item
-                                  key={repo.id}
-                                  value={repo.id.toString()}
-                                  className="add-repo-dialog__select-option"
-                                >
-                                  <Select.ItemText>
-                                    <div className="add-repo-dialog__repo-option">
-                                      <div className="add-repo-dialog__repo-name">{repo.name}</div>
-                                      {repo.description && (
-                                        <div className="add-repo-dialog__repo-description">
-                                          {repo.description}
-                                        </div>
-                                      )}
-                                      <div className="add-repo-dialog__repo-meta">
-                                        {repo.language && (
-                                          <span className="add-repo-dialog__repo-language">
-                                            {repo.language}
-                                          </span>
-                                        )}
-                                        {repo.private && (
-                                          <span className="add-repo-dialog__repo-badge">
-                                            Private
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </Select.ItemText>
-                                </Select.Item>
-                              ))
                             )}
-                          </Select.Popup>
-                        </Select.Positioner>
-                      </Select.Portal>
-                    </Select.Root>
+                            <div className="add-repo-dialog__repo-meta">
+                              {repo.language && (
+                                <span className="add-repo-dialog__repo-language">
+                                  {repo.language}
+                                </span>
+                              )}
+                              {repo.private && (
+                                <span className="add-repo-dialog__repo-badge">Private</span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {addRepoMutation.isError && (
-                <div className="add-repo-dialog__error">
-                  {addRepoMutation.error instanceof Error
-                    ? addRepoMutation.error.message
-                    : 'Failed to add repository'}
-                </div>
+                  {addRepoMutation.isError && (
+                    <div className="add-repo-dialog__error">
+                      {addRepoMutation.error instanceof Error
+                        ? addRepoMutation.error.message
+                        : 'Failed to add repository'}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

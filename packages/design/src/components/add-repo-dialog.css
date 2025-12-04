@@ -8,6 +8,104 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-height: 300px;
+}
+
+.add-repo-dialog__section-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  margin-bottom: var(--space-2);
+}
+
+.add-repo-dialog__org-list,
+.add-repo-dialog__repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.add-repo-dialog__org-card,
+.add-repo-dialog__repo-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.add-repo-dialog__org-card:hover:not(:disabled),
+.add-repo-dialog__repo-card:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-bg-subtle);
+}
+
+.add-repo-dialog__org-card:disabled,
+.add-repo-dialog__repo-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.add-repo-dialog__org-card--selected,
+.add-repo-dialog__repo-card--selected {
+  border-color: var(--color-primary);
+  background: oklch(from var(--color-primary) l c h / 0.05);
+}
+
+.add-repo-dialog__selected-org {
+  margin-bottom: var(--space-4);
+}
+
+.add-repo-dialog__org-card--selected {
+  position: relative;
+  padding-right: var(--space-10);
+}
+
+.add-repo-dialog__clear-button {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-repo-dialog__clear-button:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg);
+}
+
+.add-repo-dialog__clear-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.add-repo-dialog__org-info,
+.add-repo-dialog__repo-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
 }
 
 .add-repo-dialog__field {

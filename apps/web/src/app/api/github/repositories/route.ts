@@ -7,6 +7,13 @@ import { getInstallationOctokit } from '@/lib/github-app'
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
+    console.log('[DEBUG] Session state:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      hasAccessToken: !!session?.accessToken,
+    })
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: { code: 'NOT_AUTHENTICATED', message: 'Not authenticated' } },
@@ -26,19 +33,38 @@ export async function GET(request: NextRequest) {
     }
 
     // Find GitHub App installation for this org/user
+    // Case-insensitive match since GitHub usernames are case-insensitive
     const installation = await db.gitHubAppInstallation.findFirst({
       where: {
         userId: session.user.id,
-        accountLogin: org,
+        accountLogin: {
+          equals: org,
+          mode: 'insensitive',
+        },
       },
     })
 
+    console.log('[DEBUG] Installation lookup:', {
+      lookingFor: org,
+      userId: session.user.id,
+      found: installation ? installation.accountLogin : null,
+    })
+
     if (!installation) {
+      // Fetch all installations for this user to help with debugging
+      const allInstallations = await db.gitHubAppInstallation.findMany({
+        where: { userId: session.user.id },
+        select: { accountLogin: true, accountType: true },
+      })
+
+      console.log('[DEBUG] No installation found. Available installations:', allInstallations)
+
       return NextResponse.json(
         {
           error: {
             code: 'NO_INSTALLATION',
             message: `GitHub App not installed for ${org}. Please install the app first.`,
+            availableInstallations: allInstallations.map((i: any) => i.accountLogin),
           },
         },
         { status: 404 },
@@ -61,7 +87,7 @@ export async function GET(request: NextRequest) {
     const octokit = await getInstallationOctokit(installation.installationId)
 
     // Fetch repositories the app has access to
-    const { data: installationRepos } = await octokit.rest.apps.listReposAccessibleToInstallation({
+    const { data: installationRepos } = await octokit.request('GET /installation/repositories', {
       per_page: 100,
     })
 

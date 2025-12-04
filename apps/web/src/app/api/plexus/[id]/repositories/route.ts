@@ -9,6 +9,52 @@ const addRepoSchema = z.object({
   githubId: z.number(),
 })
 
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: plexusId } = await params
+
+    // Check user authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: { code: 'NOT_AUTHENTICATED', message: 'Not authenticated' } },
+        { status: 401 },
+      )
+    }
+
+    // Check user is a member of this plexus
+    const member = await db.plexusMember.findUnique({
+      where: {
+        userId_plexusId: {
+          userId: session.user.id,
+          plexusId,
+        },
+      },
+    })
+
+    if (!member) {
+      return NextResponse.json(
+        { error: { code: 'NOT_PLEXUS_MEMBER', message: 'Not a member of this plexus' } },
+        { status: 403 },
+      )
+    }
+
+    // Fetch all repositories for this plexus
+    const repos = await db.repo.findMany({
+      where: { plexusId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return NextResponse.json(repos)
+  } catch (error) {
+    console.error('Error fetching repositories:', error)
+    return NextResponse.json(
+      { error: { code: 'UNKNOWN_ERROR', message: 'Internal server error' } },
+      { status: 500 },
+    )
+  }
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: plexusId } = await params
