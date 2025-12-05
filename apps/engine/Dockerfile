@@ -43,14 +43,11 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy built artifacts and node_modules
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/engine/dist ./apps/engine/dist
-COPY --from=base /app/apps/engine/package.json ./apps/engine/
-COPY --from=base /app/packages ./packages
-COPY --from=base /app/package.json ./
-COPY --from=base /app/pnpm-workspace.yaml ./
+# Copy everything from base (including node_modules with proper symlinks)
+COPY --from=base /app ./
 
 ENV NODE_ENV=production
 
-CMD ["node", "apps/engine/dist/index.js"]
+WORKDIR /app/apps/engine
+
+CMD ["node", "dist/index.js"]
