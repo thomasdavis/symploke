@@ -1,12 +1,23 @@
 import http from 'node:http'
 
+// Catch any uncaught errors at the top level
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error)
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason)
+})
+
 // Start health check server FIRST before any imports that might fail
 // This ensures Railway health checks pass while we debug config issues
 const PORT = process.env.PORT || 3001
 let isHealthy = true
 let healthError: string | null = null
 
+console.log('Starting engine, PORT:', PORT)
+
 const healthServer = http.createServer((req, res) => {
+  console.log('Health check request:', req.url)
   if (req.url === '/health' || req.url === '/') {
     if (isHealthy) {
       res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -23,7 +34,7 @@ const healthServer = http.createServer((req, res) => {
 
 // Start listening immediately
 healthServer.listen(PORT, () => {
-  console.log(`Health check server running on port ${PORT}`)
+  console.log(`Health check server listening on port ${PORT}`)
 })
 
 async function main() {
@@ -52,17 +63,6 @@ async function main() {
 
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
-
-  // Handle uncaught errors
-  process.on('uncaughtException', (error) => {
-    logger.error({ error }, 'Uncaught exception')
-    process.exit(1)
-  })
-
-  process.on('unhandledRejection', (reason) => {
-    logger.error({ reason }, 'Unhandled promise rejection')
-    process.exit(1)
-  })
 
   await processor.start()
   logger.info('Engine running, processing sync jobs...')
