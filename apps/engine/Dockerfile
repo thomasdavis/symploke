@@ -17,6 +17,9 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/logger/package.json ./packages/logger/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
+# Copy Prisma schema before install (needed for postinstall script)
+COPY packages/db/prisma ./packages/db/prisma
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
