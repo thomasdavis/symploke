@@ -1,4 +1,4 @@
-FROM node:20-slim AS base
+FROM node:20-slim
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.14.2 --activate
@@ -32,19 +32,10 @@ COPY apps/engine ./apps/engine
 # Generate Prisma client
 RUN pnpm --filter @symploke/db db:generate
 
-# Build the engine
+# Build the packages and engine
+RUN pnpm --filter @symploke/logger build
+RUN pnpm --filter @symploke/db build
 RUN pnpm --filter @symploke/engine build
-
-# Production stage
-FROM node:20-slim AS production
-
-RUN corepack enable && corepack prepare pnpm@9.14.2 --activate
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy everything from base (including node_modules with proper symlinks)
-COPY --from=base /app ./
 
 ENV NODE_ENV=production
 
