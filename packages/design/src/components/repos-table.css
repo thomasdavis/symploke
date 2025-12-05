@@ -46,3 +46,103 @@
   color: var(--color-fg-muted);
   white-space: nowrap;
 }
+
+/* Sync column */
+.repos-table__sync-column {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.repos-table__sync-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  text-decoration: none;
+}
+
+.repos-table__sync-button:hover:not(:disabled) {
+  color: var(--color-fg);
+  border-color: var(--color-fg-muted);
+  background: var(--color-bg-subtle);
+}
+
+.repos-table__sync-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.repos-table__sync-button--retry {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.repos-table__sync-button--retry:hover {
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+/* Link version of sync button */
+a.repos-table__sync-button--retry:hover {
+  color: var(--color-danger);
+}
+
+/* Sync status */
+.repos-table__sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.repos-table__sync-status--link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.repos-table__sync-status--link:hover {
+  opacity: 0.8;
+}
+
+.repos-table__sync-status--success {
+  color: var(--color-success);
+}
+
+.repos-table__sync-status--error {
+  color: var(--color-danger);
+}
+
+/* Sync progress */
+.repos-table__sync-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+}
+
+.repos-table__sync-bar {
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.repos-table__sync-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-out);
+}
+
+.repos-table__sync-text {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  text-align: right;
+}

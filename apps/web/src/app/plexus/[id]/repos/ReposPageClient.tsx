@@ -6,7 +6,8 @@ import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { ReposTable } from '@symploke/ui/ReposTable/ReposTable'
 import { AddRepoDialog } from '@symploke/ui/AddRepoDialog/AddRepoDialog'
-import type { Repo } from '@symploke/ui/ReposTable/ReposTable'
+import { useSyncProgress } from '@/hooks/useSyncProgress'
+import type { Repo, SyncStatus } from '@symploke/ui/ReposTable/ReposTable'
 
 export type ReposPageClientProps = {
   plexusId: string
@@ -15,6 +16,7 @@ export type ReposPageClientProps = {
 
 export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClientProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { getSyncStatus, isSyncing } = useSyncProgress(plexusId)
 
   // Use React Query with server data as initial data
   const { data: repos } = useQuery({
@@ -28,6 +30,23 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
     staleTime: 0, // Always refetch on invalidation
   })
 
+  const getStatus = (repoId: string): SyncStatus | undefined => {
+    const status = getSyncStatus(repoId)
+    if (!status) return undefined
+    return {
+      status: status.status,
+      processedFiles: status.processedFiles,
+      totalFiles: status.totalFiles,
+      currentFile: status.currentFile,
+      error: status.error,
+    }
+  }
+
+  // Generate href for repo detail page
+  const getRepoHref = (repoId: string): string => {
+    return `/plexus/${plexusId}/repos/${repoId}`
+  }
+
   return (
     <>
       <PageHeader
@@ -38,7 +57,12 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
           </Button>
         }
       />
-      <ReposTable repos={repos} />
+      <ReposTable
+        repos={repos}
+        getSyncStatus={getStatus}
+        isSyncing={isSyncing}
+        getRepoHref={getRepoHref}
+      />
       <AddRepoDialog plexusId={plexusId} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </>
   )

@@ -103,38 +103,118 @@ model PlexusMember {
 // === Repositories ===
 
 model Repo {
-  id          String    @id @default(cuid())
-  plexusId    String
-  name        String
-  fullName    String
-  url         String
-  lastIndexed DateTime?
-  createdAt   DateTime  @default(now())
+  id             String    @id @default(cuid())
+  plexusId       String
+  name           String
+  fullName       String
+  url            String
+  defaultBranch  String    @default("main")
+  lastIndexed    DateTime?
+  lastCommitSha  String?   // SHA of last processed commit (for delta sync)
+  createdAt      DateTime  @default(now())
 
-  plexus       Plexus  @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  plexus       Plexus        @relation(fields: [plexusId], references: [id], onDelete: Cascade)
   files        File[]
-  sourceWeaves Weave[] @relation("SourceRepo")
-  targetWeaves Weave[] @relation("TargetRepo")
+  syncJobs     RepoSyncJob[]
+  sourceWeaves Weave[]       @relation("SourceRepo")
+  targetWeaves Weave[]       @relation("TargetRepo")
 
   @@unique([plexusId, fullName])
   @@map("repos")
 }
 
 model File {
-  id        String   @id @default(cuid())
-  repoId    String
-  path      String
-  content   String   // full file content
-  sha       String   // git blob sha
-  language  String?  // detected language
-  loc       Int?     // lines of code
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  repoId        String
+  path          String
+  content       String?  // file content (nullable for binary/large files)
+  sha           String   // git blob sha
+  size          Int      // file size in bytes
+  encoding      String?  // utf-8, binary, etc.
+  skippedReason String?  // why content was skipped (too_large, binary, etc.)
+  language      String?  // detected language
+  loc           Int?     // lines of code
+  updatedAt     DateTime @updatedAt
 
   repo   Repo    @relation(fields: [repoId], references: [id], onDelete: Cascade)
   chunks Chunk[]
 
   @@unique([repoId, path])
   @@map("files")
+}
+
+// === Sync Jobs ===
+
+model RepoSyncJob {
+  id             String        @id @default(cuid())
+  repoId         String
+  status         SyncJobStatus @default(PENDING)
+  totalFiles     Int?          // Set after tree fetch
+  processedFiles Int           @default(0)
+  skippedFiles   Int           @default(0)
+  failedFiles    Int           @default(0)
+  error          String?       // Error message if failed
+  config         Json?         // Config options (maxFiles, skipContent, etc.)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+
+  repo     Repo          @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  fileJobs FileSyncJob[]
+
+  @@index([status, createdAt])
+  @@index([repoId, createdAt])
+  @@map("repo_sync_jobs")
+}
+
+enum SyncJobStatus {
+  PENDING
+  FETCHING_TREE
+  PROCESSING_FILES
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model FileSyncJob {
+  id          String        @id @default(cuid())
+  syncJobId   String
+  repoId      String
+  path        String
+  sha         String        // Git blob SHA
+  size        Int           // File size in bytes
+  status      FileJobStatus @default(PENDING)
+  skipReason  String?       // Why content was skipped (binary, too_large, etc.)
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  syncJob RepoSyncJob @relation(fields: [syncJobId], references: [id], onDelete: Cascade)
+
+  @@index([syncJobId, status])
+  @@index([repoId, path])
+  @@map("file_sync_jobs")
+}
+
+enum FileJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  SKIPPED
+  FAILED
+}
+
+// === GitHub Rate Limiting ===
+
+model GitHubRateLimit {
+  id             String   @id @default(cuid())
+  installationId Int      @unique
+  remaining      Int
+  limit          Int
+  resetAt        DateTime
+  updatedAt      DateTime @updatedAt
+
+  @@map("github_rate_limits")
 }
 
 // === Embeddings ===

@@ -1,0 +1,32 @@
+{
+  "name": "@symploke/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "sync": "tsx src/cli/index.ts sync",
+    "status": "tsx src/cli/index.ts status",
+    "jobs": "tsx src/cli/index.ts jobs",
+    "reset": "tsx src/cli/index.ts reset",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@octokit/app": "^16.1.2",
+    "@octokit/rest": "^22.0.1",
+    "@symploke/db": "workspace:*",
+    "@symploke/logger": "workspace:*",
+    "commander": "^12.0.0",
+    "dotenv": "^16.0.0",
+    "pusher": "^5.2.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

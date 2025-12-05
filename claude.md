@@ -4,6 +4,36 @@ In the UX we are going to brand our terminology to Symploke, like Plexus (team),
 
 NEVER TAKE SHORTCUTS, JUST STOP WORKING IF YOU CAN'T FIGURE IT OUT, WRITE A MARKDOWN FILE WE CAN PASS CHATGPT ETC
 
+# File Sync Engine (apps/engine)
+
+The engine syncs GitHub repository files to the database. It runs as a separate service.
+
+## CLI Commands
+
+Run from `apps/engine` with the web app's .env file:
+
+```bash
+# Copy env and run commands
+cd apps/engine
+cp ../web/.env .env
+
+# Reset stuck sync jobs (PENDING, FETCHING_TREE, PROCESSING_FILES)
+npx tsx src/cli/index.ts reset --all           # Reset all stuck jobs
+npx tsx src/cli/index.ts reset --repo-id <id>  # Reset jobs for specific repo
+npx tsx src/cli/index.ts reset --job-id <id>   # Reset specific job
+
+# Trigger a sync
+npx tsx src/cli/index.ts sync --repo-id <id>
+npx tsx src/cli/index.ts sync --repo-id <id> --immediate  # Process now instead of queuing
+
+# Check status
+npx tsx src/cli/index.ts status --job-id <id>
+npx tsx src/cli/index.ts jobs --status PENDING
+
+# List repos
+npx tsx src/cli/index.ts repos
+```
+
 # Base UI - Look up these files when working on components
 
 This is the documentation for the `@base-ui-components/react` package.
