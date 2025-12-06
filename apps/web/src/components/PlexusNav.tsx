@@ -128,6 +128,27 @@ const navItems = [
     ),
   },
   {
+    href: '/logs',
+    label: 'Logs',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Logs</title>
+        <path
+          d="M4 5H16M4 8H12M4 11H14M4 14H10"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: '/members',
     label: 'Members',
     icon: (

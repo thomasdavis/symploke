@@ -24,6 +24,26 @@ export async function syncFile(
 ): Promise<FileSyncResult> {
   const { owner, repo } = parseRepoFullName(repoFullName)
 
+  // Check if file already exists with same SHA (no need to fetch again)
+  const existingFile = await db.file.findUnique({
+    where: {
+      repoId_path: {
+        repoId: job.repoId,
+        path: job.path,
+      },
+    },
+    select: { sha: true },
+  })
+
+  if (existingFile?.sha === job.sha) {
+    logger.debug({ path: job.path, sha: job.sha }, 'File unchanged, skipping fetch')
+    return {
+      success: true,
+      skipped: true,
+      skipReason: 'unchanged',
+    }
+  }
+
   // Check if content should be skipped
   const fileCheck = checkFile(job.path, job.size)
   const shouldSkipContent = skipContentOverride || fileCheck.shouldSkipContent

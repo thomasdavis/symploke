@@ -76,7 +76,7 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
       content: { not: null },
       skippedReason: null,
     },
-    select: { id: true, path: true, content: true },
+    select: { id: true, path: true, content: true, sha: true, lastChunkedSha: true },
   })
 
   logger.info({ jobId: job.id, fileCount: files.length }, 'Found files with content')
@@ -94,18 +94,27 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
   let processedFiles = 0
   let chunksCreated = 0
   let failedFiles = 0
+  let skippedFiles = 0
 
   // Phase 1: Create chunks for all files
   for (const file of files) {
     try {
-      // Delete existing chunks for this file
-      await db.chunk.deleteMany({ where: { fileId: file.id } })
-
       // Skip empty files
       if (!file.content) {
         processedFiles++
         continue
       }
+
+      // Skip files that haven't changed since last chunking
+      if (file.lastChunkedSha && file.lastChunkedSha === file.sha) {
+        logger.debug({ path: file.path, sha: file.sha }, 'File unchanged, skipping re-chunking')
+        skippedFiles++
+        processedFiles++
+        continue
+      }
+
+      // Delete existing chunks for this file (only if we're re-chunking)
+      await db.chunk.deleteMany({ where: { fileId: file.id } })
 
       // Create new chunks
       const chunks = chunkContent(file.content, config)
@@ -127,6 +136,12 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
         `
         chunksCreated++
       }
+
+      // Update lastChunkedSha to mark this file as chunked with this SHA
+      await db.file.update({
+        where: { id: file.id },
+        data: { lastChunkedSha: file.sha },
+      })
 
       processedFiles++
 
@@ -153,7 +168,7 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
   }
 
   logger.info(
-    { jobId: job.id, chunksCreated, processedFiles, failedFiles },
+    { jobId: job.id, chunksCreated, processedFiles, failedFiles, skippedFiles },
     'Chunking phase complete',
   )
 

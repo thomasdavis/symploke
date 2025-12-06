@@ -71,8 +71,8 @@ function WeaveDetail({ weave, onClose }: { weave: Weave; onClose: () => void }) 
     <div className="weave-detail">
       <div className="weave-detail__header">
         <h2>{weave.title}</h2>
-        <button className="weave-detail__close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <button type="button" className="weave-detail__close" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path
               d="M4 4L12 12M12 4L4 12"
               stroke="currentColor"
@@ -94,8 +94,8 @@ function WeaveDetail({ weave, onClose }: { weave: Weave; onClose: () => void }) 
             <span className="weave-detail__label">Source</span>
             <span className="weave-detail__value">{weave.sourceRepo.fullName}</span>
           </div>
-          <div className="weave-detail__arrow">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <div className="weave-detail__arrow" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path
                 d="M4 10H16M16 10L11 5M16 10L11 15"
                 stroke="currentColor"
@@ -141,7 +141,7 @@ function WeaveDetail({ weave, onClose }: { weave: Weave; onClose: () => void }) 
 }
 
 export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientProps) {
-  const [selectedRunId, setSelectedRunId] = useState<string>('latest')
+  const [selectedRunId, setSelectedRunId] = useState<string>('all')
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
 
   const filteredWeaves = useMemo(() => {
@@ -204,16 +204,18 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
           >
             <Select.Trigger className="run-selector-trigger">
               <Select.Value>
-                {selectedRunId === 'latest'
-                  ? `Latest${selectedRun ? ` (${formatRunDate(selectedRun.startedAt)})` : ''}`
-                  : selectedRunId === 'all'
-                    ? 'All runs'
+                {selectedRunId === 'all'
+                  ? `All runs (${weaves.length} weaves)`
+                  : selectedRunId === 'latest'
+                    ? selectedRun
+                      ? `Latest: ${formatRunDate(selectedRun.startedAt)} (${filteredWeaves.length} weaves)`
+                      : 'Latest run'
                     : selectedRun
                       ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
                       : 'Select run'}
               </Select.Value>
-              <Select.Icon>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <Select.Icon aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                   <path
                     d="M3 4.5L6 7.5L9 4.5"
                     stroke="currentColor"
@@ -228,10 +230,16 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
               <Select.Positioner>
                 <Select.Popup>
                   <Select.List>
-                    <Select.Item value="latest">
-                      <Select.ItemText>Latest run</Select.ItemText>
-                      <Select.ItemIndicator>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <Select.Item value="all">
+                      <Select.ItemText>All runs ({weaves.length} weaves)</Select.ItemText>
+                      <Select.ItemIndicator aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
                           <path
                             d="M2.5 6L5 8.5L9.5 3.5"
                             stroke="currentColor"
@@ -242,10 +250,19 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
                         </svg>
                       </Select.ItemIndicator>
                     </Select.Item>
-                    <Select.Item value="all">
-                      <Select.ItemText>All runs</Select.ItemText>
-                      <Select.ItemIndicator>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <Select.Item value="latest">
+                      <Select.ItemText>
+                        Latest run
+                        {discoveryRuns[0] ? ` (${discoveryRuns[0].weavesSaved} weaves)` : ''}
+                      </Select.ItemText>
+                      <Select.ItemIndicator aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
                           <path
                             d="M2.5 6L5 8.5L9.5 3.5"
                             stroke="currentColor"
@@ -262,8 +279,14 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
                         <Select.ItemText>
                           {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
                         </Select.ItemText>
-                        <Select.ItemIndicator>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <Select.ItemIndicator aria-hidden="true">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            aria-hidden="true"
+                          >
                             <path
                               d="M2.5 6L5 8.5L9.5 3.5"
                               stroke="currentColor"

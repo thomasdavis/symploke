@@ -136,6 +136,7 @@ model File {
   skippedReason String?  // why content was skipped (too_large, binary, etc.)
   language      String?  // detected language
   loc           Int?     // lines of code
+  lastChunkedSha String? // SHA when chunks were last created (skip re-chunking if unchanged)
   updatedAt     DateTime @updatedAt
 
   repo   Repo    @relation(fields: [repoId], references: [id], onDelete: Cascade)
