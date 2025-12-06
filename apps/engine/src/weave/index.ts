@@ -1,3 +1,7 @@
 export * from './finder.js'
+export * from './finder-v2.js'
 export * from './similarity.js'
 export * from './types/index.js'
+export * from './ontology.js'
+export * from './profiler.js'
+export * from './matcher.js'

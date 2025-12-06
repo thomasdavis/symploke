@@ -23,6 +23,9 @@ importers:
 
   apps/engine:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: ^2.0.77
+        version: 2.0.77(zod@3.25.76)
       '@octokit/app':
         specifier: ^16.1.2
         version: 16.1.2
@@ -38,6 +41,9 @@ importers:
       '@symploke/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      ai:
+        specifier: ^5.0.108
+        version: 5.0.108(zod@3.25.76)
       commander:
         specifier: ^12.0.0
         version: 12.1.0

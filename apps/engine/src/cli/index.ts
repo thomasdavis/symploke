@@ -12,6 +12,7 @@ import {
   listChunkJobs,
 } from '../queue/processor.js'
 import { findWeaves, listWeaves, listDiscoveryRuns, getDiscoveryRun } from '../weave/finder.js'
+import { findWeavesV2, profileRepository } from '../weave/finder-v2.js'
 import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
 import { getPusherService } from '../pusher/service.js'
@@ -617,6 +618,131 @@ program
       }
 
       console.log(`\nView detailed logs: pnpm engine discovery-run --run-id ${result.runId}`)
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
+// Find weaves v2 command - ontology-first approach
+program
+  .command('find-weaves-v2')
+  .description('Discover integration opportunities using ontology-first approach (v2)')
+  .requiredOption('--plexus-id <id>', 'Plexus ID to analyze')
+  .option('--min-confidence <n>', 'Minimum confidence threshold (0.0-1.0)', parseFloat, 0.6)
+  .option('--max-candidates <n>', 'Maximum candidates to assess', parseInt, 20)
+  .option('--dry-run', 'Find weaves but do not save to database')
+  .option('--verbose', 'Enable verbose debug logging')
+  .action(async (options) => {
+    try {
+      // Verify plexus exists
+      const plexus = await db.plexus.findUnique({
+        where: { id: options.plexusId },
+        select: { id: true, name: true, slug: true },
+      })
+
+      if (!plexus) {
+        console.error(`Plexus not found: ${options.plexusId}`)
+        process.exit(1)
+      }
+
+      console.log(`\nFinding weaves in plexus: ${plexus.name} (${plexus.slug})`)
+      console.log(`  Algorithm: Ontology-First (v2)`)
+      console.log(`  Min confidence: ${options.minConfidence}`)
+      console.log(`  Max candidates: ${options.maxCandidates}`)
+      console.log(`  Dry run: ${options.dryRun ? 'yes' : 'no'}`)
+      console.log(`  Verbose: ${options.verbose ? 'yes' : 'no'}`)
+      console.log('')
+
+      const result = await findWeavesV2(options.plexusId, {
+        minConfidence: options.minConfidence,
+        maxCandidates: options.maxCandidates,
+        dryRun: options.dryRun,
+        verbose: options.verbose,
+      })
+
+      console.log('\nWeave Discovery V2 Results:')
+      console.log('===========================')
+      console.log(`Run ID:           ${result.runId}`)
+      console.log(`Profiles created: ${result.profiles.length}`)
+      console.log(`Candidates found: ${result.candidatesFound}`)
+      console.log(`Weaves created:   ${result.weavesCreated}`)
+      console.log(`Duration:         ${(result.duration / 1000).toFixed(1)}s`)
+
+      if (result.profiles.length > 0) {
+        console.log('\nRepository Profiles:')
+        for (const profile of result.profiles) {
+          console.log(`\n  ${profile.fullName}`)
+          console.log(`    Purpose: ${profile.purpose}`)
+          console.log(`    Capabilities: ${profile.capabilities.join(', ') || 'none'}`)
+          console.log(`    Produces: ${profile.artifacts.produces.join(', ') || 'none'}`)
+          console.log(`    Roles: ${profile.roles.join(', ') || 'none'}`)
+          console.log(`    Confidence: ${(profile.confidence * 100).toFixed(0)}%`)
+        }
+      }
+
+      if (result.weaves.length > 0) {
+        console.log('\nDiscovered Weaves:')
+        for (const weave of result.weaves) {
+          console.log(`\n  [${(weave.confidence * 100).toFixed(0)}%] ${weave.title}`)
+          console.log(`    ${weave.sourceRepo} <-> ${weave.targetRepo}`)
+          console.log(
+            `    ${weave.description.slice(0, 120)}${weave.description.length > 120 ? '...' : ''}`,
+          )
+        }
+      }
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
+// Profile repo command - profile a single repository
+program
+  .command('profile-repo')
+  .description('Generate ontology profile for a single repository')
+  .requiredOption('--repo-id <id>', 'Repository ID to profile')
+  .action(async (options) => {
+    try {
+      const repo = await db.repo.findUnique({
+        where: { id: options.repoId },
+        select: { id: true, name: true, fullName: true },
+      })
+
+      if (!repo) {
+        console.error(`Repository not found: ${options.repoId}`)
+        process.exit(1)
+      }
+
+      console.log(`\nProfiling repository: ${repo.fullName}`)
+
+      const profile = await profileRepository(options.repoId)
+
+      if (!profile) {
+        console.error('Failed to profile repository')
+        process.exit(1)
+      }
+
+      console.log('\nRepository Profile:')
+      console.log('===================')
+      console.log(`Name:        ${profile.fullName}`)
+      console.log(`Purpose:     ${profile.purpose}`)
+      console.log(``)
+      console.log(`Capabilities: ${profile.capabilities.join(', ') || 'none'}`)
+      console.log(`Produces:     ${profile.artifacts.produces.join(', ') || 'none'}`)
+      console.log(`Consumes:     ${profile.artifacts.consumes.join(', ') || 'none'}`)
+      console.log(`Domains:      ${profile.domains.join(', ') || 'none'}`)
+      console.log(`Roles:        ${profile.roles.join(', ') || 'none'}`)
+      console.log(``)
+      console.log(`Keywords:     ${profile.keywords.join(', ') || 'none'}`)
+      console.log(`Target users: ${profile.targetUsers.join(', ') || 'none'}`)
+      console.log(``)
+      console.log(`Problems solved:`)
+      for (const problem of profile.problemsSolved) {
+        console.log(`  - ${problem}`)
+      }
+      console.log(``)
+      console.log(`Confidence:  ${(profile.confidence * 100).toFixed(0)}%`)
     } catch (error: unknown) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
       process.exit(1)
