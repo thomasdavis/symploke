@@ -20,6 +20,7 @@ import {
   type EdgeProps,
 } from '@xyflow/react'
 import type { WeaveType } from '@symploke/db'
+import { getElkLayout } from '@/hooks/useElkLayout'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
 
@@ -330,26 +331,64 @@ export type RepoFlowGraphProps = {
 
 function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   const { fitView } = useReactFlow()
+  const [isLayouting, setIsLayouting] = useState(true)
 
-  const calculatedNodes = useMemo(() => calculateNodePositions(repos), [repos])
-  const calculatedEdges = useMemo(
-    () => createEdgesFromWeaves(weaves, calculatedNodes),
-    [weaves, calculatedNodes],
-  )
+  // Create initial nodes with temporary positions (ELK will reposition them)
+  const initialNodes = useMemo(() => calculateNodePositions(repos), [repos])
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(calculatedNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(calculatedEdges)
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<WeaveEdgeData>>([])
 
-  // Update nodes and edges when data changes (e.g., when discovery run filter changes)
+  // Run ELK layout when repos or weaves change
   useEffect(() => {
-    setNodes(calculatedNodes)
-    setEdges(calculatedEdges)
-    // Fit view after a small delay to let the nodes render
-    const timer = setTimeout(() => {
-      fitView({ padding: 0.2, duration: 300 })
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [calculatedNodes, calculatedEdges, setNodes, setEdges, fitView])
+    async function runLayout() {
+      setIsLayouting(true)
+
+      try {
+        // Start with initial grid positions
+        const nodesToLayout = calculateNodePositions(repos)
+
+        // Create edges for layout calculation
+        const initialEdges = weaves.map((weave) => ({
+          id: `weave-${weave.id}`,
+          source: weave.sourceRepoId,
+          target: weave.targetRepoId,
+          type: 'weave',
+          data: { weave },
+        }))
+
+        // Run ELK layout to get optimized positions
+        const layoutedNodes = await getElkLayout(nodesToLayout, initialEdges, {
+          direction: 'RIGHT',
+          algorithm: 'layered',
+          nodeSpacing: 80,
+          layerSpacing: 150,
+        })
+
+        // Update edges with proper handles based on new positions
+        const layoutedEdges = createEdgesFromWeaves(weaves, layoutedNodes)
+
+        setNodes(layoutedNodes)
+        setEdges(layoutedEdges)
+
+        // Fit view after layout
+        setTimeout(() => {
+          fitView({ padding: 0.2, duration: 300 })
+        }, 50)
+      } catch (error) {
+        console.error('Layout error:', error)
+        // Fallback to grid layout
+        const fallbackNodes = calculateNodePositions(repos)
+        const fallbackEdges = createEdgesFromWeaves(weaves, fallbackNodes)
+        setNodes(fallbackNodes)
+        setEdges(fallbackEdges)
+      } finally {
+        setIsLayouting(false)
+      }
+    }
+
+    runLayout()
+  }, [repos, weaves, setNodes, setEdges, fitView])
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -359,34 +398,43 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   )
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeClick={onNodeClick}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      minZoom={0.1}
-      maxZoom={2}
-      defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      proOptions={{ hideAttribution: true }}
-    >
-      <Background color="var(--color-border-subtle)" gap={20} size={1} />
-      <Controls className="repo-flow-controls" showInteractive={false} />
-      <MiniMap
-        className="repo-flow-minimap"
-        nodeColor={(node) => {
-          const data = node.data as RepoNodeData
-          return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-        }}
-        maskColor="rgba(0, 0, 0, 0.1)"
-        zoomable
-        pannable
-      />
-    </ReactFlow>
+    <>
+      {isLayouting && (
+        <div className="repo-flow-loading">
+          <div className="repo-flow-loading__spinner" />
+          <span>Computing layout...</span>
+        </div>
+      )}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.1}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        proOptions={{ hideAttribution: true }}
+        style={{ opacity: isLayouting ? 0.5 : 1, transition: 'opacity 0.2s' }}
+      >
+        <Background color="var(--color-border-subtle)" gap={20} size={1} />
+        <Controls className="repo-flow-controls" showInteractive={false} />
+        <MiniMap
+          className="repo-flow-minimap"
+          nodeColor={(node) => {
+            const data = node.data as RepoNodeData
+            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+          }}
+          maskColor="rgba(0, 0, 0, 0.1)"
+          zoomable
+          pannable
+        />
+      </ReactFlow>
+    </>
   )
 }
 

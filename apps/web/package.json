@@ -43,6 +43,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "elkjs": "^0.11.0",
     "prisma": "^6.19.0",
     "typescript": "latest"
   }
