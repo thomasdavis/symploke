@@ -16,7 +16,7 @@ importers:
         version: 2.29.8(@types/node@24.10.1)
       lefthook:
         specifier: latest
-        version: 2.0.7
+        version: 2.0.8
       turbo:
         specifier: latest
         version: 2.6.3
@@ -105,6 +105,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: latest
         version: 5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)
+      '@xyflow/react':
+        specifier: ^12.10.0
+        version: 12.10.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       next:
         specifier: latest
         version: 16.0.7(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -162,7 +165,7 @@ importers:
         version: 2.0.77(zod@4.1.13)
       ai:
         specifier: latest
-        version: 5.0.106(zod@4.1.13)
+        version: 5.0.107(zod@4.1.13)
     devDependencies:
       '@symploke/test':
         specifier: workspace:*
@@ -1754,6 +1757,24 @@ packages:
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
 
+  '@types/d3-color@3.1.3':
+    resolution: {integrity: sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A==}
+
+  '@types/d3-drag@3.0.7':
+    resolution: {integrity: sha512-HE3jVKlzU9AaMazNufooRJ5ZpWmLIoc90A37WU2JMmeq28w1FQqCZswHZ3xR+SuxYftzHq6WU6KJHvqxKzTxxQ==}
+
+  '@types/d3-interpolate@3.0.4':
+    resolution: {integrity: sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA==}
+
+  '@types/d3-selection@3.0.11':
+    resolution: {integrity: sha512-bhAXu23DJWsrI45xafYpkQ4NtcKMwWnAC/vKrd2l+nxMFuvOT3XMYTIj2opv8vq8AO5Yh7Qac/nSeP/3zjTK0w==}
+
+  '@types/d3-transition@3.0.9':
+    resolution: {integrity: sha512-uZS5shfxzO3rGlu0cC3bjmMFKsXv+SmZZcgp0KD22ts4uGXp5EVYGzu/0YdwZeKmddhcAccYtREJKkPfXkZuCg==}
+
+  '@types/d3-zoom@3.0.8':
+    resolution: {integrity: sha512-iqMC4/YlFCSlO8+2Ii1GGGliCAY4XdeG748w5vQUbevlbDu0zSjH/+jojorQVBK/se0j6DUFNPBGSqD3YWYnDw==}
+
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -1912,6 +1933,15 @@ packages:
   '@vitest/utils@4.0.15':
     resolution: {integrity: sha512-HXjPW2w5dxhTD0dLwtYHDnelK3j8sR8cWIaLxr22evTyY6q8pRCjZSmhRWVjBaOVXChQd6AwMzi9pucorXCPZA==}
 
+  '@xyflow/react@12.10.0':
+    resolution: {integrity: sha512-eOtz3whDMWrB4KWVatIBrKuxECHqip6PfA8fTpaS2RUGVpiEAe+nqDKsLqkViVWxDGreq0lWX71Xth/SPAzXiw==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+
+  '@xyflow/system@0.0.74':
+    resolution: {integrity: sha512-7v7B/PkiVrkdZzSbL+inGAo6tkR/WQHHG0/jhSvLQToCsfa8YubOGmBYd1s08tpKpihdHDZFwzQZeR69QSBb4Q==}
+
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -1930,8 +1960,8 @@ packages:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
 
-  ai@5.0.106:
-    resolution: {integrity: sha512-M5obwavxSJJ3tGlAFqI6eltYNJB0D20X6gIBCFx/KVorb/X1fxVVfiZZpZb+Gslu4340droSOjT0aKQFCarNVg==}
+  ai@5.0.107:
+    resolution: {integrity: sha512-laZlS9ZC/DZfSaxPgrBqI4mM+kxRvTPBBQfa74ceBFskkunZKEsaGVFNEs4cfyGa3nCCCl1WO/fjxixp4V8Zag==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -2076,6 +2106,9 @@ packages:
   citty@0.1.6:
     resolution: {integrity: sha512-tskPPKEs8D2KPafUypv2gxwJP8h/OaJmC82QQGGDQcHvXX43xF2VDACcJVmZ0EuSxkpO9Kc4MlrA3q0+FG58AQ==}
 
+  classcat@5.0.5:
+    resolution: {integrity: sha512-JhZUT7JFcQy/EzW605k/ktHtncoo9vnyW/2GspNYwFlN1C/WmjuV/xtS04e9SOkL2sTdw0VAZ2UGCcQ9lR6p6w==}
+
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
 
@@ -2128,6 +2161,44 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  d3-color@3.1.0:
+    resolution: {integrity: sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA==}
+    engines: {node: '>=12'}
+
+  d3-dispatch@3.0.1:
+    resolution: {integrity: sha512-rzUyPU/S7rwUflMyLc1ETDeBj0NRuHKKAcvukozwhshr6g6c5d8zh4c2gQjY2bZ0dXeGLWc1PF174P2tVvKhfg==}
+    engines: {node: '>=12'}
+
+  d3-drag@3.0.0:
+    resolution: {integrity: sha512-pWbUJLdETVA8lQNJecMxoXfH6x+mO2UQo8rSmZ+QqxcbyA3hfeprFgIT//HW2nlHChWeIIMwS2Fq+gEARkhTkg==}
+    engines: {node: '>=12'}
+
+  d3-ease@3.0.1:
+    resolution: {integrity: sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w==}
+    engines: {node: '>=12'}
+
+  d3-interpolate@3.0.1:
+    resolution: {integrity: sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g==}
+    engines: {node: '>=12'}
+
+  d3-selection@3.0.0:
+    resolution: {integrity: sha512-fmTRWbNMmsmWq6xJV8D19U/gw/bwrHfNXxrIN+HfZgnzqTHp9jOmKMhsTUjXOJnZOdZY9Q28y4yebKzqDKlxlQ==}
+    engines: {node: '>=12'}
+
+  d3-timer@3.0.1:
+    resolution: {integrity: sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==}
+    engines: {node: '>=12'}
+
+  d3-transition@3.0.1:
+    resolution: {integrity: sha512-ApKvfjsSR6tg06xrL434C0WydLr7JewBB3V+/39RMHsaXTOG0zmt/OAXeng5M5LBm0ojmxJrpomQVZ1aPvBL4w==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      d3-selection: 2 - 3
+
+  d3-zoom@3.0.0:
+    resolution: {integrity: sha512-b8AmV3kfQaqWAuacbPuNbL6vahnOJflOhexLzMMNLga62+/nh0JzvJ0aO/5a5MVgUFGS7Hu1P9P03o3fJkDCyw==}
+    engines: {node: '>=12'}
 
   data-urls@6.0.0:
     resolution: {integrity: sha512-BnBS08aLUM+DKamupXs3w2tJJoqU+AkaE/+6vQxi/G/DPmIZFJJp9Dkb1kM03AZx8ADehDUZgsNxju3mPXZYIA==}
@@ -2622,58 +2693,58 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  lefthook-darwin-arm64@2.0.7:
-    resolution: {integrity: sha512-C+LPGsbTobWElRlJy8IXS0bvjNuTAVGwtRD/Yx0Mki6+Qtn7cVWjzKemDzjK7/U1QTSF55YkWvY7JCsHvgtGww==}
+  lefthook-darwin-arm64@2.0.8:
+    resolution: {integrity: sha512-Nu52qmqhSP+DKKuKYKDkMkPbgvgTZv+ueEo1LVXidTcgxEwvrbe2balcdqdulQTsPfYtm3pCPvv8ikalHrH+Qg==}
     cpu: [arm64]
     os: [darwin]
 
-  lefthook-darwin-x64@2.0.7:
-    resolution: {integrity: sha512-20Pi/FBft99rhQ6NjsrBeeqLDLAl5jit1HgxIE+G4IhOjFVKyfcNd9vyxLFTNTnm9OBI2ibkb8Ze7RbpjrJn+Q==}
+  lefthook-darwin-x64@2.0.8:
+    resolution: {integrity: sha512-EGNBw1vuXzphs/KyDchkglwnYNkKQH3EpptIPXcQCRC3WKiz87PSrwkOxjGtgDg6nLYWru3YUzgcFrIGUXjWPw==}
     cpu: [x64]
     os: [darwin]
 
-  lefthook-freebsd-arm64@2.0.7:
-    resolution: {integrity: sha512-EFYlh4T/ljpa03L0BkIyZJl3VTDTOi7rmJN3V5liaMhhmnJdLWqqnjNp1+nREFkH3O2STAZ4vUqQTFchEe6UOg==}
+  lefthook-freebsd-arm64@2.0.8:
+    resolution: {integrity: sha512-ZPua6y7y7l/0PpMJhU1ZAt4jl0dC3F+EGlSzy9v0vqzyoixk0HRqsz9nxN7wmJo/5vHhHJBjsE5/sEYS9Z8tsQ==}
     cpu: [arm64]
     os: [freebsd]
 
-  lefthook-freebsd-x64@2.0.7:
-    resolution: {integrity: sha512-vB5+s5Hmd8kJX8BYhhw1T17l3+lFTfL8HDmDBSxMK6oU+Q6I4nLDYfVAhlhpEA2C6XV73mEx9M+WamhYS3tOOA==}
+  lefthook-freebsd-x64@2.0.8:
+    resolution: {integrity: sha512-ab9M5gCsMeYzOeBoHIOz+zyVSnEZowwV2jn3Am+x625ZNcqU0T3eNf+a7ppopvkQjrehfmO3y5HiMVAkSAs1Vw==}
     cpu: [x64]
     os: [freebsd]
 
-  lefthook-linux-arm64@2.0.7:
-    resolution: {integrity: sha512-y+n6wyrSIBdc9itApW79AlcsqffNphP4YCvG+0KaTdArLZGPb3Qu5I+5EnrZHf5lOSF6hSdjgG8XXI5NlFETMg==}
+  lefthook-linux-arm64@2.0.8:
+    resolution: {integrity: sha512-BaoUKmwnAbWssSwVHoA0HyJFX3m+Mp6xJhxD4YAu8H1mo8DNOWBG5J7DGXJRIiBTm6YjAXlerq8Pjfx4lycfYQ==}
     cpu: [arm64]
     os: [linux]
 
-  lefthook-linux-x64@2.0.7:
-    resolution: {integrity: sha512-KohT2UdBHa55NvQ2z6siodcrUOslxkShF+Xlan+wsfJHy3t4KZF7LZcm5u7WOBX0C7+qAXRcx864ul5JaX8biQ==}
+  lefthook-linux-x64@2.0.8:
+    resolution: {integrity: sha512-oNXcoGWsGy/U9gqE6PJpLtiNlGlAgoYtVmfc2gauNPRJehaQBaifD5/5aXPiWhRukUTQ1p9kuShFDpT2jOYn5Q==}
     cpu: [x64]
     os: [linux]
 
-  lefthook-openbsd-arm64@2.0.7:
-    resolution: {integrity: sha512-1GzXb8/zlYa7cTLvKTJE60+4IbPMthWMnrUR8coxE5QxjUVZXeWMueeJzQhH/is7aaH8J81EQkbkM9OQiT5JPA==}
+  lefthook-openbsd-arm64@2.0.8:
+    resolution: {integrity: sha512-pxUgnilqsnDEWF7J5uNViHJ+Q4gSEQbRbrcIEdluBzjW34E20WK4UPk0bxZDQZAeaXTubNQEvyafmfY7dWe4Gg==}
     cpu: [arm64]
     os: [openbsd]
 
-  lefthook-openbsd-x64@2.0.7:
-    resolution: {integrity: sha512-pYQnVikjpTgyJZBta1Lkxegh0Ls3L5us3MYgpNO7zlVScOmXUNYnagBBqKKXw2bD9rRqcb4BGvNgoWkXmmKMYg==}
+  lefthook-openbsd-x64@2.0.8:
+    resolution: {integrity: sha512-p50cpkWImLwU330JJuJaioNVT1X/Z56iqPOLEgBt2+1BlljmPe/eGrMArF4iIKfdZ4wFJ9f2h0gq+jyvQGFjSg==}
     cpu: [x64]
     os: [openbsd]
 
-  lefthook-windows-arm64@2.0.7:
-    resolution: {integrity: sha512-DrgC+NVv3JbAPzwPebT/NtwfXlHlAtF3ak9AwKSWXWEYGQ78Wzv7JKLl3aNXeFVbJX0AxGmb9qcmImux88poSQ==}
+  lefthook-windows-arm64@2.0.8:
+    resolution: {integrity: sha512-dStshOCvmg9sQSUmWNiLMLv52HFTVxC9JE2HGxCiHcK5oqVZS2v9cCZdFdiDZ1Xldi3ozLi2y7/Xpzul8Oqv5Q==}
     cpu: [arm64]
     os: [win32]
 
-  lefthook-windows-x64@2.0.7:
-    resolution: {integrity: sha512-y7vgTyTUgOnVuKMQVlNgY7Q/FaBqFwccRsQcGei9YfVR+2S/KF/pBMd6Tl2BnOA8mQDU4NjbR3M3z1tEE2Ex8Q==}
+  lefthook-windows-x64@2.0.8:
+    resolution: {integrity: sha512-2YgT6feliy6CCDwbkT3pg1ylKD1b9lj+O5NdLsrxvZGRmO6ftXleWB4xfWKGGY8FrzAD2Y3eEVDv5n3NvGHDzw==}
     cpu: [x64]
     os: [win32]
 
-  lefthook@2.0.7:
-    resolution: {integrity: sha512-B6ipwXZCDF5gD6QN2pdz9ImUB5ulNEBdO3jG8akKd0IO9QYiGgWu66sYcxEU1hci+vJCx2UWLQdLjzLNsfhqjA==}
+  lefthook@2.0.8:
+    resolution: {integrity: sha512-FozDCKeSI+m3BP0cvyPgHch+yf7ClS3hDy1JsRUrbNmlyjqBcmlygnRXsZzpH+wHoNnF2fmfhJhkx/7S7IpaVw==}
     hasBin: true
 
   levn@0.4.1:
@@ -3658,6 +3729,21 @@ packages:
 
   zod@4.1.13:
     resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
+
+  zustand@4.5.7:
+    resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      immer: '>=9.0.6'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
 
 snapshots:
 
@@ -4925,6 +5011,27 @@ snapshots:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
 
+  '@types/d3-color@3.1.3': {}
+
+  '@types/d3-drag@3.0.7':
+    dependencies:
+      '@types/d3-selection': 3.0.11
+
+  '@types/d3-interpolate@3.0.4':
+    dependencies:
+      '@types/d3-color': 3.1.3
+
+  '@types/d3-selection@3.0.11': {}
+
+  '@types/d3-transition@3.0.9':
+    dependencies:
+      '@types/d3-selection': 3.0.11
+
+  '@types/d3-zoom@3.0.8':
+    dependencies:
+      '@types/d3-interpolate': 3.0.4
+      '@types/d3-selection': 3.0.11
+
   '@types/deep-eql@4.0.2': {}
 
   '@types/doctrine@0.0.9': {}
@@ -5140,6 +5247,29 @@ snapshots:
       '@vitest/pretty-format': 4.0.15
       tinyrainbow: 3.0.3
 
+  '@xyflow/react@12.10.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+    dependencies:
+      '@xyflow/system': 0.0.74
+      classcat: 5.0.5
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      zustand: 4.5.7(@types/react@19.2.7)(react@19.2.1)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+
+  '@xyflow/system@0.0.74':
+    dependencies:
+      '@types/d3-drag': 3.0.7
+      '@types/d3-interpolate': 3.0.4
+      '@types/d3-selection': 3.0.11
+      '@types/d3-transition': 3.0.9
+      '@types/d3-zoom': 3.0.8
+      d3-drag: 3.0.0
+      d3-interpolate: 3.0.1
+      d3-selection: 3.0.0
+      d3-zoom: 3.0.0
+
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -5152,7 +5282,7 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai@5.0.106(zod@4.1.13):
+  ai@5.0.107(zod@4.1.13):
     dependencies:
       '@ai-sdk/gateway': 2.0.18(zod@4.1.13)
       '@ai-sdk/provider': 2.0.0
@@ -5293,6 +5423,8 @@ snapshots:
     dependencies:
       consola: 3.4.2
 
+  classcat@5.0.5: {}
+
   client-only@0.0.1: {}
 
   clsx@2.1.1: {}
@@ -5337,6 +5469,42 @@ snapshots:
       css-tree: 3.1.0
 
   csstype@3.2.3: {}
+
+  d3-color@3.1.0: {}
+
+  d3-dispatch@3.0.1: {}
+
+  d3-drag@3.0.0:
+    dependencies:
+      d3-dispatch: 3.0.1
+      d3-selection: 3.0.0
+
+  d3-ease@3.0.1: {}
+
+  d3-interpolate@3.0.1:
+    dependencies:
+      d3-color: 3.1.0
+
+  d3-selection@3.0.0: {}
+
+  d3-timer@3.0.1: {}
+
+  d3-transition@3.0.1(d3-selection@3.0.0):
+    dependencies:
+      d3-color: 3.1.0
+      d3-dispatch: 3.0.1
+      d3-ease: 3.0.1
+      d3-interpolate: 3.0.1
+      d3-selection: 3.0.0
+      d3-timer: 3.0.1
+
+  d3-zoom@3.0.0:
+    dependencies:
+      d3-dispatch: 3.0.1
+      d3-drag: 3.0.0
+      d3-interpolate: 3.0.1
+      d3-selection: 3.0.0
+      d3-transition: 3.0.1(d3-selection@3.0.0)
 
   data-urls@6.0.0:
     dependencies:
@@ -5874,48 +6042,48 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  lefthook-darwin-arm64@2.0.7:
+  lefthook-darwin-arm64@2.0.8:
     optional: true
 
-  lefthook-darwin-x64@2.0.7:
+  lefthook-darwin-x64@2.0.8:
     optional: true
 
-  lefthook-freebsd-arm64@2.0.7:
+  lefthook-freebsd-arm64@2.0.8:
     optional: true
 
-  lefthook-freebsd-x64@2.0.7:
+  lefthook-freebsd-x64@2.0.8:
     optional: true
 
-  lefthook-linux-arm64@2.0.7:
+  lefthook-linux-arm64@2.0.8:
     optional: true
 
-  lefthook-linux-x64@2.0.7:
+  lefthook-linux-x64@2.0.8:
     optional: true
 
-  lefthook-openbsd-arm64@2.0.7:
+  lefthook-openbsd-arm64@2.0.8:
     optional: true
 
-  lefthook-openbsd-x64@2.0.7:
+  lefthook-openbsd-x64@2.0.8:
     optional: true
 
-  lefthook-windows-arm64@2.0.7:
+  lefthook-windows-arm64@2.0.8:
     optional: true
 
-  lefthook-windows-x64@2.0.7:
+  lefthook-windows-x64@2.0.8:
     optional: true
 
-  lefthook@2.0.7:
+  lefthook@2.0.8:
     optionalDependencies:
-      lefthook-darwin-arm64: 2.0.7
-      lefthook-darwin-x64: 2.0.7
-      lefthook-freebsd-arm64: 2.0.7
-      lefthook-freebsd-x64: 2.0.7
-      lefthook-linux-arm64: 2.0.7
-      lefthook-linux-x64: 2.0.7
-      lefthook-openbsd-arm64: 2.0.7
-      lefthook-openbsd-x64: 2.0.7
-      lefthook-windows-arm64: 2.0.7
-      lefthook-windows-x64: 2.0.7
+      lefthook-darwin-arm64: 2.0.8
+      lefthook-darwin-x64: 2.0.8
+      lefthook-freebsd-arm64: 2.0.8
+      lefthook-freebsd-x64: 2.0.8
+      lefthook-linux-arm64: 2.0.8
+      lefthook-linux-x64: 2.0.8
+      lefthook-openbsd-arm64: 2.0.8
+      lefthook-openbsd-x64: 2.0.8
+      lefthook-windows-arm64: 2.0.8
+      lefthook-windows-x64: 2.0.8
 
   levn@0.4.1:
     dependencies:
@@ -6798,3 +6966,10 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.1.13: {}
+
+  zustand@4.5.7(@types/react@19.2.7)(react@19.2.1):
+    dependencies:
+      use-sync-external-store: 1.6.0(react@19.2.1)
+    optionalDependencies:
+      '@types/react': 19.2.7
+      react: 19.2.1

@@ -25,6 +25,7 @@
     "@symploke/utils": "workspace:*",
     "@tanstack/react-query": "latest",
     "@tanstack/react-query-devtools": "latest",
+    "@xyflow/react": "^12.10.0",
     "next": "latest",
     "next-auth": "beta",
     "next-themes": "latest",
