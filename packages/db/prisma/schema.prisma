@@ -308,6 +308,7 @@ enum WeaveType {
   shared_dependency
   api_compatibility
   refactor_candidate
+  philosophical_alignment // repos that share worldview/approach even if functionally different
 }
 
 model Comment {

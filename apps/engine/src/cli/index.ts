@@ -633,6 +633,13 @@ program
   .option('--max-candidates <n>', 'Maximum candidates to assess', parseInt, 20)
   .option('--dry-run', 'Find weaves but do not save to database')
   .option('--verbose', 'Enable verbose debug logging')
+  .option('--no-philosophy', 'Disable philosophical profiling and schizosophy matching')
+  .option(
+    '--philosophy-min-confidence <n>',
+    'Minimum confidence for philosophical matches (0.0-1.0)',
+    parseFloat,
+    0.5,
+  )
   .action(async (options) => {
     try {
       // Verify plexus exists
@@ -650,6 +657,10 @@ program
       console.log(`  Algorithm: Ontology-First (v2)`)
       console.log(`  Min confidence: ${options.minConfidence}`)
       console.log(`  Max candidates: ${options.maxCandidates}`)
+      console.log(`  Philosophy: ${options.philosophy ? 'enabled' : 'disabled'}`)
+      if (options.philosophy) {
+        console.log(`  Philosophy min confidence: ${options.philosophyMinConfidence}`)
+      }
       console.log(`  Dry run: ${options.dryRun ? 'yes' : 'no'}`)
       console.log(`  Verbose: ${options.verbose ? 'yes' : 'no'}`)
       console.log('')
@@ -659,36 +670,65 @@ program
         maxCandidates: options.maxCandidates,
         dryRun: options.dryRun,
         verbose: options.verbose,
+        enablePhilosophy: options.philosophy,
+        philosophyMinConfidence: options.philosophyMinConfidence,
       })
 
       console.log('\nWeave Discovery V2 Results:')
       console.log('===========================')
-      console.log(`Run ID:           ${result.runId}`)
-      console.log(`Profiles created: ${result.profiles.length}`)
-      console.log(`Candidates found: ${result.candidatesFound}`)
-      console.log(`Weaves created:   ${result.weavesCreated}`)
-      console.log(`Duration:         ${(result.duration / 1000).toFixed(1)}s`)
+      console.log(`Run ID:              ${result.runId}`)
+      console.log(`Profiles created:    ${result.profiles.length}`)
+      console.log(`Phil. profiles:      ${result.philosophicalProfiles?.length ?? 0}`)
+      console.log(`Functional matches:  ${result.candidatesFound}`)
+      console.log(`Phil. matches:       ${result.philosophicalMatchesFound ?? 0}`)
+      console.log(`Weaves created:      ${result.weavesCreated}`)
+      console.log(`Duration:            ${(result.duration / 1000).toFixed(1)}s`)
 
       if (result.profiles.length > 0) {
         console.log('\nRepository Profiles:')
         for (const profile of result.profiles) {
+          const philProfile = result.philosophicalProfiles?.find((p) => p.repoId === profile.repoId)
           console.log(`\n  ${profile.fullName}`)
           console.log(`    Purpose: ${profile.purpose}`)
           console.log(`    Capabilities: ${profile.capabilities.join(', ') || 'none'}`)
           console.log(`    Produces: ${profile.artifacts.produces.join(', ') || 'none'}`)
           console.log(`    Roles: ${profile.roles.join(', ') || 'none'}`)
           console.log(`    Confidence: ${(profile.confidence * 100).toFixed(0)}%`)
+          if (philProfile) {
+            console.log(`    Philosophy:`)
+            console.log(`      Epistemology: ${philProfile.epistemology}`)
+            console.log(`      Antagonist: ${philProfile.antagonist}`)
+            console.log(`      Transform: ${philProfile.cognitiveTransform}`)
+            console.log(`      Level: ${philProfile.abstractionLevel}`)
+            console.log(`      Virtue: ${philProfile.coreVirtue}`)
+          }
         }
       }
 
       if (result.weaves.length > 0) {
-        console.log('\nDiscovered Weaves:')
-        for (const weave of result.weaves) {
-          console.log(`\n  [${(weave.confidence * 100).toFixed(0)}%] ${weave.title}`)
-          console.log(`    ${weave.sourceRepo} <-> ${weave.targetRepo}`)
-          console.log(
-            `    ${weave.description.slice(0, 120)}${weave.description.length > 120 ? '...' : ''}`,
-          )
+        const functionalWeaves = result.weaves.filter((w) => w.type === 'functional')
+        const philosophicalWeaves = result.weaves.filter((w) => w.type === 'philosophical')
+
+        if (functionalWeaves.length > 0) {
+          console.log('\nFunctional Weaves:')
+          for (const weave of functionalWeaves) {
+            console.log(`\n  [${(weave.confidence * 100).toFixed(0)}%] ${weave.title}`)
+            console.log(`    ${weave.sourceRepo} <-> ${weave.targetRepo}`)
+            console.log(
+              `    ${weave.description.slice(0, 120)}${weave.description.length > 120 ? '...' : ''}`,
+            )
+          }
+        }
+
+        if (philosophicalWeaves.length > 0) {
+          console.log('\nPhilosophical Weaves:')
+          for (const weave of philosophicalWeaves) {
+            console.log(`\n  [${(weave.confidence * 100).toFixed(0)}%] ${weave.title}`)
+            console.log(`    ${weave.sourceRepo} <-> ${weave.targetRepo}`)
+            console.log(
+              `    ${weave.description.slice(0, 120)}${weave.description.length > 120 ? '...' : ''}`,
+            )
+          }
         }
       }
     } catch (error: unknown) {
