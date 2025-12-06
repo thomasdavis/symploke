@@ -52,7 +52,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
