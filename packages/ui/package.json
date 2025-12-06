@@ -19,6 +19,7 @@
     "./DirectionProvider/DirectionProvider": "./src/DirectionProvider/DirectionProvider.tsx",
     "./EmptyState/EmptyState": "./src/EmptyState/EmptyState.tsx",
     "./Field/Field": "./src/Field/Field.tsx",
+    "./FilesTable/FilesTable": "./src/FilesTable/FilesTable.tsx",
     "./Fieldset/Fieldset": "./src/Fieldset/Fieldset.tsx",
     "./Form/Form": "./src/Form/Form.tsx",
     "./FormError/FormError": "./src/FormError/FormError.tsx",
