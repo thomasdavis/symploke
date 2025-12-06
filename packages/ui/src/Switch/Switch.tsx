@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Switch as BaseSwitch } from '@base-ui-components/react/switch'
+import * as React from 'react'
 import '@symploke/design/components/switch.css'
 
 const Root = React.forwardRef<

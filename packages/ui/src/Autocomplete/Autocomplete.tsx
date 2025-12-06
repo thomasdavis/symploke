@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Autocomplete as BaseAutocomplete } from '@base-ui-components/react/autocomplete'
+import * as React from 'react'
 import '@symploke/design/components/autocomplete.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseAutocomplete.Root>) => {

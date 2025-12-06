@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Tooltip as BaseTooltip } from '@base-ui-components/react/tooltip'
+import * as React from 'react'
 import '@symploke/design/components/tooltip.css'
 
 const Root = BaseTooltip.Root

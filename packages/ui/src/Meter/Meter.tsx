@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Meter as BaseMeter } from '@base-ui-components/react/meter'
+import * as React from 'react'
 import '@symploke/design/components/meter.css'
 
 const Root = React.forwardRef<

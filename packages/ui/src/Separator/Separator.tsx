@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Separator as BaseSeparator } from '@base-ui-components/react/separator'
+import * as React from 'react'
 import '@symploke/design/components/separator.css'
 
 export const Separator = React.forwardRef<

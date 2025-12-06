@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Select as BaseSelect } from '@base-ui-components/react/select'
+import * as React from 'react'
 import '@symploke/design/components/select.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseSelect.Root>) => {

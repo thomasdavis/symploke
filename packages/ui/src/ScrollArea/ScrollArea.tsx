@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { ScrollArea as BaseScrollArea } from '@base-ui-components/react/scroll-area'
+import * as React from 'react'
 import '@symploke/design/components/scroll-area.css'
 
 const Root = React.forwardRef<

@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Toolbar as BaseToolbar } from '@base-ui-components/react/toolbar'
+import * as React from 'react'
 import '@symploke/design/components/toolbar.css'
 
 export interface ToolbarRootProps extends React.ComponentPropsWithoutRef<typeof BaseToolbar.Root> {

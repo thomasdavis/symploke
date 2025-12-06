@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { RadioGroup as BaseRadioGroup } from '@base-ui-components/react/radio-group'
+import * as React from 'react'
 import '@symploke/design/src/components/radio-group.css'
 
 export const RadioGroup = React.forwardRef<

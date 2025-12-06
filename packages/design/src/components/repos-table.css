@@ -47,102 +47,138 @@
   white-space: nowrap;
 }
 
-/* Sync column */
-.repos-table__sync-column {
+/* Action columns */
+.repos-table__sync-column,
+.repos-table__embed-column {
   text-align: right;
   white-space: nowrap;
+  width: 120px;
 }
 
-.repos-table__sync-button {
+/* Unified action button */
+.repos-table__action-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  justify-content: center;
+  gap: 6px;
+  padding: 6px var(--space-3);
+  min-width: 90px;
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-fg-muted);
-  background: transparent;
+  color: var(--color-fg);
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-in-out);
-  text-decoration: none;
 }
 
-.repos-table__sync-button:hover:not(:disabled) {
-  color: var(--color-fg);
+.repos-table__action-btn:hover:not(:disabled) {
   border-color: var(--color-fg-muted);
   background: var(--color-bg-subtle);
 }
 
-.repos-table__sync-button:disabled {
+.repos-table__action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.repos-table__sync-button--retry {
+/* Ghost variant - for re-sync/re-run actions */
+.repos-table__action-btn--ghost {
+  color: var(--color-fg-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.repos-table__action-btn--ghost:hover:not(:disabled) {
+  color: var(--color-fg);
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+}
+
+/* Warning variant - for "Update" when out of date */
+.repos-table__action-btn--warning {
+  color: oklch(45% 0.16 75);
+  background: oklch(75% 0.16 75 / 0.12);
+  border-color: oklch(65% 0.16 75 / 0.3);
+}
+
+.repos-table__action-btn--warning:hover:not(:disabled) {
+  background: oklch(75% 0.16 75 / 0.2);
+  border-color: oklch(65% 0.16 75 / 0.5);
+}
+
+/* Danger variant - for retry after failure */
+.repos-table__action-btn--danger {
   color: var(--color-danger);
-  border-color: var(--color-danger);
+  background: oklch(from var(--color-danger) l c h / 0.1);
+  border-color: oklch(from var(--color-danger) l c h / 0.3);
 }
 
-.repos-table__sync-button--retry:hover {
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+.repos-table__action-btn--danger:hover:not(:disabled) {
+  background: oklch(from var(--color-danger) l c h / 0.15);
+  border-color: oklch(from var(--color-danger) l c h / 0.5);
 }
 
-/* Link version of sync button */
-a.repos-table__sync-button--retry:hover {
-  color: var(--color-danger);
-}
-
-/* Sync status */
-.repos-table__sync-status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.repos-table__sync-status--link {
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.repos-table__sync-status--link:hover {
-  opacity: 0.8;
-}
-
-.repos-table__sync-status--success {
-  color: var(--color-success);
-}
-
-.repos-table__sync-status--error {
-  color: var(--color-danger);
-}
-
-/* Sync progress */
-.repos-table__sync-progress {
+/* Progress cell */
+.repos-table__progress-cell {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 120px;
+  align-items: stretch;
+  gap: 4px;
+  width: 90px;
 }
 
-.repos-table__sync-bar {
+.repos-table__progress-bar {
+  width: 100%;
   height: 4px;
   background: var(--color-border);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
-.repos-table__sync-bar-fill {
+.repos-table__progress-fill {
   height: 100%;
   background: var(--color-primary);
   border-radius: var(--radius-full);
-  transition: width var(--duration-normal) var(--ease-out);
+  transition: width 200ms ease-out;
 }
 
-.repos-table__sync-text {
+.repos-table__progress-text {
   font-size: var(--text-xs);
   color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* Clickable progress link */
+.repos-table__progress-link {
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: 4px 6px;
+  margin: -4px -6px;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+
+.repos-table__progress-link:hover {
+  background: var(--color-bg-subtle);
+}
+
+.repos-table__progress-link:hover .repos-table__progress-text {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* Action button icon sizing */
+.repos-table__action-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Muted status (dash for unavailable) */
+.repos-table__status-muted {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
 }

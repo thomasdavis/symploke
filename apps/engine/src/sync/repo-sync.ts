@@ -107,29 +107,60 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     failedFiles: 0,
   })
 
-  // Get default branch if not already set
-  let branch = repo.defaultBranch
-  if (!branch || branch === 'main') {
-    emitLog('info', 'Fetching default branch...')
-    try {
-      branch = await getDefaultBranch(octokit, repo.fullName, installationId)
+  // Always fetch default branch fresh from GitHub (it may have changed)
+  emitLog('info', 'Fetching default branch...')
+  let branch: string
+  try {
+    branch = await getDefaultBranch(octokit, repo.fullName, installationId)
+    // Update in database if it changed
+    if (branch !== repo.defaultBranch) {
       await db.repo.update({
         where: { id: repo.id },
         data: { defaultBranch: branch },
       })
-      emitLog('info', `Using branch: ${branch}`)
-    } catch (error) {
-      logger.warn({ error, repo: repo.fullName }, 'Could not fetch default branch, using main')
-      branch = 'main'
-      emitLog('warn', 'Could not detect default branch, using main')
     }
-  } else {
     emitLog('info', `Using branch: ${branch}`)
+  } catch (error) {
+    logger.warn({ error, repo: repo.fullName }, 'Could not fetch default branch')
+    // Fall back to cached value or 'main'
+    branch = repo.defaultBranch || 'main'
+    emitLog('warn', `Could not detect default branch, using: ${branch}`)
   }
 
   // Fetch repo tree
   emitLog('info', 'Fetching repository file tree...')
-  const tree = await fetchRepoTree(octokit, repo.fullName, branch, installationId)
+  let tree: Awaited<ReturnType<typeof fetchRepoTree>>
+  try {
+    tree = await fetchRepoTree(octokit, repo.fullName, branch, installationId)
+  } catch (error) {
+    // Check if this is an empty repo (no branches)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('Branch not found') || errorMessage.includes('Not Found')) {
+      emitLog('warn', 'Repository appears to be empty (no branches/commits)')
+      // Mark job as completed with 0 files
+      await db.repoSyncJob.update({
+        where: { id: job.id },
+        data: {
+          status: SyncJobStatus.COMPLETED,
+          totalFiles: 0,
+          processedFiles: 0,
+          completedAt: new Date(),
+        },
+      })
+      pusher?.emitSyncCompleted(repo.plexusId, {
+        jobId: job.id,
+        repoId: repo.id,
+        status: SyncJobStatus.COMPLETED,
+        processedFiles: 0,
+        totalFiles: 0,
+        skippedFiles: 0,
+        failedFiles: 0,
+      })
+      emitLog('success', 'Sync completed (empty repository)')
+      return
+    }
+    throw error
+  }
   emitLog('info', `Found ${tree.entries.length} files in repository`)
 
   // Apply maxFiles limit if specified

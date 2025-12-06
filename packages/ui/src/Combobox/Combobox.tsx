@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Combobox as BaseCombobox } from '@base-ui-components/react/combobox'
+import * as React from 'react'
 import '@symploke/design/components/combobox.css'
 
 const Root = (props: React.ComponentPropsWithoutRef<typeof BaseCombobox.Root>) => {

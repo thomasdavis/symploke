@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Fieldset as BaseFieldset } from '@base-ui-components/react/fieldset'
+import * as React from 'react'
 import '@symploke/design/src/components/fieldset.css'
 
 const Root = React.forwardRef<

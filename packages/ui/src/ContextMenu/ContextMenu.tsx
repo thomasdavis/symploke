@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { ContextMenu as BaseContextMenu } from '@base-ui-components/react/context-menu'
+import * as React from 'react'
 import '@symploke/design/components/context-menu.css'
 
 const Root = BaseContextMenu.Root

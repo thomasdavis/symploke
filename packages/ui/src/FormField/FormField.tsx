@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import '@symploke/design/components/field.css'
 
 export type FormFieldProps = {

@@ -1,5 +1,5 @@
-import { Table } from '../Table/Table'
 import type { TableColumn } from '../Table/Table'
+import { Table } from '../Table/Table'
 import '@symploke/design/components/files-table.css'
 
 export type File = {
@@ -27,7 +27,7 @@ function formatBytes(bytes: number): string {
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+  return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`
 }
 
 function formatTimeAgo(date: Date | string | null): string {

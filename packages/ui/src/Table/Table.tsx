@@ -13,6 +13,7 @@ export type TableProps<T> = {
   emptyMessage?: string
   className?: string
   getRowKey: (row: T) => string
+  onRowClick?: (row: T) => void
 }
 
 export function Table<T>({
@@ -21,6 +22,7 @@ export function Table<T>({
   emptyMessage = 'No data available',
   className,
   getRowKey,
+  onRowClick,
 }: TableProps<T>) {
   return (
     <div className={`table-container ${className || ''}`}>
@@ -41,7 +43,11 @@ export function Table<T>({
             </tr>
           ) : (
             data.map((row) => (
-              <tr key={getRowKey(row)}>
+              <tr
+                key={getRowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={onRowClick ? 'table__row--clickable' : ''}
+              >
                 {columns.map((column) => {
                   const value =
                     typeof column.accessor === 'function'

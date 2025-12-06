@@ -1,7 +1,7 @@
 import Pusher from 'pusher'
 import { logger } from '@symploke/logger'
 import { config } from '../config.js'
-import type { SyncJobStatus } from '@symploke/db'
+import type { SyncJobStatus, ChunkJobStatus } from '@symploke/db'
 
 export interface SyncProgressEvent {
   jobId: string
@@ -11,6 +11,18 @@ export interface SyncProgressEvent {
   totalFiles: number
   skippedFiles: number
   failedFiles: number
+  currentFile?: string
+  error?: string
+}
+
+export interface EmbedProgressEvent {
+  jobId: string
+  repoId: string
+  status: ChunkJobStatus
+  processedFiles: number
+  totalFiles: number
+  chunksCreated: number
+  embeddingsGenerated: number
   currentFile?: string
   error?: string
 }
@@ -130,6 +142,34 @@ export class PusherService {
       await this.client.trigger(`private-plexus-${plexusId}`, 'sync:log', event)
     } catch {
       // Don't log every log event failure, too noisy
+    }
+  }
+
+  /**
+   * Emit embed progress event
+   */
+  async emitEmbedProgress(plexusId: string, event: EmbedProgressEvent): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`private-plexus-${plexusId}`, 'embed:progress', event)
+      logger.debug({ plexusId, event }, 'Emitted embed progress event')
+    } catch (error) {
+      logger.error({ error, plexusId }, 'Failed to emit embed progress event')
+    }
+  }
+
+  /**
+   * Emit embed completed event
+   */
+  async emitEmbedCompleted(plexusId: string, event: EmbedProgressEvent): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`private-plexus-${plexusId}`, 'embed:completed', event)
+      logger.debug({ plexusId, event }, 'Emitted embed completed event')
+    } catch (error) {
+      logger.error({ error, plexusId }, 'Failed to emit embed completed event')
     }
   }
 }

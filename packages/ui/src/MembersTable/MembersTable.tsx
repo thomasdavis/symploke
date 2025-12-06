@@ -1,5 +1,5 @@
-import { Table } from '../Table/Table'
 import type { TableColumn } from '../Table/Table'
+import { Table } from '../Table/Table'
 import '@symploke/design/components/members-table.css'
 
 export type Member = {

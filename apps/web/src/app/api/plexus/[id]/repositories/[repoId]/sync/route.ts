@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { db, SyncJobStatus } from '@symploke/db'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Parse optional config from request body
-    let config: z.infer<typeof syncConfigSchema> = undefined
+    let config: z.infer<typeof syncConfigSchema>
     try {
       const body = await request.json()
       const validation = syncConfigSchema.safeParse(body)

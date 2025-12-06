@@ -45,14 +45,14 @@
     opacity: 0;
   }
   to {
-    height: var(--collapsible-height);
+    height: var(--collapsible-panel-height);
     opacity: 1;
   }
 }
 
 @keyframes collapsibleUp {
   from {
-    height: var(--collapsible-height);
+    height: var(--collapsible-panel-height);
     opacity: 1;
   }
   to {

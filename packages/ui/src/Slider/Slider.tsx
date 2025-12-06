@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Slider as BaseSlider } from '@base-ui-components/react/slider'
+import * as React from 'react'
 import '@symploke/design/components/slider.css'
 
 const Root = React.forwardRef<

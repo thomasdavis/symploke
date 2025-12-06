@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { NumberField as BaseNumberField } from '@base-ui-components/react/number-field'
+import * as React from 'react'
 import '@symploke/design/src/components/number-field.css'
 
 const Root = React.forwardRef<

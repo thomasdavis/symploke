@@ -16,6 +16,10 @@ const envSchema = z.object({
   // Rate limit settings
   RATE_LIMIT_BUFFER: z.coerce.number().default(100), // Stop when this many requests left
   MAX_FILE_SIZE_BYTES: z.coerce.number().default(50 * 1024), // 50KB
+  // OpenAI / Embedding settings
+  OPENAI_API_KEY: z.string().optional(),
+  EMBED_BATCH_SIZE: z.coerce.number().default(50),
+  EMBED_RATE_LIMIT_DELAY_MS: z.coerce.number().default(100),
 })
 
 function createConfig() {

@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Checkbox as BaseCheckbox } from '@base-ui-components/react/checkbox'
+import * as React from 'react'
 import '@symploke/design/src/components/checkbox.css'
 
 const Root = React.forwardRef<

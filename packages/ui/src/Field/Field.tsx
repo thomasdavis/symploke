@@ -1,7 +1,7 @@
 'use client'
 
-import * as React from 'react'
 import { Field as BaseField } from '@base-ui-components/react/field'
+import * as React from 'react'
 import '@symploke/design/components/field.css'
 
 type RootProps = React.ComponentPropsWithoutRef<typeof BaseField.Root> & {

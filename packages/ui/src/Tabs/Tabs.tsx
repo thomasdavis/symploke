@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Tabs as BaseTabs } from '@base-ui-components/react/tabs'
+import * as React from 'react'
 import '@symploke/design/components/tabs.css'
 
 const Root = React.forwardRef<

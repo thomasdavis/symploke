@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Dialog } from '../Dialog/Dialog'
+import { useMemo, useState } from 'react'
 import { Button } from '../Button/Button'
+import { Dialog } from '../Dialog/Dialog'
 import { Input } from '../Input/Input'
 import '@symploke/design/components/add-repo-dialog.css'
 
@@ -30,7 +30,8 @@ type Repository = {
   pushed_at: string | null
 }
 
-type SortOption = 'updated' | 'created' | 'name' | 'stars'
+type RepoSortOption = 'updated' | 'created' | 'name' | 'stars'
+type OrgSortOption = 'name' | 'type'
 
 type ApiError = Error & {
   code?: string
@@ -45,12 +46,18 @@ export type AddRepoDialogProps = {
 export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogProps) {
   const [selectedOrg, setSelectedOrg] = useState<string>('')
   const [selectedRepo, setSelectedRepo] = useState<number | null>(null)
-  const [filterText, setFilterText] = useState('')
-  const [sortBy, setSortBy] = useState<SortOption>('updated')
+  const [orgFilterText, setOrgFilterText] = useState('')
+  const [orgSortBy, setOrgSortBy] = useState<OrgSortOption>('name')
+  const [repoFilterText, setRepoFilterText] = useState('')
+  const [repoSortBy, setRepoSortBy] = useState<RepoSortOption>('updated')
   const queryClient = useQueryClient()
 
-  // Fetch organizations
-  const { data: orgsData, isLoading: isLoadingOrgs } = useQuery({
+  // Fetch organizations - always refetch when dialog opens
+  const {
+    data: orgsData,
+    isLoading: isLoadingOrgs,
+    refetch: refetchOrgs,
+  } = useQuery({
     queryKey: ['github-organizations'],
     queryFn: async () => {
       const response = await fetch('/api/github/organizations')
@@ -60,6 +67,8 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
       return response.json() as Promise<{ organizations: Organization[] }>
     },
     enabled: open,
+    staleTime: 0, // Always refetch when dialog opens
+    refetchOnMount: 'always',
   })
 
   // Fetch repositories for selected org
@@ -89,6 +98,40 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     retry: false,
   })
 
+  // Filter and sort organizations
+  const filteredAndSortedOrgs = useMemo(() => {
+    if (!orgsData?.organizations) return []
+
+    let orgs = [...orgsData.organizations]
+
+    // Filter by name or description
+    if (orgFilterText.trim()) {
+      const search = orgFilterText.toLowerCase()
+      orgs = orgs.filter(
+        (org) =>
+          org.login.toLowerCase().includes(search) ||
+          org.description?.toLowerCase().includes(search),
+      )
+    }
+
+    // Sort
+    orgs.sort((a, b) => {
+      switch (orgSortBy) {
+        case 'name':
+          return a.login.localeCompare(b.login)
+        case 'type':
+          // User first, then organizations
+          if (a.type === 'User' && b.type !== 'User') return -1
+          if (a.type !== 'User' && b.type === 'User') return 1
+          return a.login.localeCompare(b.login)
+        default:
+          return 0
+      }
+    })
+
+    return orgs
+  }, [orgsData?.organizations, orgFilterText, orgSortBy])
+
   // Filter and sort repositories
   const filteredAndSortedRepos = useMemo(() => {
     if (!reposData?.repositories) return []
@@ -96,8 +139,8 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     let repos = [...reposData.repositories]
 
     // Filter by name or description
-    if (filterText.trim()) {
-      const search = filterText.toLowerCase()
+    if (repoFilterText.trim()) {
+      const search = repoFilterText.toLowerCase()
       repos = repos.filter(
         (repo) =>
           repo.name.toLowerCase().includes(search) ||
@@ -108,7 +151,7 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
 
     // Sort
     repos.sort((a, b) => {
-      switch (sortBy) {
+      switch (repoSortBy) {
         case 'updated':
           return new Date(b.pushed_at || 0).getTime() - new Date(a.pushed_at || 0).getTime()
         case 'created':
@@ -123,7 +166,7 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     })
 
     return repos
-  }, [reposData?.repositories, filterText, sortBy])
+  }, [reposData?.repositories, repoFilterText, repoSortBy])
 
   // Add repository mutation
   const addRepoMutation = useMutation({
@@ -165,8 +208,10 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     if (!addRepoMutation.isPending) {
       setSelectedOrg('')
       setSelectedRepo(null)
-      setFilterText('')
-      setSortBy('updated')
+      setOrgFilterText('')
+      setOrgSortBy('name')
+      setRepoFilterText('')
+      setRepoSortBy('updated')
       addRepoMutation.reset()
       onOpenChange(false)
     }
@@ -186,38 +231,116 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
             <div className="add-repo-dialog__content">
               {!selectedOrg ? (
                 <>
-                  <div className="add-repo-dialog__section-label">Select a GitHub organization</div>
+                  <div className="add-repo-dialog__section-header">
+                    <div className="add-repo-dialog__section-label">
+                      Select a GitHub organization
+                    </div>
+                    <div className="add-repo-dialog__section-actions">
+                      <button
+                        type="button"
+                        onClick={() => refetchOrgs()}
+                        className="add-repo-dialog__refresh-button"
+                        title="Refresh organizations"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M14 8A6 6 0 1 1 8 2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M8 2V5L10.5 3.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <a
+                        href={`https://github.com/apps/symploke-dev/installations/new?state=${encodeURIComponent(JSON.stringify({ plexusId }))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="add-repo-dialog__configure-link"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path
+                            d="M8 10a2 2 0 100-4 2 2 0 000 4z"
+                            stroke="currentColor"
+                            strokeWidth="1.25"
+                          />
+                          <path
+                            d="M13.5 8c0-.3-.02-.58-.07-.87l1.57-1.23-.01-.03a7.03 7.03 0 00-1.4-2.42l-.03-.02-1.87.56c-.45-.38-.95-.7-1.5-.93L9.7 1.17a.16.16 0 00-.03-.02 7.03 7.03 0 00-2.82-.01l-.03.01-.49 1.91c-.55.23-1.06.55-1.5.93l-1.87-.56-.03.02a7.03 7.03 0 00-1.4 2.42l-.01.03 1.57 1.23c-.05.29-.08.57-.08.87s.02.58.07.87L1.5 10.1l.01.03c.3.9.78 1.73 1.4 2.42l.03.02 1.87-.56c.45.38.95.7 1.5.93l.49 1.89.03.02c.92.17 1.87.17 2.82.01l.03-.01.49-1.91c.55-.23 1.06-.55 1.5-.93l1.87.56.03-.02c.62-.69 1.1-1.52 1.4-2.42l.01-.03-1.57-1.23c.05-.29.08-.57.08-.87z"
+                            stroke="currentColor"
+                            strokeWidth="1.25"
+                          />
+                        </svg>
+                        Configure access
+                      </a>
+                    </div>
+                  </div>
                   {isLoadingOrgs ? (
                     <div className="add-repo-dialog__loading">Loading organizations...</div>
                   ) : (
-                    <div className="add-repo-dialog__org-list">
-                      {orgsData?.organizations.map((org) => (
-                        <button
-                          key={org.login}
-                          type="button"
-                          className="add-repo-dialog__org-card"
-                          onClick={() => {
-                            setSelectedOrg(org.login)
-                            setSelectedRepo(null)
-                          }}
-                          disabled={addRepoMutation.isPending}
+                    <>
+                      <div className="add-repo-dialog__filters">
+                        <Input
+                          placeholder="Filter organizations..."
+                          value={orgFilterText}
+                          onChange={(e) => setOrgFilterText(e.target.value)}
+                          className="add-repo-dialog__filter-input"
+                        />
+                        <select
+                          value={orgSortBy}
+                          onChange={(e) => setOrgSortBy(e.target.value as OrgSortOption)}
+                          className="add-repo-dialog__sort-select"
                         >
-                          <img
-                            src={org.avatar_url}
-                            alt=""
-                            className="add-repo-dialog__org-avatar"
-                          />
-                          <div className="add-repo-dialog__org-info">
-                            <div className="add-repo-dialog__org-name">{org.login}</div>
-                            {org.description && (
-                              <div className="add-repo-dialog__org-description">
-                                {org.description}
+                          <option value="name">Name</option>
+                          <option value="type">Type</option>
+                        </select>
+                      </div>
+                      <div className="add-repo-dialog__repo-count">
+                        {filteredAndSortedOrgs.length === orgsData?.organizations.length
+                          ? `${orgsData?.organizations.length} organizations`
+                          : `${filteredAndSortedOrgs.length} of ${orgsData?.organizations.length} organizations`}
+                      </div>
+                      {filteredAndSortedOrgs.length === 0 ? (
+                        <div className="add-repo-dialog__empty">
+                          No organizations match your filter.
+                        </div>
+                      ) : (
+                        <div className="add-repo-dialog__org-list">
+                          {filteredAndSortedOrgs.map((org) => (
+                            <button
+                              key={org.login}
+                              type="button"
+                              className="add-repo-dialog__org-card"
+                              onClick={() => {
+                                setSelectedOrg(org.login)
+                                setSelectedRepo(null)
+                                setRepoFilterText('')
+                              }}
+                              disabled={addRepoMutation.isPending}
+                            >
+                              <img
+                                src={org.avatar_url}
+                                alt=""
+                                className="add-repo-dialog__org-avatar"
+                              />
+                              <div className="add-repo-dialog__org-info">
+                                <div className="add-repo-dialog__org-name">{org.login}</div>
+                                {org.description && (
+                                  <div className="add-repo-dialog__org-description">
+                                    {org.description}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               ) : (
@@ -306,13 +429,13 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
                       <div className="add-repo-dialog__filters">
                         <Input
                           placeholder="Filter repositories..."
-                          value={filterText}
-                          onChange={(e) => setFilterText(e.target.value)}
+                          value={repoFilterText}
+                          onChange={(e) => setRepoFilterText(e.target.value)}
                           className="add-repo-dialog__filter-input"
                         />
                         <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as SortOption)}
+                          value={repoSortBy}
+                          onChange={(e) => setRepoSortBy(e.target.value as RepoSortOption)}
                           className="add-repo-dialog__sort-select"
                         >
                           <option value="updated">Last updated</option>

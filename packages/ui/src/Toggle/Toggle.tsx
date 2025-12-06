@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Toggle as BaseToggle } from '@base-ui-components/react/toggle'
+import * as React from 'react'
 import '@symploke/design/components/toggle.css'
 
 export interface ToggleProps extends React.ComponentPropsWithoutRef<typeof BaseToggle> {

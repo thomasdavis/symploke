@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { ReposTable } from '@symploke/ui/ReposTable/ReposTable'
 import { AddRepoDialog } from '@symploke/ui/AddRepoDialog/AddRepoDialog'
 import { useSyncProgress } from '@/hooks/useSyncProgress'
-import type { Repo, SyncStatus } from '@symploke/ui/ReposTable/ReposTable'
+import { useEmbedProgress } from '@/hooks/useEmbedProgress'
+import type { Repo, SyncStatus, EmbedStatus } from '@symploke/ui/ReposTable/ReposTable'
 
 export type ReposPageClientProps = {
   plexusId: string
@@ -16,7 +17,9 @@ export type ReposPageClientProps = {
 
 export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClientProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const { getSyncStatus, isSyncing } = useSyncProgress(plexusId)
+  const queryClient = useQueryClient()
+  const { getSyncStatus, isSyncing, triggerSync } = useSyncProgress(plexusId)
+  const { getEmbedStatus, isEmbedding, triggerEmbed } = useEmbedProgress(plexusId)
 
   // Use React Query with server data as initial data
   const { data: repos } = useQuery({
@@ -30,7 +33,7 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
     staleTime: 0, // Always refetch on invalidation
   })
 
-  const getStatus = (repoId: string): SyncStatus | undefined => {
+  const getSyncStatusForRepo = (repoId: string): SyncStatus | undefined => {
     const status = getSyncStatus(repoId)
     if (!status) return undefined
     return {
@@ -39,6 +42,43 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
       totalFiles: status.totalFiles,
       currentFile: status.currentFile,
       error: status.error,
+    }
+  }
+
+  const getEmbedStatusForRepo = (repoId: string): EmbedStatus | undefined => {
+    const status = getEmbedStatus(repoId)
+    if (!status) return undefined
+    return {
+      status: status.status,
+      processedFiles: status.processedFiles,
+      totalFiles: status.totalFiles,
+      chunksCreated: status.chunksCreated,
+      embeddingsGenerated: status.embeddingsGenerated,
+      error: status.error,
+    }
+  }
+
+  const handleSync = async (repoId: string) => {
+    try {
+      await triggerSync(repoId)
+      // Refetch repos after sync completes to update status
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['plexus-repos', plexusId] })
+      }, 2000)
+    } catch (error) {
+      console.error('Failed to trigger sync:', error)
+    }
+  }
+
+  const handleEmbed = async (repoId: string) => {
+    try {
+      await triggerEmbed(repoId)
+      // Refetch repos after embed completes to update status
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['plexus-repos', plexusId] })
+      }, 2000)
+    } catch (error) {
+      console.error('Failed to trigger embedding:', error)
     }
   }
 
@@ -59,8 +99,13 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
       />
       <ReposTable
         repos={repos}
-        getSyncStatus={getStatus}
+        plexusId={plexusId}
+        onSync={handleSync}
+        onEmbed={handleEmbed}
+        getSyncStatus={getSyncStatusForRepo}
+        getEmbedStatus={getEmbedStatusForRepo}
         isSyncing={isSyncing}
+        isEmbedding={isEmbedding}
         getRepoHref={getRepoHref}
       />
       <AddRepoDialog plexusId={plexusId} open={isDialogOpen} onOpenChange={setIsDialogOpen} />

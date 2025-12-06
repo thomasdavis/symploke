@@ -1,7 +1,5 @@
 import { db } from '@symploke/db'
-import { Button } from '@symploke/ui/Button/Button'
-import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
-import { MembersTable } from '@symploke/ui/MembersTable/MembersTable'
+import { MembersPageClient } from './MembersPageClient'
 
 type MembersPageProps = {
   params: Promise<{ id: string }>
@@ -12,7 +10,9 @@ export default async function MembersPage({ params }: MembersPageProps) {
 
   const members = await db.plexusMember.findMany({
     where: { plexusId: id },
-    include: {
+    select: {
+      userId: true,
+      role: true,
       user: {
         select: {
           name: true,
@@ -26,17 +26,5 @@ export default async function MembersPage({ params }: MembersPageProps) {
     },
   })
 
-  return (
-    <div style={{ padding: 'var(--space-8)' }}>
-      <PageHeader
-        title="Members"
-        actions={
-          <Button variant="primary" disabled>
-            Add Member
-          </Button>
-        }
-      />
-      <MembersTable members={members} />
-    </div>
-  )
+  return <MembersPageClient plexusId={id} initialMembers={members} />
 }

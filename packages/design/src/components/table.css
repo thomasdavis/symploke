@@ -50,3 +50,15 @@
   color: var(--color-fg-muted);
   font-size: var(--text-base);
 }
+
+.table__row--clickable {
+  cursor: pointer;
+}
+
+.table__row--clickable:hover {
+  background: var(--color-bg-subtle);
+}
+
+.table__row--clickable:active {
+  background: var(--color-bg);
+}

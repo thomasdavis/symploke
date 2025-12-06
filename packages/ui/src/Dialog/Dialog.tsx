@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Dialog as BaseDialog } from '@base-ui-components/react/dialog'
+import * as React from 'react'
 import '@symploke/design/components/dialog.css'
 
 const Root = BaseDialog.Root

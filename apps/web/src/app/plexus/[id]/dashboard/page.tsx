@@ -1,6 +1,5 @@
 import { db } from '@symploke/db'
-import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
-import { RepoFlowGraph } from './RepoFlowGraph'
+import { DashboardClient } from './DashboardClient'
 
 type DashboardPageProps = {
   params: Promise<{ id: string }>
@@ -22,10 +21,34 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     },
   })
 
+  // Get discovery runs (completed only)
+  const discoveryRuns = await db.weaveDiscoveryRun.findMany({
+    where: {
+      plexusId: id,
+      status: 'COMPLETED',
+    },
+    orderBy: {
+      startedAt: 'desc',
+    },
+    take: 20,
+  })
+
+  // Get all weaves for this plexus (excluding dismissed), grouped by run
+  const weaves = await db.weave.findMany({
+    where: {
+      plexusId: id,
+      dismissed: false,
+    },
+    include: {
+      sourceRepo: { select: { name: true } },
+      targetRepo: { select: { name: true } },
+    },
+    orderBy: {
+      score: 'desc',
+    },
+  })
+
   return (
-    <div className="dashboard-page">
-      <PageHeader title="Dashboard" subtitle={`${repos.length} repositories`} />
-      <RepoFlowGraph repos={repos} plexusId={id} />
-    </div>
+    <DashboardClient repos={repos} weaves={weaves} discoveryRuns={discoveryRuns} plexusId={id} />
   )
 }

@@ -1,7 +1,7 @@
-import { auth } from '@/lib/auth'
-import { db } from '@symploke/db'
-import { jsonOk, jsonError } from '@symploke/api/responses'
+import { jsonError, jsonOk } from '@symploke/api/responses'
 import { CreatePlexusSchema, PlexusSchema } from '@symploke/api/schemas'
+import { db } from '@symploke/db'
+import { auth } from '@/lib/auth'
 
 export async function POST(req: Request) {
   const session = await auth()

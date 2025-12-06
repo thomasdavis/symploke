@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Button } from '../Button/Button'
 import '@symploke/design/components/empty-state.css'
 

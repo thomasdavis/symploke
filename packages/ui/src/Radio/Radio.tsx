@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Radio as BaseRadio } from '@base-ui-components/react/radio'
+import * as React from 'react'
 import '@symploke/design/src/components/radio.css'
 
 const Root = React.forwardRef<

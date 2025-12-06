@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./Accordion/Accordion": "./src/Accordion/Accordion.tsx",
+    "./AddMemberDialog/AddMemberDialog": "./src/AddMemberDialog/AddMemberDialog.tsx",
     "./AddRepoDialog/AddRepoDialog": "./src/AddRepoDialog/AddRepoDialog.tsx",
     "./AlertDialog/AlertDialog": "./src/AlertDialog/AlertDialog.tsx",
     "./Autocomplete/Autocomplete": "./src/Autocomplete/Autocomplete.tsx",
@@ -12,6 +13,7 @@
     "./Card/Card": "./src/Card/Card.tsx",
     "./Checkbox/Checkbox": "./src/Checkbox/Checkbox.tsx",
     "./CheckboxGroup/CheckboxGroup": "./src/CheckboxGroup/CheckboxGroup.tsx",
+    "./ChunksTable/ChunksTable": "./src/ChunksTable/ChunksTable.tsx",
     "./Collapsible/Collapsible": "./src/Collapsible/Collapsible.tsx",
     "./Combobox/Combobox": "./src/Combobox/Combobox.tsx",
     "./ContextMenu/ContextMenu": "./src/ContextMenu/ContextMenu.tsx",

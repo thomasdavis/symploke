@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Collapsible as BaseCollapsible } from '@base-ui-components/react/collapsible'
+import * as React from 'react'
 import '@symploke/design/components/collapsible.css'
 
 const Root = BaseCollapsible.Root

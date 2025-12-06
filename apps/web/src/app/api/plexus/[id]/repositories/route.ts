@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { db } from '@symploke/db'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { getInstallationOctokit } from '@/lib/github-app'
@@ -39,13 +39,63 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Fetch all repositories for this plexus
+    // Fetch all repositories for this plexus with their latest sync and embed jobs
     const repos = await db.repo.findMany({
       where: { plexusId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        syncJobs: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            completedAt: true,
+          },
+        },
+        chunkSyncJobs: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            completedAt: true,
+          },
+        },
+      },
     })
 
-    return NextResponse.json(repos)
+    // Transform to include embedding status
+    const reposWithStatus = repos.map((repo) => {
+      const latestSync = repo.syncJobs[0]
+      const latestEmbed = repo.chunkSyncJobs[0]
+
+      // Determine if embeddings are out of date
+      // Out of date if: sync completed after embed completed (or embed never ran)
+      const isEmbeddingOutdated =
+        latestSync?.status === 'COMPLETED' &&
+        latestSync.completedAt &&
+        (!latestEmbed?.completedAt ||
+          (latestEmbed.status === 'COMPLETED' && latestSync.completedAt > latestEmbed.completedAt))
+
+      return {
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.fullName,
+        url: repo.url,
+        lastIndexed: repo.lastIndexed,
+        createdAt: repo.createdAt,
+        // Embedding status
+        lastEmbedded: latestEmbed?.completedAt ?? null,
+        embeddingStatus: latestEmbed?.status ?? null,
+        isEmbeddingOutdated,
+        // Latest job IDs for linking
+        latestSyncJobId: latestSync?.id ?? null,
+        latestEmbedJobId: latestEmbed?.id ?? null,
+      }
+    })
+
+    return NextResponse.json(reposWithStatus)
   } catch (error) {
     console.error('Error fetching repositories:', error)
     return NextResponse.json(

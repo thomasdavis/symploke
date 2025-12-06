@@ -1,5 +1,5 @@
-import { Table } from '../Table/Table'
 import type { TableColumn } from '../Table/Table'
+import { Table } from '../Table/Table'
 import '@symploke/design/components/repos-table.css'
 
 export type Repo = {
@@ -9,6 +9,13 @@ export type Repo = {
   url: string
   lastIndexed: Date | null
   createdAt: Date
+  // Embedding status
+  lastEmbedded?: Date | null
+  embeddingStatus?: string | null
+  isEmbeddingOutdated?: boolean
+  // Latest job IDs
+  latestSyncJobId?: string | null
+  latestEmbedJobId?: string | null
 }
 
 export type SyncStatus = {
@@ -19,12 +26,25 @@ export type SyncStatus = {
   error?: string
 }
 
+export type EmbedStatus = {
+  status: 'PENDING' | 'CHUNKING' | 'EMBEDDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+  processedFiles: number
+  totalFiles: number
+  chunksCreated?: number
+  embeddingsGenerated?: number
+  error?: string
+}
+
 export type ReposTableProps = {
   repos: Repo[]
   className?: string
+  plexusId: string
   onSync?: (repoId: string) => void
+  onEmbed?: (repoId: string) => void
   getSyncStatus?: (repoId: string) => SyncStatus | undefined
+  getEmbedStatus?: (repoId: string) => EmbedStatus | undefined
   isSyncing?: (repoId: string) => boolean
+  isEmbedding?: (repoId: string) => boolean
   getRepoHref?: (repoId: string) => string
 }
 
@@ -60,157 +80,228 @@ function formatTimeAgo(date: Date | string | null): string {
   return `${years} years ago`
 }
 
+const syncIcon = (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path
+      d="M2 8C2 4.68629 4.68629 2 8 2C10.2208 2 12.1599 3.26477 13.1973 5.10051"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M14 8C14 11.3137 11.3137 14 8 14C5.77915 14 3.84006 12.7352 2.80269 10.8995"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M10 5H14V1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6 11H2V15"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 function SyncStatusCell({
+  repo,
   status,
   onSync,
   isSyncing,
-  href,
+  plexusId,
 }: {
+  repo: Repo
   status?: SyncStatus
   onSync?: () => void
   isSyncing?: boolean
-  href?: string
+  plexusId: string
 }) {
-  const syncIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="M2 8C2 4.68629 4.68629 2 8 2C10.2208 2 12.1599 3.26477 13.1973 5.10051"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M14 8C14 11.3137 11.3137 14 8 14C5.77915 14 3.84006 12.7352 2.80269 10.8995"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M10 5H14V1"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6 11H2V15"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  const detailHref = `/plexus/${plexusId}/repos/${repo.id}`
 
+  // Currently syncing - show progress bar (clickable to view details)
   if (isSyncing && status) {
     const percent =
       status.totalFiles > 0 ? Math.round((status.processedFiles / status.totalFiles) * 100) : 0
 
-    // If we have href, make the progress clickable to view details
-    const progressContent = (
-      <div className="repos-table__sync-progress">
-        <div className="repos-table__sync-bar">
-          <div className="repos-table__sync-bar-fill" style={{ width: `${percent}%` }} />
+    return (
+      <a href={detailHref} className="repos-table__progress-cell repos-table__progress-link">
+        <div className="repos-table__progress-bar">
+          <div className="repos-table__progress-fill" style={{ width: `${percent}%` }} />
         </div>
-        <span className="repos-table__sync-text">
+        <span className="repos-table__progress-text">
           {status.status === 'FETCHING_TREE'
-            ? 'Fetching files...'
-            : `${status.processedFiles}/${status.totalFiles} files`}
+            ? 'Fetching...'
+            : `${status.processedFiles}/${status.totalFiles}`}
         </span>
-      </div>
-    )
-
-    if (href) {
-      return (
-        <a href={href} className="repos-table__sync-status repos-table__sync-status--link">
-          {progressContent}
-        </a>
-      )
-    }
-
-    return <div className="repos-table__sync-status">{progressContent}</div>
-  }
-
-  if (status?.status === 'COMPLETED') {
-    const content = (
-      <>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path
-            d="M13.5 4.5L6 12L2.5 8.5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span>Synced</span>
-      </>
-    )
-
-    if (href) {
-      return (
-        <a
-          href={href}
-          className="repos-table__sync-status repos-table__sync-status--success repos-table__sync-status--link"
-        >
-          {content}
-        </a>
-      )
-    }
-
-    return (
-      <div className="repos-table__sync-status repos-table__sync-status--success">{content}</div>
-    )
-  }
-
-  if (status?.status === 'FAILED') {
-    return (
-      <div className="repos-table__sync-status repos-table__sync-status--error">
-        <span title={status.error}>Failed</span>
-        {href ? (
-          <a href={href} className="repos-table__sync-button repos-table__sync-button--retry">
-            Retry
-          </a>
-        ) : (
-          <button
-            type="button"
-            className="repos-table__sync-button repos-table__sync-button--retry"
-            onClick={onSync}
-          >
-            Retry
-          </button>
-        )}
-      </div>
-    )
-  }
-
-  // Default: show sync button/link
-  if (href) {
-    return (
-      <a href={href} className="repos-table__sync-button">
-        {syncIcon}
-        Sync
       </a>
     )
   }
 
+  // Sync failed
+  if (status?.status === 'FAILED') {
+    return (
+      <button
+        type="button"
+        className="repos-table__action-btn repos-table__action-btn--danger"
+        onClick={onSync}
+        title={status.error}
+      >
+        {syncIcon}
+        <span>Retry</span>
+      </button>
+    )
+  }
+
+  // Has been synced before
+  if (repo.lastIndexed) {
+    return (
+      <button
+        type="button"
+        className="repos-table__action-btn repos-table__action-btn--ghost"
+        onClick={onSync}
+        disabled={isSyncing}
+        title="Re-sync files"
+      >
+        {syncIcon}
+        <span>Re-sync</span>
+      </button>
+    )
+  }
+
+  // Never synced
+  return (
+    <button type="button" className="repos-table__action-btn" onClick={onSync} disabled={isSyncing}>
+      {syncIcon}
+      <span>Sync</span>
+    </button>
+  )
+}
+
+const embedIcon = (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="8" cy="8" r="2" fill="currentColor" />
+  </svg>
+)
+
+function EmbedStatusCell({
+  repo,
+  status,
+  onEmbed,
+  isEmbedding,
+  plexusId,
+}: {
+  repo: Repo
+  status?: EmbedStatus
+  onEmbed?: () => void
+  isEmbedding?: boolean
+  plexusId: string
+}) {
+  const detailHref = `/plexus/${plexusId}/repos/${repo.id}`
+
+  // Currently embedding - show progress bar (clickable to view details)
+  if (isEmbedding && status) {
+    const percent =
+      status.totalFiles > 0 ? Math.round((status.processedFiles / status.totalFiles) * 100) : 0
+
+    const statusText =
+      status.status === 'CHUNKING'
+        ? 'Chunking...'
+        : status.status === 'EMBEDDING'
+          ? `${status.embeddingsGenerated || 0} vectors`
+          : `${status.processedFiles}/${status.totalFiles}`
+
+    return (
+      <a href={detailHref} className="repos-table__progress-cell repos-table__progress-link">
+        <div className="repos-table__progress-bar">
+          <div className="repos-table__progress-fill" style={{ width: `${percent}%` }} />
+        </div>
+        <span className="repos-table__progress-text">{statusText}</span>
+      </a>
+    )
+  }
+
+  // Embed failed
+  if (status?.status === 'FAILED') {
+    return (
+      <button
+        type="button"
+        className="repos-table__action-btn repos-table__action-btn--danger"
+        onClick={onEmbed}
+        title={status.error}
+      >
+        {embedIcon}
+        <span>Retry</span>
+      </button>
+    )
+  }
+
+  // Not synced yet - can't embed
+  if (!repo.lastIndexed) {
+    return <span className="repos-table__status-muted">—</span>
+  }
+
+  // Has embeddings but they're out of date
+  if (repo.isEmbeddingOutdated) {
+    return (
+      <button
+        type="button"
+        className="repos-table__action-btn repos-table__action-btn--warning"
+        onClick={onEmbed}
+        disabled={isEmbedding}
+      >
+        {embedIcon}
+        <span>Update</span>
+      </button>
+    )
+  }
+
+  // Has been embedded before
+  if (repo.lastEmbedded) {
+    return (
+      <button
+        type="button"
+        className="repos-table__action-btn repos-table__action-btn--ghost"
+        onClick={onEmbed}
+        disabled={isEmbedding}
+        title="Re-run embeddings"
+      >
+        {embedIcon}
+        <span>Re-run</span>
+      </button>
+    )
+  }
+
+  // Never embedded - show "Embed" button
   return (
     <button
       type="button"
-      className="repos-table__sync-button"
-      onClick={onSync}
-      disabled={isSyncing}
+      className="repos-table__action-btn"
+      onClick={onEmbed}
+      disabled={isEmbedding}
     >
-      {syncIcon}
-      Sync
+      {embedIcon}
+      <span>Embed</span>
     </button>
   )
 }
 
 function createColumns(
+  plexusId: string,
   onSync?: (repoId: string) => void,
+  onEmbed?: (repoId: string) => void,
   getSyncStatus?: (repoId: string) => SyncStatus | undefined,
+  getEmbedStatus?: (repoId: string) => EmbedStatus | undefined,
   isSyncing?: (repoId: string) => boolean,
+  isEmbedding?: (repoId: string) => boolean,
   getRepoHref?: (repoId: string) => string,
 ): TableColumn<Repo>[] {
   const columns: TableColumn<Repo>[] = [
@@ -268,32 +359,37 @@ function createColumns(
       },
     },
     {
-      header: 'Last Indexed',
+      header: 'Last Synced',
       accessor: (repo) => formatTimeAgo(repo.lastIndexed),
       className: 'repos-table__last-indexed',
     },
     {
-      header: 'Added',
-      accessor: (repo) => formatTimeAgo(repo.createdAt),
-      className: 'repos-table__created',
-    },
-  ]
-
-  // Add sync column if sync handlers or href is provided
-  if (onSync || getRepoHref) {
-    columns.push({
-      header: '',
+      header: 'Files',
       accessor: (repo) => (
         <SyncStatusCell
+          repo={repo}
           status={getSyncStatus?.(repo.id)}
           onSync={onSync ? () => onSync(repo.id) : undefined}
           isSyncing={isSyncing?.(repo.id)}
-          href={getRepoHref?.(repo.id)}
+          plexusId={plexusId}
         />
       ),
       className: 'repos-table__sync-column',
-    })
-  }
+    },
+    {
+      header: 'Embeddings',
+      accessor: (repo) => (
+        <EmbedStatusCell
+          repo={repo}
+          status={getEmbedStatus?.(repo.id)}
+          onEmbed={onEmbed ? () => onEmbed(repo.id) : undefined}
+          isEmbedding={isEmbedding?.(repo.id)}
+          plexusId={plexusId}
+        />
+      ),
+      className: 'repos-table__embed-column',
+    },
+  ]
 
   return columns
 }
@@ -301,12 +397,25 @@ function createColumns(
 export function ReposTable({
   repos,
   className,
+  plexusId,
   onSync,
+  onEmbed,
   getSyncStatus,
+  getEmbedStatus,
   isSyncing,
+  isEmbedding,
   getRepoHref,
 }: ReposTableProps) {
-  const columns = createColumns(onSync, getSyncStatus, isSyncing, getRepoHref)
+  const columns = createColumns(
+    plexusId,
+    onSync,
+    onEmbed,
+    getSyncStatus,
+    getEmbedStatus,
+    isSyncing,
+    isEmbedding,
+    getRepoHref,
+  )
 
   return (
     <Table

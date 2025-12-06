@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { db } from '@symploke/db'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { getInstallationOctokit } from '@/lib/github-app'
 

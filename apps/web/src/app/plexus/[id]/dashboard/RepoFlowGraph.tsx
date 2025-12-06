@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -10,10 +10,14 @@ import {
   useEdgesState,
   Handle,
   Position,
+  EdgeLabelRenderer,
+  getBezierPath,
   type Node,
   type Edge,
   type NodeProps,
+  type EdgeProps,
 } from '@xyflow/react'
+import type { WeaveType } from '@symploke/db'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
 
@@ -29,8 +33,24 @@ type Repo = {
   }
 }
 
+type Weave = {
+  id: string
+  sourceRepoId: string
+  targetRepoId: string
+  type: WeaveType
+  title: string
+  description: string
+  score: number
+  sourceRepo: { name: string }
+  targetRepo: { name: string }
+}
+
 type RepoNodeData = {
   repo: Repo
+}
+
+type WeaveEdgeData = {
+  weave: Weave
 }
 
 function formatTimeAgo(date: Date | string | null): string {
@@ -115,7 +135,102 @@ function RepoNode({ data }: NodeProps<Node<RepoNodeData>>) {
       </div>
 
       <Handle type="source" position={Position.Bottom} className="repo-node__handle" />
+      <Handle type="source" position={Position.Left} id="left" className="repo-node__handle" />
+      <Handle type="target" position={Position.Right} id="right" className="repo-node__handle" />
     </div>
+  )
+}
+
+function WeaveEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+  markerEnd,
+}: EdgeProps<Edge<WeaveEdgeData>>) {
+  const [isHovered, setIsHovered] = useState(false)
+  const weave = data?.weave
+
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    curvature: 0.25,
+  })
+
+  if (!weave) return null
+
+  const scorePercent = Math.round(weave.score * 100)
+
+  return (
+    <>
+      {/* Invisible wider path for easier hover */}
+      <path
+        id={`${id}-hitarea`}
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={20}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      />
+      {/* Visible edge */}
+      <path
+        id={id}
+        d={edgePath}
+        fill="none"
+        stroke={isHovered ? 'var(--color-primary)' : 'var(--color-weave-edge)'}
+        strokeWidth={isHovered ? 3 : 2}
+        markerEnd={markerEnd}
+        className="weave-edge__path"
+        style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
+      />
+      <EdgeLabelRenderer>
+        <div
+          className={`weave-edge__label ${isHovered ? 'weave-edge__label--hovered' : ''}`}
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+            pointerEvents: 'all',
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <span className="weave-edge__title">{weave.title}</span>
+          <span className="weave-edge__score">{scorePercent}%</span>
+
+          {isHovered && (
+            <div className="weave-edge__tooltip">
+              <div className="weave-edge__tooltip-header">
+                <span className="weave-edge__tooltip-title">{weave.title}</span>
+                <span className="weave-edge__tooltip-score">{scorePercent}% match</span>
+              </div>
+              <p className="weave-edge__tooltip-description">{weave.description}</p>
+              <div className="weave-edge__tooltip-repos">
+                <span>{weave.sourceRepo.name}</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M6 4L10 8L6 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{weave.targetRepo.name}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </EdgeLabelRenderer>
+    </>
   )
 }
 
@@ -123,11 +238,15 @@ const nodeTypes = {
   repo: RepoNode,
 }
 
+const edgeTypes = {
+  weave: WeaveEdge,
+}
+
 function calculateNodePositions(repos: Repo[]): Node<RepoNodeData>[] {
   const nodeWidth = 240
   const nodeHeight = 160
-  const horizontalGap = 60
-  const verticalGap = 40
+  const horizontalGap = 100
+  const verticalGap = 80
   const nodesPerRow = Math.ceil(Math.sqrt(repos.length))
 
   return repos.map((repo, index) => {
@@ -146,14 +265,64 @@ function calculateNodePositions(repos: Repo[]): Node<RepoNodeData>[] {
   })
 }
 
+function createEdgesFromWeaves(
+  weaves: Weave[],
+  nodes: Node<RepoNodeData>[],
+): Edge<WeaveEdgeData>[] {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+
+  return weaves.map((weave) => {
+    const sourceNode = nodeMap.get(weave.sourceRepoId)
+    const targetNode = nodeMap.get(weave.targetRepoId)
+
+    // Determine best connection points based on relative positions
+    let sourceHandle = 'bottom'
+    let targetHandle = 'top'
+
+    if (sourceNode && targetNode) {
+      const dx = targetNode.position.x - sourceNode.position.x
+      const dy = targetNode.position.y - sourceNode.position.y
+
+      // If target is more to the side than below/above, use side handles
+      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (dx > 0) {
+          sourceHandle = 'right'
+          targetHandle = 'left'
+        } else {
+          sourceHandle = 'left'
+          targetHandle = 'right'
+        }
+      } else if (dy < 0) {
+        sourceHandle = 'top'
+        targetHandle = 'bottom'
+      }
+    }
+
+    return {
+      id: `weave-${weave.id}`,
+      source: weave.sourceRepoId,
+      target: weave.targetRepoId,
+      sourceHandle: sourceHandle === 'bottom' ? undefined : sourceHandle,
+      targetHandle: targetHandle === 'top' ? undefined : targetHandle,
+      type: 'weave',
+      data: { weave },
+      animated: false,
+    }
+  })
+}
+
 export type RepoFlowGraphProps = {
   repos: Repo[]
+  weaves: Weave[]
   plexusId: string
 }
 
-export function RepoFlowGraph({ repos, plexusId }: RepoFlowGraphProps) {
+export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   const initialNodes = useMemo(() => calculateNodePositions(repos), [repos])
-  const initialEdges: Edge[] = useMemo(() => [], [])
+  const initialEdges = useMemo(
+    () => createEdgesFromWeaves(weaves, initialNodes),
+    [weaves, initialNodes],
+  )
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes)
   const [edges, , onEdgesChange] = useEdgesState(initialEdges)
@@ -191,6 +360,7 @@ export function RepoFlowGraph({ repos, plexusId }: RepoFlowGraphProps) {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.1}

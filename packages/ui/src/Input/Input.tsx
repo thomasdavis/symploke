@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Input as BaseInput } from '@base-ui-components/react/input'
+import * as React from 'react'
 import '@symploke/design/components/input.css'
 
 export const Input = React.forwardRef<

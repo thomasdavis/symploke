@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Toast as BaseToast } from '@base-ui-components/react/toast'
+import * as React from 'react'
 import '@symploke/design/components/toast.css'
 
 const Provider: typeof BaseToast.Provider = BaseToast.Provider

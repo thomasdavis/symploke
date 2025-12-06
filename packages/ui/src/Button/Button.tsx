@@ -1,5 +1,5 @@
-import type * as React from 'react'
 import { Button as BaseButton } from '@base-ui-components/react/button'
+import type * as React from 'react'
 import '@symploke/design/components/button.css'
 
 export type ButtonProps = React.ComponentPropsWithoutRef<typeof BaseButton> & {

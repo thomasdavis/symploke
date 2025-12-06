@@ -1,6 +1,7 @@
 // @ts-nocheck - Base UI menubar package has incomplete type exports
-import * as React from 'react'
+
 import * as BaseMenubar from '@base-ui-components/react/menubar'
+import * as React from 'react'
 import '@symploke/design/components/menubar.css'
 
 const Root = React.forwardRef<

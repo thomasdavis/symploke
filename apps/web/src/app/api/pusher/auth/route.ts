@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import Pusher from 'pusher'
 import { db } from '@symploke/db'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import Pusher from 'pusher'
 import { auth } from '@/lib/auth'
 
 // Initialize Pusher server

@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { AlertDialog as BaseAlertDialog } from '@base-ui-components/react/alert-dialog'
+import * as React from 'react'
 import '@symploke/design/components/alert-dialog.css'
 
 const Root = BaseAlertDialog.Root

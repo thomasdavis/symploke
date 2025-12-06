@@ -1,7 +1,8 @@
-import { db, SyncJobStatus } from '@symploke/db'
+import { db, SyncJobStatus, ChunkJobStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
 import { config } from '../config.js'
 import { syncRepo, failJob } from '../sync/repo-sync.js'
+import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
 import { getPusherService } from '../pusher/service.js'
 
 /**
@@ -67,8 +68,10 @@ export class QueueProcessor {
    * Process the next pending job
    */
   private async processNextJob(): Promise<void> {
-    // Find next pending job (oldest first)
-    const job = await db.repoSyncJob.findFirst({
+    const pusher = getPusherService()
+
+    // Check for pending sync jobs first
+    const syncJob = await db.repoSyncJob.findFirst({
       where: {
         status: SyncJobStatus.PENDING,
       },
@@ -77,24 +80,49 @@ export class QueueProcessor {
       },
     })
 
-    if (!job) {
-      return // No jobs to process
+    if (syncJob) {
+      this.currentJobId = syncJob.id
+      logger.info({ jobId: syncJob.id, repoId: syncJob.repoId }, 'Processing sync job')
+
+      try {
+        await syncRepo(syncJob, pusher)
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        logger.error({ error, jobId: syncJob.id }, 'Sync job failed')
+        await failJob(syncJob.id, message, pusher)
+      } finally {
+        this.currentJobId = null
+      }
+      return
     }
 
-    this.currentJobId = job.id
-    logger.info({ jobId: job.id, repoId: job.repoId }, 'Processing sync job')
+    // Check for pending chunk/embed jobs
+    const chunkJob = await db.chunkSyncJob.findFirst({
+      where: {
+        status: ChunkJobStatus.PENDING,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
 
-    const pusher = getPusherService()
+    if (chunkJob) {
+      this.currentJobId = chunkJob.id
+      logger.info({ jobId: chunkJob.id, repoId: chunkJob.repoId }, 'Processing chunk job')
 
-    try {
-      await syncRepo(job, pusher)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error)
-      logger.error({ error, jobId: job.id }, 'Sync job failed')
-      await failJob(job.id, message, pusher)
-    } finally {
-      this.currentJobId = null
+      try {
+        await embedRepo(chunkJob, pusher)
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        logger.error({ error, jobId: chunkJob.id }, 'Chunk job failed')
+        await failChunkJob(chunkJob.id, message, pusher)
+      } finally {
+        this.currentJobId = null
+      }
+      return
     }
+
+    // No jobs to process
   }
 
   /**
@@ -182,6 +210,80 @@ export async function listJobs(options?: {
   limit?: number
 }) {
   return db.repoSyncJob.findMany({
+    where: {
+      ...(options?.status && { status: options.status }),
+      ...(options?.repoId && { repoId: options.repoId }),
+    },
+    orderBy: { createdAt: 'desc' },
+    take: options?.limit || 20,
+    include: {
+      repo: {
+        select: { name: true, fullName: true },
+      },
+    },
+  })
+}
+
+/**
+ * Create a new chunk/embed job for a repository
+ */
+export async function createChunkJob(
+  repoId: string,
+  config?: {
+    chunkSize?: number
+    overlap?: number
+  },
+): Promise<string> {
+  // Check if there's already a pending or in-progress chunk job for this repo
+  const existingJob = await db.chunkSyncJob.findFirst({
+    where: {
+      repoId,
+      status: {
+        in: [ChunkJobStatus.PENDING, ChunkJobStatus.CHUNKING, ChunkJobStatus.EMBEDDING],
+      },
+    },
+  })
+
+  if (existingJob) {
+    logger.warn({ repoId, existingJobId: existingJob.id }, 'Chunk job already exists for repo')
+    return existingJob.id
+  }
+
+  // Create new job
+  const job = await db.chunkSyncJob.create({
+    data: {
+      repoId,
+      config: config ?? undefined,
+    },
+  })
+
+  logger.info({ jobId: job.id, repoId }, 'Created chunk job')
+  return job.id
+}
+
+/**
+ * Get chunk job status
+ */
+export async function getChunkJobStatus(jobId: string) {
+  return db.chunkSyncJob.findUnique({
+    where: { id: jobId },
+    include: {
+      repo: {
+        select: { name: true, fullName: true },
+      },
+    },
+  })
+}
+
+/**
+ * List chunk jobs with optional filtering
+ */
+export async function listChunkJobs(options?: {
+  status?: ChunkJobStatus
+  repoId?: string
+  limit?: number
+}) {
+  return db.chunkSyncJob.findMany({
     where: {
       ...(options?.status && { status: options.status }),
       ...(options?.repoId && { repoId: options.repoId }),

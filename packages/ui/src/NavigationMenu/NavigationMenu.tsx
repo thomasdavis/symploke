@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { NavigationMenu as BaseNavigationMenu } from '@base-ui-components/react/navigation-menu'
+import * as React from 'react'
 import '@symploke/design/components/navigation-menu.css'
 
 const Root = React.forwardRef<

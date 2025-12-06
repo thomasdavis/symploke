@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { Menu as BaseMenu } from '@base-ui-components/react/menu'
+import * as React from 'react'
 import '@symploke/design/components/menu.css'
 
 const Root = BaseMenu.Root

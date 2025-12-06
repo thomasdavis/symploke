@@ -81,9 +81,10 @@ model Plexus {
   slug      String   @unique
   createdAt DateTime @default(now())
 
-  members PlexusMember[]
-  repos   Repo[]
-  weaves  Weave[]
+  members       PlexusMember[]
+  repos         Repo[]
+  weaves        Weave[]
+  discoveryRuns WeaveDiscoveryRun[]
 
   @@map("plexuses")
 }
@@ -113,11 +114,12 @@ model Repo {
   lastCommitSha  String?   // SHA of last processed commit (for delta sync)
   createdAt      DateTime  @default(now())
 
-  plexus       Plexus        @relation(fields: [plexusId], references: [id], onDelete: Cascade)
-  files        File[]
-  syncJobs     RepoSyncJob[]
-  sourceWeaves Weave[]       @relation("SourceRepo")
-  targetWeaves Weave[]       @relation("TargetRepo")
+  plexus        Plexus         @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  files         File[]
+  syncJobs      RepoSyncJob[]
+  chunkSyncJobs ChunkSyncJob[]
+  sourceWeaves  Weave[]        @relation("SourceRepo")
+  targetWeaves  Weave[]        @relation("TargetRepo")
 
   @@unique([plexusId, fullName])
   @@map("repos")
@@ -220,39 +222,82 @@ model GitHubRateLimit {
 // === Embeddings ===
 
 model Chunk {
-  id        String                      @id @default(cuid())
-  fileId    String
-  content   String
-  startLine Int
-  endLine   Int
-  embedding Unsupported("vector(3072)") // text-embedding-3-large
+  id         String                       @id @default(cuid())
+  fileId     String
+  content    String
+  startChar  Int                          // Character offset from start of file
+  endChar    Int                          // End character offset
+  chunkIndex Int                          // 0-based index within file
+  tokenCount Int?                         // Approximate token count
+  embedding  Unsupported("vector(3072)")? // text-embedding-3-large (nullable until embeddings generated)
+  embeddedAt DateTime?                    // When embedding was generated
+  createdAt  DateTime                     @default(now())
 
   file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
-  @@index([embedding])
+  @@index([fileId])
+  // Note: pgvector index created manually via SQL (ivfflat or hnsw) - Prisma doesn't support vector indexes
   @@map("chunks")
+}
+
+// === Chunk Sync Jobs ===
+
+model ChunkSyncJob {
+  id                  String          @id @default(cuid())
+  repoId              String
+  status              ChunkJobStatus  @default(PENDING)
+  totalFiles          Int?            // Files with content to process
+  processedFiles      Int             @default(0)
+  chunksCreated       Int             @default(0)
+  embeddingsGenerated Int             @default(0)
+  skippedFiles        Int             @default(0)
+  failedFiles         Int             @default(0)
+  error               String?         // Error message if failed
+  config              Json?           // { chunkSize, overlap }
+  startedAt           DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime        @default(now())
+
+  repo Repo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([repoId, createdAt])
+  @@map("chunk_sync_jobs")
+}
+
+enum ChunkJobStatus {
+  PENDING
+  CHUNKING
+  EMBEDDING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
 
 // === Weaves ===
 
 model Weave {
-  id           String    @id @default(cuid())
-  plexusId     String
-  sourceRepoId String
-  targetRepoId String
-  type         WeaveType
-  title        String    // "Shared auth implementation"
-  description  String    // AI-generated explanation
-  score        Float     // similarity score
-  dismissed    Boolean   @default(false)
-  createdAt    DateTime  @default(now())
+  id              String             @id @default(cuid())
+  plexusId        String
+  sourceRepoId    String
+  targetRepoId    String
+  discoveryRunId  String?
+  type            WeaveType
+  title           String             // "Shared auth implementation"
+  description     String             // AI-generated explanation
+  score           Float              // similarity score
+  metadata        Json?              // File pairs, chunk matches, and other details
+  dismissed       Boolean            @default(false)
+  createdAt       DateTime           @default(now())
 
-  plexus     Plexus    @relation(fields: [plexusId], references: [id], onDelete: Cascade)
-  sourceRepo Repo      @relation("SourceRepo", fields: [sourceRepoId], references: [id], onDelete: Cascade)
-  targetRepo Repo      @relation("TargetRepo", fields: [targetRepoId], references: [id], onDelete: Cascade)
-  comments   Comment[]
+  plexus       Plexus             @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  sourceRepo   Repo               @relation("SourceRepo", fields: [sourceRepoId], references: [id], onDelete: Cascade)
+  targetRepo   Repo               @relation("TargetRepo", fields: [targetRepoId], references: [id], onDelete: Cascade)
+  discoveryRun WeaveDiscoveryRun? @relation(fields: [discoveryRunId], references: [id], onDelete: SetNull)
+  comments     Comment[]
 
   @@index([plexusId, createdAt])
+  @@index([discoveryRunId])
   @@map("weaves")
 }
 
@@ -276,4 +321,34 @@ model Comment {
 
   @@index([weaveId, createdAt])
   @@map("comments")
+}
+
+// === Weave Discovery Runs ===
+
+model WeaveDiscoveryRun {
+  id               String                 @id @default(cuid())
+  plexusId         String
+  status           WeaveDiscoveryStatus   @default(RUNNING)
+  config           Json?                  // Threshold, options, etc.
+  repoPairsTotal   Int                    @default(0)
+  repoPairsChecked Int                    @default(0)
+  candidatesFound  Int                    @default(0)
+  weavesSaved      Int                    @default(0)
+  weavesSkipped    Int                    @default(0)
+  error            String?
+  logs             Json?                  // Detailed logs for debugging
+  startedAt        DateTime               @default(now())
+  completedAt      DateTime?
+
+  plexus Plexus  @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  weaves Weave[]
+
+  @@index([plexusId, startedAt])
+  @@map("weave_discovery_runs")
+}
+
+enum WeaveDiscoveryStatus {
+  RUNNING
+  COMPLETED
+  FAILED
 }
