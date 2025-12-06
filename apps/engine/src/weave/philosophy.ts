@@ -309,7 +309,7 @@ export const SCHIZOSOPHY_RULES: Array<{
     description: 'Both repos fight the same conceptual enemy',
     match: (source, target) => source.antagonist === target.antagonist,
     confidence: 0.7,
-    hypothesis: (source, target) =>
+    hypothesis: (source, _target) =>
       `Both fight ${source.antagonist}. They could share strategies or become complementary tools.`,
   },
   {
@@ -329,7 +329,7 @@ export const SCHIZOSOPHY_RULES: Array<{
     description: 'Both repos use the same approach to truth-seeking',
     match: (source, target) => source.epistemology === target.epistemology,
     confidence: 0.6,
-    hypothesis: (source, target) =>
+    hypothesis: (source, _target) =>
       `Both embody ${source.epistemology} epistemology. ` +
       `Developers who value one would appreciate the other.`,
   },
@@ -340,7 +340,7 @@ export const SCHIZOSOPHY_RULES: Array<{
       (source.cognitiveTransform === 'reveals' && target.cognitiveTransform === 'enforces') ||
       (source.cognitiveTransform === 'enforces' && target.cognitiveTransform === 'reveals'),
     confidence: 0.75,
-    hypothesis: (source, target) => {
+    hypothesis: (source, _target) => {
       const revealer = source.cognitiveTransform === 'reveals' ? 'Source' : 'Target'
       const enforcer = revealer === 'Source' ? 'Target' : 'Source'
       return (
@@ -503,7 +503,6 @@ Both repos embody **${sourceProfile.epistemology}** epistemology:
 **Value:** Developers who appreciate one will naturally appreciate the other.
 Cross-pollinate ideas, patterns, and approaches between the two communities.`
 
-    case 'shared_antagonist':
     default:
       return `## Shared Antagonist: ${sourceProfile.antagonist}
 
