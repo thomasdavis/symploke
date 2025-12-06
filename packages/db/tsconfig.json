@@ -1,7 +1,10 @@
 {
   "extends": "@symploke/tsconfig/base.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": "src"
   },
   "include": ["src"]
 }
