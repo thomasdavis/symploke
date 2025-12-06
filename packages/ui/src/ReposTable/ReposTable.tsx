@@ -216,14 +216,10 @@ function createColumns(
   const columns: TableColumn<Repo>[] = [
     {
       header: 'Repository',
-      accessor: (repo) => (
-        <div className="repos-table__repo-cell">
-          <a
-            href={repo.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="repos-table__repo-link"
-          >
+      accessor: (repo) => {
+        const repoHref = getRepoHref?.(repo.id)
+        const content = (
+          <>
             <svg
               width="16"
               height="16"
@@ -231,8 +227,8 @@ function createColumns(
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               className="repos-table__repo-icon"
+              aria-hidden="true"
             >
-              <title>Repository</title>
               <rect
                 x="2"
                 y="2"
@@ -248,9 +244,28 @@ function createColumns(
               <div className="repos-table__repo-name">{repo.name}</div>
               <div className="repos-table__repo-full-name">{repo.fullName}</div>
             </div>
-          </a>
-        </div>
-      ),
+          </>
+        )
+
+        return (
+          <div className="repos-table__repo-cell">
+            {repoHref ? (
+              <a href={repoHref} className="repos-table__repo-link">
+                {content}
+              </a>
+            ) : (
+              <a
+                href={repo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="repos-table__repo-link"
+              >
+                {content}
+              </a>
+            )}
+          </div>
+        )
+      },
     },
     {
       header: 'Last Indexed',
