@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import {
   ReactFlow,
   Background,
@@ -8,6 +8,8 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
   Handle,
   Position,
   EdgeLabelRenderer,
@@ -83,7 +85,11 @@ function RepoNode({ data }: NodeProps<Node<RepoNodeData>>) {
 
   return (
     <div className={`repo-node ${isIndexed ? 'repo-node--indexed' : 'repo-node--pending'}`}>
-      <Handle type="target" position={Position.Top} className="repo-node__handle" />
+      {/* Target handles - where edges can connect TO this node */}
+      <Handle type="target" position={Position.Top} id="top" className="repo-node__handle" />
+      <Handle type="target" position={Position.Left} id="left" className="repo-node__handle" />
+      <Handle type="target" position={Position.Right} id="right" className="repo-node__handle" />
+      <Handle type="target" position={Position.Bottom} id="bottom" className="repo-node__handle" />
 
       <div className="repo-node__header">
         <svg
@@ -134,9 +140,11 @@ function RepoNode({ data }: NodeProps<Node<RepoNodeData>>) {
         {isIndexed ? 'Indexed' : 'Not indexed'}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="repo-node__handle" />
+      {/* Source handles - where edges can connect FROM this node */}
+      <Handle type="source" position={Position.Top} id="top" className="repo-node__handle" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="repo-node__handle" />
       <Handle type="source" position={Position.Left} id="left" className="repo-node__handle" />
-      <Handle type="target" position={Position.Right} id="right" className="repo-node__handle" />
+      <Handle type="source" position={Position.Right} id="right" className="repo-node__handle" />
     </div>
   )
 }
@@ -171,29 +179,25 @@ function WeaveEdge({
 
   return (
     <>
-      {/* Invisible wider path for easier hover */}
-      <path
-        id={`${id}-hitarea`}
-        d={edgePath}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={20}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      />
-      {/* Visible edge */}
-      <path
-        id={id}
-        d={edgePath}
-        fill="none"
-        stroke={isHovered ? 'var(--color-primary)' : 'var(--color-weave-edge)'}
-        strokeWidth={isHovered ? 3 : 2}
-        markerEnd={markerEnd}
-        className="weave-edge__path"
-        style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
-      />
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover events for edge highlighting */}
+      <g onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+        {/* Invisible wider path for easier hover */}
+        <path id={`${id}-hitarea`} d={edgePath} fill="none" stroke="transparent" strokeWidth={20} />
+        {/* Visible edge */}
+        <path
+          id={id}
+          d={edgePath}
+          fill="none"
+          stroke={isHovered ? 'var(--color-primary)' : 'var(--color-weave-edge)'}
+          strokeWidth={isHovered ? 3 : 2}
+          markerEnd={markerEnd}
+          className="weave-edge__path"
+          style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
+        />
+      </g>
       <EdgeLabelRenderer>
-        <div
+        <button
+          type="button"
           className={`weave-edge__label ${isHovered ? 'weave-edge__label--hovered' : ''}`}
           style={{
             position: 'absolute',
@@ -215,7 +219,7 @@ function WeaveEdge({
               <p className="weave-edge__tooltip-description">{weave.description}</p>
               <div className="weave-edge__tooltip-repos">
                 <span>{weave.sourceRepo.name}</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path
                     d="M6 4L10 8L6 12"
                     stroke="currentColor"
@@ -228,7 +232,7 @@ function WeaveEdge({
               </div>
             </div>
           )}
-        </div>
+        </button>
       </EdgeLabelRenderer>
     </>
   )
@@ -243,21 +247,28 @@ const edgeTypes = {
 }
 
 function calculateNodePositions(repos: Repo[]): Node<RepoNodeData>[] {
-  const nodeWidth = 240
-  const nodeHeight = 160
-  const horizontalGap = 100
-  const verticalGap = 80
-  const nodesPerRow = Math.ceil(Math.sqrt(repos.length))
+  const nodeWidth = 260
+  const nodeHeight = 180
+  const horizontalGap = 120
+  const verticalGap = 100
+
+  // Use a wider aspect ratio for better visualization
+  const aspectRatio = 1.5
+  const totalNodes = repos.length
+  const nodesPerRow = Math.max(2, Math.ceil(Math.sqrt(totalNodes * aspectRatio)))
 
   return repos.map((repo, index) => {
     const row = Math.floor(index / nodesPerRow)
     const col = index % nodesPerRow
 
+    // Offset alternating rows for a more organic feel
+    const rowOffset = row % 2 === 1 ? (nodeWidth + horizontalGap) / 2 : 0
+
     return {
       id: repo.id,
       type: 'repo',
       position: {
-        x: col * (nodeWidth + horizontalGap),
+        x: col * (nodeWidth + horizontalGap) + rowOffset,
         y: row * (nodeHeight + verticalGap),
       },
       data: { repo },
@@ -302,8 +313,8 @@ function createEdgesFromWeaves(
       id: `weave-${weave.id}`,
       source: weave.sourceRepoId,
       target: weave.targetRepoId,
-      sourceHandle: sourceHandle === 'bottom' ? undefined : sourceHandle,
-      targetHandle: targetHandle === 'top' ? undefined : targetHandle,
+      sourceHandle,
+      targetHandle,
       type: 'weave',
       data: { weave },
       animated: false,
@@ -317,15 +328,28 @@ export type RepoFlowGraphProps = {
   plexusId: string
 }
 
-export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
-  const initialNodes = useMemo(() => calculateNodePositions(repos), [repos])
-  const initialEdges = useMemo(
-    () => createEdgesFromWeaves(weaves, initialNodes),
-    [weaves, initialNodes],
+function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
+  const { fitView } = useReactFlow()
+
+  const calculatedNodes = useMemo(() => calculateNodePositions(repos), [repos])
+  const calculatedEdges = useMemo(
+    () => createEdgesFromWeaves(weaves, calculatedNodes),
+    [weaves, calculatedNodes],
   )
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes)
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges)
+  const [nodes, setNodes, onNodesChange] = useNodesState(calculatedNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(calculatedEdges)
+
+  // Update nodes and edges when data changes (e.g., when discovery run filter changes)
+  useEffect(() => {
+    setNodes(calculatedNodes)
+    setEdges(calculatedEdges)
+    // Fit view after a small delay to let the nodes render
+    const timer = setTimeout(() => {
+      fitView({ padding: 0.2, duration: 300 })
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [calculatedNodes, calculatedEdges, setNodes, setEdges, fitView])
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -334,6 +358,39 @@ export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
     [plexusId],
   )
 
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={onNodeClick}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      fitView
+      fitViewOptions={{ padding: 0.2 }}
+      minZoom={0.1}
+      maxZoom={2}
+      defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+      proOptions={{ hideAttribution: true }}
+    >
+      <Background color="var(--color-border-subtle)" gap={20} size={1} />
+      <Controls className="repo-flow-controls" showInteractive={false} />
+      <MiniMap
+        className="repo-flow-minimap"
+        nodeColor={(node) => {
+          const data = node.data as RepoNodeData
+          return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+        }}
+        maskColor="rgba(0, 0, 0, 0.1)"
+        zoomable
+        pannable
+      />
+    </ReactFlow>
+  )
+}
+
+export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   if (repos.length === 0) {
     return (
       <div className="repo-flow-empty">
@@ -353,31 +410,9 @@ export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
 
   return (
     <div className="repo-flow-container">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-      >
-        <Background color="var(--color-border-subtle)" gap={20} size={1} />
-        <Controls className="repo-flow-controls" />
-        <MiniMap
-          className="repo-flow-minimap"
-          nodeColor={(node) => {
-            const data = node.data as RepoNodeData
-            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-          }}
-          maskColor="rgba(0, 0, 0, 0.1)"
-        />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <RepoFlowGraphInner repos={repos} weaves={weaves} plexusId={plexusId} />
+      </ReactFlowProvider>
     </div>
   )
 }

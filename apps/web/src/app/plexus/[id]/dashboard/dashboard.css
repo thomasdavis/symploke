@@ -129,14 +129,26 @@
 }
 
 .repo-node__handle {
-  width: 8px;
-  height: 8px;
-  background: var(--color-border);
-  border: 2px solid var(--color-bg);
+  width: 10px;
+  height: 10px;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.repo-node:hover .repo-node__handle {
+  opacity: 1;
 }
 
 .repo-node__handle:hover {
   background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Hide handles when there are active connections to prevent clutter */
+.react-flow__node.selected .repo-node__handle {
+  opacity: 1;
 }
 
 /* Empty state */
@@ -235,6 +247,11 @@
 }
 
 .weave-edge__label {
+  /* Reset button styles */
+  font-family: inherit;
+  font-size: var(--text-xs);
+  text-align: left;
+  /* Custom styling */
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -242,7 +259,6 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
-  font-size: var(--text-xs);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.15s ease;
