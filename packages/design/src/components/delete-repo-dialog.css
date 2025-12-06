@@ -1,0 +1,19 @@
+.delete-repo-dialog {
+  max-width: 28rem;
+}
+
+.delete-repo-dialog__error {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  background: oklch(from var(--color-danger) l c h / 0.1);
+  border: 1px solid oklch(from var(--color-danger) l c h / 0.2);
+  border-radius: var(--radius-md);
+}
+
+.delete-repo-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}

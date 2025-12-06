@@ -182,3 +182,28 @@
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
 }
+
+/* Actions column */
+.repos-table__actions-column {
+  width: 48px;
+  text-align: center;
+}
+
+/* Icon-only button variant */
+.repos-table__action-btn--icon {
+  min-width: unset;
+  padding: 6px;
+}
+
+/* Subtle danger - for delete button */
+.repos-table__action-btn--danger-subtle {
+  color: var(--color-fg-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.repos-table__action-btn--danger-subtle:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: oklch(from var(--color-danger) l c h / 0.1);
+  border-color: oklch(from var(--color-danger) l c h / 0.3);
+}

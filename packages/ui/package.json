@@ -17,6 +17,7 @@
     "./Collapsible/Collapsible": "./src/Collapsible/Collapsible.tsx",
     "./Combobox/Combobox": "./src/Combobox/Combobox.tsx",
     "./ContextMenu/ContextMenu": "./src/ContextMenu/ContextMenu.tsx",
+    "./DeleteRepoDialog/DeleteRepoDialog": "./src/DeleteRepoDialog/DeleteRepoDialog.tsx",
     "./Dialog/Dialog": "./src/Dialog/Dialog.tsx",
     "./DirectionProvider/DirectionProvider": "./src/DirectionProvider/DirectionProvider.tsx",
     "./EmptyState/EmptyState": "./src/EmptyState/EmptyState.tsx",

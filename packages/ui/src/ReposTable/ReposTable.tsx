@@ -41,6 +41,7 @@ export type ReposTableProps = {
   plexusId: string
   onSync?: (repoId: string) => void
   onEmbed?: (repoId: string) => void
+  onDelete?: (repoId: string, repoName: string) => void
   getSyncStatus?: (repoId: string) => SyncStatus | undefined
   getEmbedStatus?: (repoId: string) => EmbedStatus | undefined
   isSyncing?: (repoId: string) => boolean
@@ -192,6 +193,22 @@ const embedIcon = (
   </svg>
 )
 
+const deleteIcon = (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path
+      d="M6 4V2.5C6 2.22386 6.22386 2 6.5 2H9.5C9.77614 2 10 2.22386 10 2.5V4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M4 4L4.5 13.5C4.5 13.7761 4.72386 14 5 14H11C11.2761 14 11.5 13.7761 11.5 13.5L12 4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+)
+
 function EmbedStatusCell({
   repo,
   status,
@@ -298,6 +315,7 @@ function createColumns(
   plexusId: string,
   onSync?: (repoId: string) => void,
   onEmbed?: (repoId: string) => void,
+  onDelete?: (repoId: string, repoName: string) => void,
   getSyncStatus?: (repoId: string) => SyncStatus | undefined,
   getEmbedStatus?: (repoId: string) => EmbedStatus | undefined,
   isSyncing?: (repoId: string) => boolean,
@@ -389,6 +407,22 @@ function createColumns(
       ),
       className: 'repos-table__embed-column',
     },
+    {
+      header: '',
+      accessor: (repo) =>
+        onDelete ? (
+          <button
+            type="button"
+            className="repos-table__action-btn repos-table__action-btn--icon repos-table__action-btn--danger-subtle"
+            onClick={() => onDelete(repo.id, repo.fullName)}
+            title="Remove repository"
+            aria-label={`Remove ${repo.name}`}
+          >
+            {deleteIcon}
+          </button>
+        ) : null,
+      className: 'repos-table__actions-column',
+    },
   ]
 
   return columns
@@ -400,6 +434,7 @@ export function ReposTable({
   plexusId,
   onSync,
   onEmbed,
+  onDelete,
   getSyncStatus,
   getEmbedStatus,
   isSyncing,
@@ -410,6 +445,7 @@ export function ReposTable({
     plexusId,
     onSync,
     onEmbed,
+    onDelete,
     getSyncStatus,
     getEmbedStatus,
     isSyncing,

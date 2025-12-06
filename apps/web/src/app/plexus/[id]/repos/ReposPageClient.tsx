@@ -6,6 +6,7 @@ import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { ReposTable } from '@symploke/ui/ReposTable/ReposTable'
 import { AddRepoDialog } from '@symploke/ui/AddRepoDialog/AddRepoDialog'
+import { DeleteRepoDialog } from '@symploke/ui/DeleteRepoDialog/DeleteRepoDialog'
 import { useSyncProgress } from '@/hooks/useSyncProgress'
 import { useEmbedProgress } from '@/hooks/useEmbedProgress'
 import type { Repo, SyncStatus, EmbedStatus } from '@symploke/ui/ReposTable/ReposTable'
@@ -16,7 +17,10 @@ export type ReposPageClientProps = {
 }
 
 export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClientProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ repoId: string; repoName: string } | null>(
+    null,
+  )
   const queryClient = useQueryClient()
   const { getSyncStatus, isSyncing, triggerSync } = useSyncProgress(plexusId)
   const { getEmbedStatus, isEmbedding, triggerEmbed } = useEmbedProgress(plexusId)
@@ -87,12 +91,17 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
     return `/plexus/${plexusId}/repos/${repoId}`
   }
 
+  // Handle delete - open confirmation dialog
+  const handleDelete = (repoId: string, repoName: string) => {
+    setDeleteTarget({ repoId, repoName })
+  }
+
   return (
     <>
       <PageHeader
         title="Repositories"
         actions={
-          <Button variant="primary" onClick={() => setIsDialogOpen(true)}>
+          <Button variant="primary" onClick={() => setIsAddDialogOpen(true)}>
             Add Repository
           </Button>
         }
@@ -102,13 +111,23 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
         plexusId={plexusId}
         onSync={handleSync}
         onEmbed={handleEmbed}
+        onDelete={handleDelete}
         getSyncStatus={getSyncStatusForRepo}
         getEmbedStatus={getEmbedStatusForRepo}
         isSyncing={isSyncing}
         isEmbedding={isEmbedding}
         getRepoHref={getRepoHref}
       />
-      <AddRepoDialog plexusId={plexusId} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <AddRepoDialog plexusId={plexusId} open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <DeleteRepoDialog
+        plexusId={plexusId}
+        repoId={deleteTarget?.repoId ?? null}
+        repoName={deleteTarget?.repoName ?? null}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      />
     </>
   )
 }

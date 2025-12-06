@@ -22,6 +22,7 @@
     "./components/collapsible.css": "./src/components/collapsible.css",
     "./components/combobox.css": "./src/components/combobox.css",
     "./components/context-menu.css": "./src/components/context-menu.css",
+    "./components/delete-repo-dialog.css": "./src/components/delete-repo-dialog.css",
     "./components/dialog.css": "./src/components/dialog.css",
     "./components/direction-provider.css": "./src/components/direction-provider.css",
     "./components/empty-state.css": "./src/components/empty-state.css",

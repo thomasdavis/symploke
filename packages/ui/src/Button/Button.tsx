@@ -3,7 +3,7 @@ import type * as React from 'react'
 import '@symploke/design/components/button.css'
 
 export type ButtonProps = React.ComponentPropsWithoutRef<typeof BaseButton> & {
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
 }
 
