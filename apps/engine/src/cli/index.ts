@@ -790,4 +790,106 @@ program
     }
   })
 
+// Daily command - run sync, embed, and weave discovery for all repos in a plexus
+program
+  .command('daily')
+  .description('Run daily sync, embed, and weave discovery for all repos in a plexus')
+  .requiredOption('--plexus-id <id>', 'Plexus ID to process')
+  .option('--skip-sync', 'Skip file sync phase')
+  .option('--skip-embed', 'Skip embedding phase')
+  .option('--skip-weaves', 'Skip weave discovery phase')
+  .action(async (options) => {
+    try {
+      // Verify plexus exists
+      const plexus = await db.plexus.findUnique({
+        where: { id: options.plexusId },
+        select: { id: true, name: true, slug: true },
+      })
+
+      if (!plexus) {
+        console.error(`Plexus not found: ${options.plexusId}`)
+        process.exit(1)
+      }
+
+      console.log(`\n=== Daily Processing for ${plexus.name} (${plexus.slug}) ===\n`)
+
+      // Get all repos in the plexus
+      const repos = await db.repo.findMany({
+        where: { plexusId: plexus.id },
+        select: { id: true, name: true, fullName: true },
+      })
+
+      console.log(`Found ${repos.length} repositories\n`)
+
+      if (repos.length === 0) {
+        console.log('No repositories to process')
+        process.exit(0)
+      }
+
+      const pusher = getPusherService()
+
+      // Phase 1: Sync all repos
+      if (!options.skipSync) {
+        console.log('--- Phase 1: File Sync ---')
+        for (const repo of repos) {
+          console.log(`\nSyncing ${repo.fullName}...`)
+          try {
+            const job = await db.repoSyncJob.create({
+              data: { repoId: repo.id },
+            })
+            await syncRepo(job, pusher)
+            console.log(`  Sync completed for ${repo.fullName}`)
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`  Sync failed for ${repo.fullName}: ${message}`)
+          }
+        }
+        console.log('\nFile sync phase complete\n')
+      }
+
+      // Phase 2: Embed all repos
+      if (!options.skipEmbed) {
+        console.log('--- Phase 2: Embeddings ---')
+        for (const repo of repos) {
+          console.log(`\nEmbedding ${repo.fullName}...`)
+          try {
+            const job = await db.chunkSyncJob.create({
+              data: { repoId: repo.id },
+            })
+            await embedRepo(job, pusher)
+            console.log(`  Embedding completed for ${repo.fullName}`)
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`  Embedding failed for ${repo.fullName}: ${message}`)
+          }
+        }
+        console.log('\nEmbedding phase complete\n')
+      }
+
+      // Phase 3: Weave discovery
+      if (!options.skipWeaves) {
+        console.log('--- Phase 3: Weave Discovery ---')
+        try {
+          const result = await findWeaves(plexus.id, {
+            verbose: true,
+          })
+          console.log(`\nWeave discovery complete:`)
+          console.log(`  Repo pairs analyzed: ${result.repoPairs}`)
+          console.log(`  Candidates found: ${result.candidates.length}`)
+          console.log(`  Weaves saved: ${result.saved}`)
+          console.log(`  Weaves skipped: ${result.skipped}`)
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error)
+          console.error(`Weave discovery failed: ${message}`)
+        }
+        console.log('\nWeave discovery phase complete\n')
+      }
+
+      console.log('=== Daily processing complete ===')
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
 program.parse()

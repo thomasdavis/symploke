@@ -1,0 +1,121 @@
+name: Daily Processing
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      plexus_id:
+        description: 'Plexus ID to process (leave empty to process all)'
+        required: false
+        type: string
+      skip_sync:
+        description: 'Skip file sync phase'
+        required: false
+        type: boolean
+        default: false
+      skip_embed:
+        description: 'Skip embedding phase'
+        required: false
+        type: boolean
+        default: false
+      skip_weaves:
+        description: 'Skip weave discovery phase'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  daily-processing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @symploke/db db:generate
+
+      - name: Build packages
+        run: |
+          pnpm --filter @symploke/logger build
+          pnpm --filter @symploke/db build
+          pnpm --filter @symploke/ai build
+
+      - name: Get plexus IDs
+        id: plexuses
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "${{ inputs.plexus_id }}" ]; then
+            echo "plexus_ids=${{ inputs.plexus_id }}" >> $GITHUB_OUTPUT
+          else
+            # Get all plexus IDs from database
+            cd apps/engine
+            PLEXUS_IDS=$(pnpm tsx -e "
+              import { db } from '@symploke/db';
+              async function main() {
+                const plexuses = await db.plexus.findMany({ select: { id: true } });
+                console.log(plexuses.map(p => p.id).join(' '));
+                await db.\$disconnect();
+              }
+              main();
+            ")
+            echo "plexus_ids=$PLEXUS_IDS" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run daily processing
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          AUTH_GITHUB_APP_ID: ${{ secrets.AUTH_GITHUB_APP_ID }}
+          AUTH_GITHUB_APP_PRIVATE_KEY: ${{ secrets.AUTH_GITHUB_APP_PRIVATE_KEY }}
+        run: |
+          cd apps/engine
+
+          # Build flags
+          FLAGS=""
+          if [ "${{ inputs.skip_sync }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-sync"
+          fi
+          if [ "${{ inputs.skip_embed }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-embed"
+          fi
+          if [ "${{ inputs.skip_weaves }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-weaves"
+          fi
+
+          # Process each plexus
+          for PLEXUS_ID in ${{ steps.plexuses.outputs.plexus_ids }}; do
+            echo "Processing plexus: $PLEXUS_ID"
+            pnpm tsx src/cli/index.ts daily --plexus-id "$PLEXUS_ID" $FLAGS || true
+            echo "---"
+          done
+
+      - name: Notify Discord on failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -H "Content-Type: application/json" \
+              -d '{"embeds":[{"title":"Daily Processing Failed","description":"The daily sync/embed/weave job failed. Check GitHub Actions for details.","color":15548997,"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}' \
+              "$DISCORD_WEBHOOK"
+          fi

@@ -5,6 +5,7 @@ import { fetchRepoTree, getDefaultBranch } from './tree-fetcher.js'
 import { syncFile, deleteRemovedFiles } from './file-sync.js'
 import { checkFile } from '../utils/file-utils.js'
 import type { PusherService } from '../pusher/service.js'
+import { notifySyncCompleted } from '../discord/service.js'
 
 export interface SyncConfig {
   maxFiles?: number
@@ -392,6 +393,19 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     `Sync completed in ${durationSec}s`,
     `${processedFiles} processed, ${skippedFiles} skipped, ${failedFiles} failed`,
   )
+
+  // Send Discord notification
+  await notifySyncCompleted({
+    repoName: repo.name,
+    repoFullName: repo.fullName,
+    plexusName: repo.plexus.name,
+    totalFiles: entries.length,
+    processedFiles,
+    skippedFiles,
+    failedFiles,
+    duration,
+    jobId: job.id,
+  })
 }
 
 /**

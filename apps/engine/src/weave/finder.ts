@@ -3,6 +3,7 @@ import { logger } from '@symploke/logger'
 import { findTopSimilarChunks, getRepoChunkCounts } from './similarity.js'
 import type { WeaveCandidate, WeaveOptions, WeaveTypeHandler } from './types/base.js'
 import { IntegrationOpportunityWeave } from './types/integration-opportunity.js'
+import { notifyWeavesDiscovered } from '../discord/service.js'
 
 /**
  * Registry of all weave type handlers
@@ -66,6 +67,16 @@ export async function findWeaves(
   }
 
   log('info', 'Starting weave discovery', { plexusId, options })
+
+  // Fetch plexus info for notifications
+  const plexus = await db.plexus.findUnique({
+    where: { id: plexusId },
+    select: { name: true, slug: true },
+  })
+
+  if (!plexus) {
+    throw new Error(`Plexus not found: ${plexusId}`)
+  }
 
   // Create discovery run record
   const discoveryRun = await db.weaveDiscoveryRun.create({
@@ -349,6 +360,34 @@ export async function findWeaves(
       saved,
       skipped,
       duration: `${(duration / 1000).toFixed(1)}s`,
+    })
+
+    // Build weave info for Discord notification
+    const repoMap = new Map(repos.map((r) => [r.id, r]))
+    const weaveInfo = allCandidates.map((c) => {
+      const sourceRepo = repoMap.get(c.sourceRepoId)
+      const targetRepo = repoMap.get(c.targetRepoId)
+      return {
+        title: c.title,
+        description: c.description,
+        score: c.score,
+        sourceRepo: sourceRepo?.fullName || c.sourceRepoId,
+        targetRepo: targetRepo?.fullName || c.targetRepoId,
+        type: c.type,
+      }
+    })
+
+    // Send Discord notification
+    await notifyWeavesDiscovered({
+      plexusName: plexus.name,
+      plexusSlug: plexus.slug,
+      repoPairsAnalyzed: repoPairs.length,
+      candidatesFound: allCandidates.length,
+      weavesSaved: saved,
+      weavesSkipped: skipped,
+      duration,
+      runId: discoveryRun.id,
+      weaves: weaveInfo,
     })
 
     return finishRun(

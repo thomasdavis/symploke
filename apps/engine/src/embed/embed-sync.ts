@@ -8,6 +8,7 @@ import {
   type ChunkConfig,
 } from './chunker.js'
 import type { PusherService } from '../pusher/service.js'
+import { notifyEmbedCompleted } from '../discord/service.js'
 
 export interface EmbedProgressEvent {
   jobId: string
@@ -272,6 +273,18 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
     totalFiles: files.length,
     chunksCreated,
     embeddingsGenerated,
+  })
+
+  // Send Discord notification
+  await notifyEmbedCompleted({
+    repoName: repo.name,
+    repoFullName: repo.fullName,
+    plexusName: repo.plexus.name,
+    totalFiles: files.length,
+    chunksCreated,
+    embeddingsGenerated,
+    duration,
+    jobId: job.id,
   })
 }
 
