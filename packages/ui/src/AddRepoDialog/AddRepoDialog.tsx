@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dialog } from '../Dialog/Dialog'
 import { Button } from '../Button/Button'
+import { Input } from '../Input/Input'
 import '@symploke/design/components/add-repo-dialog.css'
 
 type Organization = {
@@ -24,7 +25,12 @@ type Repository = {
   language: string | null
   stargazers_count: number
   fork: boolean
+  created_at: string | null
+  updated_at: string | null
+  pushed_at: string | null
 }
+
+type SortOption = 'updated' | 'created' | 'name' | 'stars'
 
 type ApiError = Error & {
   code?: string
@@ -39,6 +45,8 @@ export type AddRepoDialogProps = {
 export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogProps) {
   const [selectedOrg, setSelectedOrg] = useState<string>('')
   const [selectedRepo, setSelectedRepo] = useState<number | null>(null)
+  const [filterText, setFilterText] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('updated')
   const queryClient = useQueryClient()
 
   // Fetch organizations
@@ -81,6 +89,42 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     retry: false,
   })
 
+  // Filter and sort repositories
+  const filteredAndSortedRepos = useMemo(() => {
+    if (!reposData?.repositories) return []
+
+    let repos = [...reposData.repositories]
+
+    // Filter by name or description
+    if (filterText.trim()) {
+      const search = filterText.toLowerCase()
+      repos = repos.filter(
+        (repo) =>
+          repo.name.toLowerCase().includes(search) ||
+          repo.full_name.toLowerCase().includes(search) ||
+          repo.description?.toLowerCase().includes(search),
+      )
+    }
+
+    // Sort
+    repos.sort((a, b) => {
+      switch (sortBy) {
+        case 'updated':
+          return new Date(b.pushed_at || 0).getTime() - new Date(a.pushed_at || 0).getTime()
+        case 'created':
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'stars':
+          return b.stargazers_count - a.stargazers_count
+        default:
+          return 0
+      }
+    })
+
+    return repos
+  }, [reposData?.repositories, filterText, sortBy])
+
   // Add repository mutation
   const addRepoMutation = useMutation({
     mutationFn: async (githubId: number) => {
@@ -121,6 +165,8 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
     if (!addRepoMutation.isPending) {
       setSelectedOrg('')
       setSelectedRepo(null)
+      setFilterText('')
+      setSortBy('updated')
       addRepoMutation.reset()
       onOpenChange(false)
     }
@@ -256,38 +302,71 @@ export function AddRepoDialog({ plexusId, open, onOpenChange }: AddRepoDialogPro
                       All repositories from this organization have been added.
                     </div>
                   ) : (
-                    <div className="add-repo-dialog__repo-list">
-                      {reposData?.repositories.map((repo) => (
-                        <button
-                          key={repo.id}
-                          type="button"
-                          className={`add-repo-dialog__repo-card ${
-                            selectedRepo === repo.id ? 'add-repo-dialog__repo-card--selected' : ''
-                          }`}
-                          onClick={() => setSelectedRepo(repo.id)}
-                          disabled={addRepoMutation.isPending}
+                    <>
+                      <div className="add-repo-dialog__filters">
+                        <Input
+                          placeholder="Filter repositories..."
+                          value={filterText}
+                          onChange={(e) => setFilterText(e.target.value)}
+                          className="add-repo-dialog__filter-input"
+                        />
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as SortOption)}
+                          className="add-repo-dialog__sort-select"
                         >
-                          <div className="add-repo-dialog__repo-info">
-                            <div className="add-repo-dialog__repo-name">{repo.name}</div>
-                            {repo.description && (
-                              <div className="add-repo-dialog__repo-description">
-                                {repo.description}
+                          <option value="updated">Last updated</option>
+                          <option value="created">Date created</option>
+                          <option value="name">Name</option>
+                          <option value="stars">Stars</option>
+                        </select>
+                      </div>
+                      <div className="add-repo-dialog__repo-count">
+                        {filteredAndSortedRepos.length === reposData?.repositories.length
+                          ? `${reposData?.repositories.length} repositories`
+                          : `${filteredAndSortedRepos.length} of ${reposData?.repositories.length} repositories`}
+                      </div>
+                      {filteredAndSortedRepos.length === 0 ? (
+                        <div className="add-repo-dialog__empty">
+                          No repositories match your filter.
+                        </div>
+                      ) : (
+                        <div className="add-repo-dialog__repo-list">
+                          {filteredAndSortedRepos.map((repo) => (
+                            <button
+                              key={repo.id}
+                              type="button"
+                              className={`add-repo-dialog__repo-card ${
+                                selectedRepo === repo.id
+                                  ? 'add-repo-dialog__repo-card--selected'
+                                  : ''
+                              }`}
+                              onClick={() => setSelectedRepo(repo.id)}
+                              disabled={addRepoMutation.isPending}
+                            >
+                              <div className="add-repo-dialog__repo-info">
+                                <div className="add-repo-dialog__repo-name">{repo.name}</div>
+                                {repo.description && (
+                                  <div className="add-repo-dialog__repo-description">
+                                    {repo.description}
+                                  </div>
+                                )}
+                                <div className="add-repo-dialog__repo-meta">
+                                  {repo.language && (
+                                    <span className="add-repo-dialog__repo-language">
+                                      {repo.language}
+                                    </span>
+                                  )}
+                                  {repo.private && (
+                                    <span className="add-repo-dialog__repo-badge">Private</span>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            <div className="add-repo-dialog__repo-meta">
-                              {repo.language && (
-                                <span className="add-repo-dialog__repo-language">
-                                  {repo.language}
-                                </span>
-                              )}
-                              {repo.private && (
-                                <span className="add-repo-dialog__repo-badge">Private</span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {addRepoMutation.isError && (

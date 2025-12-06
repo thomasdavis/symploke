@@ -86,10 +86,46 @@ export async function GET(request: NextRequest) {
     // Get installation-scoped Octokit
     const octokit = await getInstallationOctokit(installation.installationId)
 
-    // Fetch repositories the app has access to
-    const { data: installationRepos } = await octokit.request('GET /installation/repositories', {
-      per_page: 100,
-    })
+    // Fetch ALL repositories the app has access to (with pagination)
+    const allRepos: Array<{
+      id: number
+      name: string
+      full_name: string
+      description: string | null
+      html_url: string
+      private: boolean
+      language: string | null
+      stargazers_count: number
+      fork: boolean
+      created_at: string | null
+      updated_at: string | null
+      pushed_at: string | null
+    }> = []
+
+    let page = 1
+    const perPage = 100
+
+    while (true) {
+      const { data: installationRepos } = await octokit.request('GET /installation/repositories', {
+        per_page: perPage,
+        page,
+      })
+
+      allRepos.push(...installationRepos.repositories)
+
+      // Check if we've fetched all repos
+      if (installationRepos.repositories.length < perPage) {
+        break
+      }
+
+      page++
+
+      // Safety limit to prevent infinite loops
+      if (page > 50) {
+        console.warn('Hit pagination safety limit at 5000 repos')
+        break
+      }
+    }
 
     // Get existing repos in this plexus
     const existingRepos = await db.repo.findMany({
@@ -99,7 +135,7 @@ export async function GET(request: NextRequest) {
     const existingFullNames = new Set(existingRepos.map((r: { fullName: string }) => r.fullName))
 
     // Filter and map repositories
-    const repositories = installationRepos.repositories
+    const repositories = allRepos
       .filter((repo) => !existingFullNames.has(repo.full_name))
       .map((repo) => ({
         id: repo.id,
@@ -111,6 +147,9 @@ export async function GET(request: NextRequest) {
         language: repo.language,
         stargazers_count: repo.stargazers_count,
         fork: repo.fork,
+        created_at: repo.created_at,
+        updated_at: repo.updated_at,
+        pushed_at: repo.pushed_at,
       }))
 
     return NextResponse.json({ repositories })
