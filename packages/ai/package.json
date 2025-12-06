@@ -4,8 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./embeddings": "./src/embeddings.ts",
-    "./completion": "./src/completion.ts"
+    "./embeddings": {
+      "types": "./dist/embeddings.d.ts",
+      "import": "./dist/embeddings.js",
+      "default": "./src/embeddings.ts"
+    },
+    "./completion": {
+      "types": "./dist/completion.d.ts",
+      "import": "./dist/completion.js",
+      "default": "./src/completion.ts"
+    }
   },
   "scripts": {
     "build": "tsc",

@@ -13,6 +13,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 
 # Copy all package.json files for workspace
 COPY apps/engine/package.json ./apps/engine/
+COPY packages/ai/package.json ./packages/ai/
 COPY packages/db/package.json ./packages/db/
 COPY packages/logger/package.json ./packages/logger/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
@@ -25,6 +26,7 @@ RUN pnpm install --frozen-lockfile
 
 # Copy source files
 COPY packages/tsconfig ./packages/tsconfig
+COPY packages/ai ./packages/ai
 COPY packages/logger ./packages/logger
 COPY packages/db ./packages/db
 COPY apps/engine ./apps/engine
@@ -35,6 +37,7 @@ RUN pnpm --filter @symploke/db db:generate
 # Build the packages and engine
 RUN pnpm --filter @symploke/logger build
 RUN pnpm --filter @symploke/db build
+RUN pnpm --filter @symploke/ai build
 RUN pnpm --filter @symploke/engine build
 
 ENV NODE_ENV=production
