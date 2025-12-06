@@ -42,8 +42,19 @@ async function main() {
   const { logger } = await import('@symploke/logger')
   const { getQueueProcessor } = await import('./queue/processor.js')
   const { getPusherService } = await import('./pusher/service.js')
+  const { recoverStuckJobs } = await import('./queue/recovery.js')
 
   logger.info('Starting Symploke File Sync Engine...')
+
+  // Recover any jobs that were interrupted by the last restart
+  try {
+    const recovered = await recoverStuckJobs()
+    if (recovered.syncJobsRecovered > 0 || recovered.chunkJobsRecovered > 0) {
+      logger.info(recovered, 'Recovered stuck jobs from previous run')
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to recover stuck jobs, continuing startup')
+  }
 
   // Initialize Pusher service
   const pusher = getPusherService()
