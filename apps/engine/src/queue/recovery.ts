@@ -30,14 +30,17 @@ export async function recoverStuckJobs(): Promise<{
       'Found stuck sync jobs, resetting to PENDING',
     )
 
-    // Reset to PENDING so they'll be picked up again
+    // Reset to PENDING and clear progress counters since we'll restart from scratch
     await db.repoSyncJob.updateMany({
       where: {
         id: { in: stuckSyncJobs.map((j) => j.id) },
       },
       data: {
         status: SyncJobStatus.PENDING,
-        // Keep progress so we can potentially resume
+        processedFiles: 0,
+        skippedFiles: 0,
+        failedFiles: 0,
+        startedAt: null,
         error: 'Recovered after service restart',
       },
     })
@@ -59,13 +62,18 @@ export async function recoverStuckJobs(): Promise<{
       'Found stuck chunk jobs, resetting to PENDING',
     )
 
-    // Reset to PENDING so they'll be picked up again
+    // Reset to PENDING and clear progress counters since we'll restart from scratch
     await db.chunkSyncJob.updateMany({
       where: {
         id: { in: stuckChunkJobs.map((j) => j.id) },
       },
       data: {
         status: ChunkJobStatus.PENDING,
+        processedFiles: 0,
+        chunksCreated: 0,
+        embeddingsGenerated: 0,
+        failedFiles: 0,
+        startedAt: null,
         error: 'Recovered after service restart',
       },
     })
