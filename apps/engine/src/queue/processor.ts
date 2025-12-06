@@ -148,7 +148,7 @@ export async function createSyncJob(
   const job = await db.repoSyncJob.create({
     data: {
       repoId,
-      config: config || null,
+      config: config ?? undefined,
     },
   })
 

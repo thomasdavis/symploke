@@ -41,16 +41,13 @@ export default async function Home() {
           <div className="plexus-list">
             <h2 className="plexus-list-title">Your Plexuses</h2>
             <div className="plexus-items">
-              {userPlexuses.map((member: any) => (
+              {userPlexuses.map((member) => (
                 <a
                   key={member.plexus.id}
                   href={`/plexus/${member.plexus.id}/repos`}
                   className="plexus-link"
                 >
                   <h3 className="plexus-name">{member.plexus.name}</h3>
-                  {member.plexus.description && (
-                    <p className="plexus-description">{member.plexus.description}</p>
-                  )}
                 </a>
               ))}
             </div>

@@ -5,7 +5,7 @@ import { CreatePlexusSchema, PlexusSchema } from '@symploke/api/schemas'
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return jsonError('Unauthorized', 401)
   }
 

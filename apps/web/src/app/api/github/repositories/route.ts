@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           error: {
             code: 'NO_INSTALLATION',
             message: `GitHub App not installed for ${org}. Please install the app first.`,
-            availableInstallations: allInstallations.map((i: any) => i.accountLogin),
+            availableInstallations: allInstallations.map((inst) => inst.accountLogin),
           },
         },
         { status: 404 },

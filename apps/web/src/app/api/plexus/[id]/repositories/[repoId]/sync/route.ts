@@ -63,7 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Parse optional config from request body
-    let config = null
+    let config: z.infer<typeof syncConfigSchema> = undefined
     try {
       const body = await request.json()
       const validation = syncConfigSchema.safeParse(body)

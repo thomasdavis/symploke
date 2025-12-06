@@ -17,11 +17,11 @@ export async function GET() {
 
     return NextResponse.json({
       count: installations.length,
-      installations: installations.map((i: any) => ({
-        installationId: i.installationId,
-        accountLogin: i.accountLogin,
-        accountType: i.accountType,
-        createdAt: i.createdAt,
+      installations: installations.map((installation) => ({
+        installationId: installation.installationId,
+        accountLogin: installation.accountLogin,
+        accountType: installation.accountType,
+        createdAt: installation.createdAt,
       })),
     })
   } catch (error) {
