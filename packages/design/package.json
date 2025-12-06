@@ -24,6 +24,7 @@
     "./components/direction-provider.css": "./src/components/direction-provider.css",
     "./components/empty-state.css": "./src/components/empty-state.css",
     "./components/field.css": "./src/components/field.css",
+    "./components/files-table.css": "./src/components/files-table.css",
     "./components/form-error.css": "./src/components/form-error.css",
     "./components/fieldset.css": "./src/components/fieldset.css",
     "./components/form.css": "./src/components/form.css",
