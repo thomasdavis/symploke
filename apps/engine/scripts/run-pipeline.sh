@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Symploke Full Pipeline Script
-# Runs: sync → embed → weave discovery (v2) for a plexus
+# Runs: sync → embed → weave discovery for a plexus
 # Uses incremental processing (only processes changed files based on SHA)
 
 set -e
@@ -18,9 +18,6 @@ PLEXUS_ID=""
 SKIP_SYNC=false
 SKIP_EMBED=false
 SKIP_WEAVES=false
-WEAVE_VERSION="v2"
-DRY_RUN=false
-VERBOSE=false
 
 # Print usage
 usage() {
@@ -31,9 +28,6 @@ usage() {
     echo "  --skip-sync        Skip the file sync phase"
     echo "  --skip-embed       Skip the embedding phase"
     echo "  --skip-weaves      Skip the weave discovery phase"
-    echo "  --weave-v1         Use v1 weave discovery (similarity-based) instead of v2"
-    echo "  --dry-run          Don't save weaves to database"
-    echo "  --verbose          Enable verbose output"
     echo "  --help             Show this help message"
     echo ""
     echo "Incremental Processing:"
@@ -45,7 +39,6 @@ usage() {
     echo "  $0 --plexus-id abc123                  # Full pipeline"
     echo "  $0 --plexus-id abc123 --skip-sync      # Only embed + weave"
     echo "  $0 --plexus-id abc123 --skip-weaves    # Only sync + embed"
-    echo "  $0 --plexus-id abc123 --dry-run        # Test weave discovery"
     exit 1
 }
 
@@ -66,18 +59,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-weaves)
             SKIP_WEAVES=true
-            shift
-            ;;
-        --weave-v1)
-            WEAVE_VERSION="v1"
-            shift
-            ;;
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-        --verbose)
-            VERBOSE=true
             shift
             ;;
         --help)
@@ -109,8 +90,6 @@ echo -e "Plexus ID: ${GREEN}$PLEXUS_ID${NC}"
 echo -e "Skip Sync: $SKIP_SYNC"
 echo -e "Skip Embed: $SKIP_EMBED"
 echo -e "Skip Weaves: $SKIP_WEAVES"
-echo -e "Weave Version: $WEAVE_VERSION"
-echo -e "Dry Run: $DRY_RUN"
 echo ""
 
 START_TIME=$(date +%s)
@@ -130,27 +109,9 @@ if [[ "$SKIP_WEAVES" == "true" ]]; then
     DAILY_OPTS="$DAILY_OPTS --skip-weaves"
 fi
 
-# Run the daily command (sync + embed)
-echo -e "${YELLOW}Phase 1-2: Sync and Embed${NC}"
+# Run the daily command
+echo -e "${YELLOW}Running pipeline...${NC}"
 npx tsx src/cli/index.ts daily $DAILY_OPTS
-
-# If we're running weaves separately with v2
-if [[ "$SKIP_WEAVES" == "false" && "$WEAVE_VERSION" == "v2" ]]; then
-    echo ""
-    echo -e "${YELLOW}Phase 3: Weave Discovery (v2 - Ontology-First)${NC}"
-
-    WEAVE_OPTS="--plexus-id $PLEXUS_ID"
-
-    if [[ "$DRY_RUN" == "true" ]]; then
-        WEAVE_OPTS="$WEAVE_OPTS --dry-run"
-    fi
-
-    if [[ "$VERBOSE" == "true" ]]; then
-        WEAVE_OPTS="$WEAVE_OPTS --verbose"
-    fi
-
-    npx tsx src/cli/index.ts find-weaves-v2 $WEAVE_OPTS
-fi
 
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))

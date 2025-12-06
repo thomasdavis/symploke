@@ -1032,18 +1032,19 @@ program
         console.log('\nEmbedding phase complete\n')
       }
 
-      // Phase 3: Weave discovery
+      // Phase 3: Weave discovery (using ontology-first v2 approach)
       if (!options.skipWeaves) {
-        console.log('--- Phase 3: Weave Discovery ---')
+        console.log('--- Phase 3: Weave Discovery (Ontology-First) ---')
         try {
-          const result = await findWeaves(plexus.id, {
+          const result = await findWeavesV2(plexus.id, {
             verbose: true,
           })
           console.log(`\nWeave discovery complete:`)
-          console.log(`  Repo pairs analyzed: ${result.repoPairs}`)
-          console.log(`  Candidates found: ${result.candidates.length}`)
-          console.log(`  Weaves saved: ${result.saved}`)
-          console.log(`  Weaves skipped: ${result.skipped}`)
+          console.log(`  Profiles created: ${result.profiles.length}`)
+          console.log(`  Functional matches: ${result.candidatesFound}`)
+          console.log(`  Philosophical matches: ${result.philosophicalMatchesFound ?? 0}`)
+          console.log(`  Weaves created: ${result.weavesCreated}`)
+          console.log(`  Duration: ${(result.duration / 1000).toFixed(1)}s`)
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : String(error)
           console.error(`Weave discovery failed: ${message}`)
