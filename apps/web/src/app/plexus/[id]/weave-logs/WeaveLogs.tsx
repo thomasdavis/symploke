@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type {
   WeaveDiscoveryRun,
   WeaveDiscoveryStatus,
@@ -279,7 +278,9 @@ function RunDetailTab({ run, repos }: { run: WeaveDiscoveryRun; repos: Repo[] })
               {glossaryAttempts.map((attempt, i) => (
                 <tr
                   key={i}
-                  className={attempt.scores && attempt.scores.final >= 0.5 ? 'wl-row--success' : ''}
+                  className={
+                    attempt.scores && attempt.scores.final >= 0.25 ? 'wl-row--success' : ''
+                  }
                 >
                   <td>{repoMap.get(attempt.sourceRepo) || attempt.sourceRepo.slice(0, 8)}</td>
                   <td>{repoMap.get(attempt.targetRepo) || attempt.targetRepo.slice(0, 8)}</td>
@@ -291,7 +292,7 @@ function RunDetailTab({ run, repos }: { run: WeaveDiscoveryRun; repos: Repo[] })
                       <td className="wl-score">{(attempt.scores.poetics * 100).toFixed(0)}%</td>
                       <td className="wl-score">{(attempt.scores.psychology * 100).toFixed(0)}%</td>
                       <td
-                        className={`wl-score wl-score--final ${attempt.scores.final >= 0.5 ? 'wl-score--pass' : 'wl-score--fail'}`}
+                        className={`wl-score wl-score--final ${attempt.scores.final >= 0.25 ? 'wl-score--pass' : 'wl-score--fail'}`}
                       >
                         {(attempt.scores.final * 100).toFixed(0)}%
                       </td>
@@ -375,59 +376,34 @@ export function WeaveLogs({
   glossaries,
   weaves,
 }: WeaveLogsProps) {
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(runs[0]?.id || null)
-  const selectedRun = runs.find((r) => r.id === selectedRunId)
+  // Always show the latest run (first in the array, sorted by startedAt desc)
+  const latestRun = runs[0] || null
 
   return (
     <div className="wl-page">
       <PageHeader
         title="Weave Logs"
-        subtitle="Raw data: glossaries, alignment attempts, and discovery logs"
+        subtitle="Latest discovery run, glossaries, and weave results"
       />
 
       <Tabs.Root defaultValue="runs">
         <Tabs.List>
-          <Tabs.Tab value="runs">Discovery Runs ({runs.length})</Tabs.Tab>
+          <Tabs.Tab value="runs">Latest Run</Tabs.Tab>
           <Tabs.Tab value="glossaries">Glossaries ({glossaries.length})</Tabs.Tab>
           <Tabs.Tab value="weaves">Weaves ({weaves.length})</Tabs.Tab>
           <Tabs.Indicator />
         </Tabs.List>
 
         <Tabs.Panel value="runs">
-          <div className="wl-runs-layout">
-            <div className="wl-runs-list">
-              <h3>Discovery Runs</h3>
-              {runs.length === 0 ? (
-                <div className="wl-empty">No discovery runs yet.</div>
-              ) : (
-                runs.map((run) => (
-                  <button
-                    type="button"
-                    key={run.id}
-                    className={`wl-run-item ${selectedRunId === run.id ? 'wl-run-item--selected' : ''}`}
-                    onClick={() => setSelectedRunId(run.id)}
-                  >
-                    <div className="wl-run-item-header">
-                      <StatusBadge status={run.status} />
-                      <span className="wl-run-item-date">{formatDate(run.startedAt)}</span>
-                    </div>
-                    <div className="wl-run-item-stats">
-                      {run.repoPairsChecked}/{run.repoPairsTotal} pairs •{run.candidatesFound} found
-                      •{run.weavesSaved} saved
-                    </div>
-                  </button>
-                ))
-              )}
+          {latestRun ? (
+            <div className="wl-run-content wl-run-content--full">
+              <RunDetailTab run={latestRun} repos={repos} />
             </div>
-
-            <div className="wl-run-content">
-              {selectedRun ? (
-                <RunDetailTab run={selectedRun} repos={repos} />
-              ) : (
-                <div className="wl-empty">Select a run to view details</div>
-              )}
+          ) : (
+            <div className="wl-empty">
+              No discovery runs yet. Run: <code>pnpm engine find-weaves --plexus-id {'<id>'}</code>
             </div>
-          </div>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel value="glossaries">

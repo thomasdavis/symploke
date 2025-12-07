@@ -4,11 +4,11 @@ import { WeaveLogs } from './WeaveLogs'
 export default async function WeaveLogsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // Fetch all discovery runs with full logs
+  // Fetch only the latest discovery run
   const runs = await db.weaveDiscoveryRun.findMany({
     where: { plexusId: id },
     orderBy: { startedAt: 'desc' },
-    take: 20,
+    take: 1,
   })
 
   // Fetch all repos in plexus for reference

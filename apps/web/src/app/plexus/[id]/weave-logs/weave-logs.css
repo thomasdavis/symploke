@@ -141,6 +141,10 @@
   overflow-x: auto;
 }
 
+.wl-run-content--full {
+  margin-top: var(--space-6);
+}
+
 /* Run detail */
 .wl-run-header {
   margin-bottom: var(--space-6);
