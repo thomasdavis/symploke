@@ -13,6 +13,7 @@ import {
 } from '../queue/processor.js'
 import { findWeaves, listWeaves, listDiscoveryRuns, getDiscoveryRun } from '../weave/finder.js'
 import { findWeavesV2, profileRepository } from '../weave/finder-v2.js'
+import { extractGlossary, extractPlexusGlossaries, getGlossary } from '../weave/glossary.js'
 import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
 import { getPusherService } from '../pusher/service.js'
@@ -1053,6 +1054,222 @@ program
       }
 
       console.log('=== Daily processing complete ===')
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
+// Extract glossary command - extract glossary for a repository
+program
+  .command('extract-glossary')
+  .description('Extract the glossary (soul) of a repository')
+  .option('--repo-id <id>', 'Repository ID to extract glossary for')
+  .option('--plexus-id <id>', 'Extract glossaries for all repos in plexus')
+  .option('--force', 'Force re-extraction even if glossary exists')
+  .action(async (options) => {
+    try {
+      if (!options.repoId && !options.plexusId) {
+        console.error('Please specify either --repo-id or --plexus-id')
+        process.exit(1)
+      }
+
+      if (options.repoId) {
+        // Single repo extraction
+        const repo = await db.repo.findUnique({
+          where: { id: options.repoId },
+          select: { id: true, fullName: true },
+        })
+
+        if (!repo) {
+          console.error(`Repository not found: ${options.repoId}`)
+          process.exit(1)
+        }
+
+        console.log(`\nExtracting glossary for: ${repo.fullName}`)
+        console.log(`  Force: ${options.force ? 'yes' : 'no'}\n`)
+
+        const glossary = await extractGlossary(options.repoId, { force: options.force })
+
+        if (!glossary) {
+          const existing = await db.repoGlossary.findUnique({
+            where: { repoId: options.repoId },
+          })
+          if (existing?.status === 'UNGLOSSABLE') {
+            console.log(`\nRepository marked as unglossable:`)
+            console.log(`  ${existing.unglossableReason}`)
+          } else if (existing?.status === 'COMPLETE' && !options.force) {
+            console.log(`\nGlossary already exists. Use --force to re-extract.`)
+          } else {
+            console.error(`\nGlossary extraction failed`)
+          }
+          process.exit(0)
+        }
+
+        console.log('\n=== GLOSSARY ===\n')
+
+        console.log('TERMS:')
+        for (const term of glossary.terms) {
+          console.log(`  ${term.term} [${term.emotionalValence}]`)
+          console.log(`    ${term.definition}`)
+        }
+
+        console.log('\nEMPIRICS:')
+        console.log(`  Measures: ${glossary.empirics.measures.join(', ') || 'none'}`)
+        console.log(`  Evidence types: ${glossary.empirics.evidenceTypes.join(', ') || 'none'}`)
+        console.log(`  Truth claims: ${glossary.empirics.truthClaims.join(', ') || 'none'}`)
+
+        console.log('\nPSYCHOLOGY:')
+        console.log(`  Fears: ${glossary.psychology.fears.join(', ') || 'none'}`)
+        console.log(`  Confidences: ${glossary.psychology.confidences.join(', ') || 'none'}`)
+        console.log(`  Defenses: ${glossary.psychology.defenses.join(', ') || 'none'}`)
+        console.log(`  Attachments: ${glossary.psychology.attachments.join(', ') || 'none'}`)
+        console.log(`  Blind spots: ${glossary.psychology.blindSpots.join(', ') || 'none'}`)
+
+        console.log('\nPOETICS:')
+        console.log(`  Metaphors: ${glossary.poetics.metaphors.join(', ') || 'none'}`)
+        console.log(`  Naming patterns: ${glossary.poetics.namingPatterns.join(', ') || 'none'}`)
+        console.log(`  Aesthetic: ${glossary.poetics.aesthetic}`)
+        console.log(`  Rhythm: ${glossary.poetics.rhythm}`)
+        console.log(`  Voice: ${glossary.poetics.voice}`)
+
+        console.log('\nPHILOSOPHY:')
+        console.log(`  Beliefs: ${glossary.philosophy.beliefs.join(', ') || 'none'}`)
+        console.log(`  Assumptions: ${glossary.philosophy.assumptions.join(', ') || 'none'}`)
+        console.log(`  Virtues: ${glossary.philosophy.virtues.join(', ') || 'none'}`)
+        console.log(`  Epistemology: ${glossary.philosophy.epistemology}`)
+        console.log(`  Ontology: ${glossary.philosophy.ontology}`)
+        console.log(`  Teleology: ${glossary.philosophy.teleology}`)
+
+        console.log('\nRESENTMENTS:')
+        console.log(`  Hates: ${glossary.resentments.hates.join(', ') || 'none'}`)
+        console.log(
+          `  Defines against: ${glossary.resentments.definesAgainst.join(', ') || 'none'}`,
+        )
+        console.log(`  Allergies: ${glossary.resentments.allergies.join(', ') || 'none'}`)
+        console.log(`  Warnings: ${glossary.resentments.warnings.join(', ') || 'none'}`)
+        console.log(`  Enemies: ${glossary.resentments.enemies.join(', ') || 'none'}`)
+
+        console.log('\nFUTURE VISION (Year 2500):')
+        console.log(`  ${glossary.futureVision}`)
+
+        console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
+      } else {
+        // Plexus-wide extraction
+        const plexus = await db.plexus.findUnique({
+          where: { id: options.plexusId },
+          select: { id: true, name: true, slug: true },
+        })
+
+        if (!plexus) {
+          console.error(`Plexus not found: ${options.plexusId}`)
+          process.exit(1)
+        }
+
+        console.log(`\nExtracting glossaries for plexus: ${plexus.name}`)
+        console.log(`  Force: ${options.force ? 'yes' : 'no'}\n`)
+
+        const result = await extractPlexusGlossaries(options.plexusId, { force: options.force })
+
+        console.log('\nGlossary Extraction Results:')
+        console.log('============================')
+        console.log(`  Extracted: ${result.extracted}`)
+        console.log(`  Skipped:   ${result.skipped}`)
+        console.log(`  Failed:    ${result.failed}`)
+      }
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
+// View glossary command - view a repository's glossary
+program
+  .command('glossary')
+  .description("View a repository's glossary")
+  .requiredOption('--repo-id <id>', 'Repository ID')
+  .action(async (options) => {
+    try {
+      const repo = await db.repo.findUnique({
+        where: { id: options.repoId },
+        select: { id: true, fullName: true },
+      })
+
+      if (!repo) {
+        console.error(`Repository not found: ${options.repoId}`)
+        process.exit(1)
+      }
+
+      const glossary = await getGlossary(options.repoId)
+
+      if (!glossary) {
+        const record = await db.repoGlossary.findUnique({
+          where: { repoId: options.repoId },
+        })
+
+        if (!record) {
+          console.log(`No glossary found for ${repo.fullName}`)
+          console.log(`Run: pnpm engine extract-glossary --repo-id ${options.repoId}`)
+        } else if (record.status === 'UNGLOSSABLE') {
+          console.log(`Repository marked as unglossable:`)
+          console.log(`  ${record.unglossableReason}`)
+        } else if (record.status === 'EXTRACTING') {
+          console.log(`Glossary extraction in progress...`)
+        } else if (record.status === 'FAILED') {
+          console.log(`Glossary extraction failed:`)
+          console.log(`  ${record.unglossableReason}`)
+        } else {
+          console.log(`Glossary status: ${record.status}`)
+        }
+        process.exit(0)
+      }
+
+      console.log(`\n=== GLOSSARY: ${repo.fullName} ===\n`)
+
+      console.log('TERMS:')
+      for (const term of glossary.terms) {
+        console.log(`  ${term.term} [${term.emotionalValence}]`)
+        console.log(`    ${term.definition}`)
+      }
+
+      console.log('\nEMPIRICS:')
+      console.log(`  Measures: ${glossary.empirics.measures.join(', ') || 'none'}`)
+      console.log(`  Evidence types: ${glossary.empirics.evidenceTypes.join(', ') || 'none'}`)
+      console.log(`  Truth claims: ${glossary.empirics.truthClaims.join(', ') || 'none'}`)
+
+      console.log('\nPSYCHOLOGY:')
+      console.log(`  Fears: ${glossary.psychology.fears.join(', ') || 'none'}`)
+      console.log(`  Confidences: ${glossary.psychology.confidences.join(', ') || 'none'}`)
+      console.log(`  Defenses: ${glossary.psychology.defenses.join(', ') || 'none'}`)
+      console.log(`  Attachments: ${glossary.psychology.attachments.join(', ') || 'none'}`)
+      console.log(`  Blind spots: ${glossary.psychology.blindSpots.join(', ') || 'none'}`)
+
+      console.log('\nPOETICS:')
+      console.log(`  Metaphors: ${glossary.poetics.metaphors.join(', ') || 'none'}`)
+      console.log(`  Naming patterns: ${glossary.poetics.namingPatterns.join(', ') || 'none'}`)
+      console.log(`  Aesthetic: ${glossary.poetics.aesthetic}`)
+      console.log(`  Rhythm: ${glossary.poetics.rhythm}`)
+      console.log(`  Voice: ${glossary.poetics.voice}`)
+
+      console.log('\nPHILOSOPHY:')
+      console.log(`  Beliefs: ${glossary.philosophy.beliefs.join(', ') || 'none'}`)
+      console.log(`  Assumptions: ${glossary.philosophy.assumptions.join(', ') || 'none'}`)
+      console.log(`  Virtues: ${glossary.philosophy.virtues.join(', ') || 'none'}`)
+      console.log(`  Epistemology: ${glossary.philosophy.epistemology}`)
+      console.log(`  Ontology: ${glossary.philosophy.ontology}`)
+      console.log(`  Teleology: ${glossary.philosophy.teleology}`)
+
+      console.log('\nRESENTMENTS:')
+      console.log(`  Hates: ${glossary.resentments.hates.join(', ') || 'none'}`)
+      console.log(`  Defines against: ${glossary.resentments.definesAgainst.join(', ') || 'none'}`)
+      console.log(`  Allergies: ${glossary.resentments.allergies.join(', ') || 'none'}`)
+      console.log(`  Warnings: ${glossary.resentments.warnings.join(', ') || 'none'}`)
+      console.log(`  Enemies: ${glossary.resentments.enemies.join(', ') || 'none'}`)
+
+      console.log('\nFUTURE VISION (Year 2500):')
+      console.log(`  ${glossary.futureVision}`)
+
+      console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
     } catch (error: unknown) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
       process.exit(1)

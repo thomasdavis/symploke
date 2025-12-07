@@ -120,6 +120,7 @@ model Repo {
   chunkSyncJobs ChunkSyncJob[]
   sourceWeaves  Weave[]        @relation("SourceRepo")
   targetWeaves  Weave[]        @relation("TargetRepo")
+  glossary      RepoGlossary?
 
   @@unique([plexusId, fullName])
   @@map("repos")
@@ -309,6 +310,7 @@ enum WeaveType {
   api_compatibility
   refactor_candidate
   philosophical_alignment // repos that share worldview/approach even if functionally different
+  glossary_alignment // repos with aligned vocabulary, beliefs, resentments
 }
 
 model Comment {
@@ -352,5 +354,39 @@ model WeaveDiscoveryRun {
 enum WeaveDiscoveryStatus {
   RUNNING
   COMPLETED
+  FAILED
+}
+
+// === Repo Glossaries ===
+
+model RepoGlossary {
+  id        String   @id @default(cuid())
+  repoId    String   @unique
+
+  // Core dimensions - the soul of a codebase made legible
+  terms         Json     // { term, definition, context, emotionalValence }[]
+  empirics      Json     // { measures, evidenceTypes, truthClaims, uncertainties }
+  psychology    Json     // { fears, confidences, defenses, attachments, blindSpots }
+  poetics       Json     // { metaphors, namingPatterns, aesthetic, rhythm, voice }
+  philosophy    Json     // { beliefs, assumptions, virtues, epistemology, ontology, teleology }
+  resentments   Json     // { hates, definesAgainst, allergies, warnings, enemies }
+  futureVision  String?  // What would a historian in 2500 say about this repo?
+
+  // Status
+  status            GlossaryStatus @default(PENDING)
+  unglossableReason String?        // Why extraction was skipped (if unglossable)
+  confidence        Float?
+  extractedAt       DateTime?
+
+  repo Repo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@map("repo_glossaries")
+}
+
+enum GlossaryStatus {
+  PENDING
+  EXTRACTING
+  COMPLETE
+  UNGLOSSABLE
   FAILED
 }

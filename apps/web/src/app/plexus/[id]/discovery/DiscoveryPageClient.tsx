@@ -25,6 +25,15 @@ type NearMissCandidate = {
   similarity: string
 }
 
+type AttemptedPair = {
+  sourceRepo: string
+  targetRepo: string
+  result: 'weave_created' | 'below_threshold' | 'no_candidates' | 'error'
+  weaveType?: string
+  score?: number
+  title?: string
+}
+
 type DiscoveryPageClientProps = {
   plexusId: string
   runs: WeaveDiscoveryRun[]
@@ -100,6 +109,125 @@ function NearMissCandidates({ logs }: { logs: LogEntry[] }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Extract all attempted pairs from logs
+ */
+function extractAttemptedPairs(logs: LogEntry[]): AttemptedPair[] {
+  const pairs: Map<string, AttemptedPair> = new Map()
+
+  for (const log of logs) {
+    // Look for "Checking pair:" logs
+    if (log.message.includes('Checking pair:') && log.data) {
+      const sourceId = log.data.sourceId as string
+      const targetId = log.data.targetId as string
+      const key = `${sourceId}:${targetId}`
+      const repoNames = log.message.replace('Checking pair:', '').trim()
+      const [source, target] = repoNames.split('<->').map((s) => s.trim())
+
+      if (!pairs.has(key)) {
+        pairs.set(key, {
+          sourceRepo: source || sourceId,
+          targetRepo: target || targetId,
+          result: 'no_candidates',
+        })
+      }
+    }
+
+    // Look for "Found X candidate(s)" logs
+    if (log.message.includes('candidate(s) for') && log.data?.candidates) {
+      const candidates = log.data.candidates as Array<{
+        type: string
+        score: number
+        title: string
+      }>
+      const repoNames = log.message.split('for')[1]?.trim() || ''
+      const [source, target] = repoNames.split('<->').map((s) => s.trim())
+
+      for (const [, pair] of pairs.entries()) {
+        if (pair.sourceRepo === source && pair.targetRepo === target) {
+          if (candidates.length > 0) {
+            pair.result = 'weave_created'
+            pair.weaveType = candidates[0]?.type
+            pair.score = candidates[0]?.score
+            pair.title = candidates[0]?.title
+          }
+        }
+      }
+    }
+
+    // Look for "No candidates for" logs
+    if (log.message.includes('No candidates for')) {
+      const repoNames = log.message.replace('No candidates for', '').trim()
+      const [source, target] = repoNames.split('<->').map((s) => s.trim())
+
+      for (const [, pair] of pairs.entries()) {
+        if (pair.sourceRepo === source && pair.targetRepo === target) {
+          pair.result = 'no_candidates'
+        }
+      }
+    }
+
+    // Look for error logs
+    if (log.level === 'error' && log.message.includes('pair')) {
+      // Mark as error if we can identify the pair
+    }
+  }
+
+  return Array.from(pairs.values())
+}
+
+function AttemptedPairsTable({ logs }: { logs: LogEntry[] }) {
+  const pairs = extractAttemptedPairs(logs)
+
+  if (pairs.length === 0) return null
+
+  const getResultBadge = (pair: AttemptedPair) => {
+    switch (pair.result) {
+      case 'weave_created':
+        return <span className="pair-result pair-result--success">weave</span>
+      case 'below_threshold':
+        return <span className="pair-result pair-result--warning">below threshold</span>
+      case 'no_candidates':
+        return <span className="pair-result pair-result--neutral">no match</span>
+      case 'error':
+        return <span className="pair-result pair-result--error">error</span>
+    }
+  }
+
+  return (
+    <div className="attempted-pairs-section">
+      <h3>All Attempted Pairs</h3>
+      <p className="attempted-pairs-description">
+        Every repository pair that was analyzed during this discovery run, regardless of outcome.
+      </p>
+      <div className="attempted-pairs-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Target</th>
+              <th>Result</th>
+              <th>Type</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pairs.map((pair, i) => (
+              <tr key={i} className={`pair-row pair-row--${pair.result}`}>
+                <td>{pair.sourceRepo}</td>
+                <td>{pair.targetRepo}</td>
+                <td>{getResultBadge(pair)}</td>
+                <td>{pair.weaveType?.replace(/_/g, ' ') || '—'}</td>
+                <td>{pair.score ? `${(pair.score * 100).toFixed(0)}%` : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -206,7 +334,7 @@ function LogEntryRow({ log }: { log: LogEntry }) {
         <span className={`log-entry__level log-entry__level--${log.level}`}>{log.level}</span>
         <span className="log-entry__message">{log.message}</span>
         <span className="log-entry__expand">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path
               d="M3 4.5L6 7.5L9 4.5"
               stroke="currentColor"
@@ -294,6 +422,8 @@ function RunDetail({ run, onClose }: { run: WeaveDiscoveryRun; onClose: () => vo
           </div>
         )}
       </div>
+
+      <AttemptedPairsTable logs={logs} />
 
       <div className="discovery-detail__logs">
         <h3>Execution Logs</h3>

@@ -498,3 +498,96 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Attempted Pairs Section */
+.attempted-pairs-section {
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.attempted-pairs-section h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.attempted-pairs-description {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.attempted-pairs-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.attempted-pairs-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.attempted-pairs-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.attempted-pairs-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.attempted-pairs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pair-row--weave_created {
+  background: oklch(55% 0.15 145 / 0.05);
+}
+
+.pair-row--no_candidates {
+  opacity: 0.7;
+}
+
+.pair-row--error {
+  background: oklch(55% 0.22 25 / 0.05);
+}
+
+/* Pair Result Badges */
+.pair-result {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.pair-result--success {
+  background: oklch(55% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+}
+
+.pair-result--warning {
+  background: oklch(65% 0.18 75 / 0.15);
+  color: oklch(55% 0.18 75);
+}
+
+.pair-result--neutral {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
+}
+
+.pair-result--error {
+  background: oklch(55% 0.22 25 / 0.15);
+  color: oklch(55% 0.22 25);
+}
