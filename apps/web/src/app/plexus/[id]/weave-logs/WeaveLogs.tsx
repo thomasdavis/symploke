@@ -21,6 +21,7 @@ type LogEntry = {
 type Repo = {
   id: string
   fullName: string
+  name?: string
 }
 
 type GlossaryWithRepo = RepoGlossary & {
@@ -32,12 +33,21 @@ type WeaveWithRepos = Weave & {
   targetRepo: { fullName: string }
 }
 
+type FocusPair = {
+  blocks: GlossaryWithRepo | null
+  carmack: GlossaryWithRepo | null
+  weave: WeaveWithRepos | null
+  blocksRepoId: string | null
+  carmackRepoId: string | null
+}
+
 type WeaveLogsProps = {
   plexusId: string
   runs: WeaveDiscoveryRun[]
   repos: Repo[]
   glossaries: GlossaryWithRepo[]
   weaves: WeaveWithRepos[]
+  focusPair: FocusPair
 }
 
 function StatusBadge({ status }: { status: WeaveDiscoveryStatus | GlossaryStatus | string }) {
@@ -335,6 +345,244 @@ function RunDetailTab({ run, repos }: { run: WeaveDiscoveryRun; repos: Repo[] })
   )
 }
 
+function FocusPairSection({
+  focusPair,
+  latestRun,
+}: {
+  focusPair: FocusPair
+  latestRun: WeaveDiscoveryRun | null
+}) {
+  const { blocks, carmack, weave, blocksRepoId, carmackRepoId } = focusPair
+
+  // Extract alignment scores from logs if available
+  let alignmentScores: {
+    vocabulary: number
+    resentment: number
+    philosophy: number
+    poetics: number
+    psychology: number
+    final: number
+  } | null = null
+
+  if (latestRun) {
+    const logs = (latestRun.logs as LogEntry[]) || []
+    for (const log of logs) {
+      if (log.message === 'Glossary alignment scores calculated' && log.data) {
+        const sourceId = log.data.sourceRepoId as string
+        const targetId = log.data.targetRepoId as string
+        if (
+          (sourceId === blocksRepoId && targetId === carmackRepoId) ||
+          (sourceId === carmackRepoId && targetId === blocksRepoId)
+        ) {
+          alignmentScores = {
+            vocabulary: log.data.vocabularyScore as number,
+            resentment: log.data.resentmentScore as number,
+            philosophy: log.data.philosophyScore as number,
+            poetics: log.data.poeticsScore as number,
+            psychology: log.data.psychologyScore as number,
+            final: log.data.finalScore as number,
+          }
+          break
+        }
+      }
+    }
+  }
+
+  return (
+    <div className="wl-focus-section">
+      <h2 className="wl-focus-title">🔗 Blocks ↔ Carmack Connection</h2>
+      <p className="wl-focus-subtitle">
+        Deep comparison of these two repositories and their philosophical alignment
+      </p>
+
+      {/* Weave Status */}
+      <div className="wl-focus-status">
+        {weave ? (
+          <div className="wl-focus-weave-exists">
+            <span className="wl-focus-weave-icon">✓</span>
+            <div>
+              <strong>Weave Created!</strong>
+              <p>
+                {weave.title} - Score: {(weave.score * 100).toFixed(0)}%
+              </p>
+              <p className="wl-focus-weave-desc">{weave.description}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="wl-focus-no-weave">
+            <span className="wl-focus-weave-icon">○</span>
+            <div>
+              <strong>No Weave Yet</strong>
+              <p>Discovery run in progress or threshold not met</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Alignment Scores */}
+      {alignmentScores && (
+        <div className="wl-focus-scores">
+          <h3>Alignment Scores (Latest Run)</h3>
+          <div className="wl-focus-scores-grid">
+            <div className="wl-focus-score">
+              <span className="wl-focus-score-label">Vocabulary</span>
+              <span className="wl-focus-score-value">
+                {(alignmentScores.vocabulary * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="wl-focus-score">
+              <span className="wl-focus-score-label">Resentment</span>
+              <span className="wl-focus-score-value">
+                {(alignmentScores.resentment * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="wl-focus-score">
+              <span className="wl-focus-score-label">Philosophy</span>
+              <span className="wl-focus-score-value">
+                {(alignmentScores.philosophy * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="wl-focus-score">
+              <span className="wl-focus-score-label">Poetics</span>
+              <span className="wl-focus-score-value">
+                {(alignmentScores.poetics * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="wl-focus-score">
+              <span className="wl-focus-score-label">Psychology</span>
+              <span className="wl-focus-score-value">
+                {(alignmentScores.psychology * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="wl-focus-score wl-focus-score--final">
+              <span className="wl-focus-score-label">Final Score</span>
+              <span
+                className={`wl-focus-score-value ${alignmentScores.final >= 0.25 ? 'wl-focus-score--pass' : 'wl-focus-score--fail'}`}
+              >
+                {(alignmentScores.final * 100).toFixed(0)}%
+              </span>
+            </div>
+          </div>
+          <p className="wl-focus-threshold">Threshold: 25% (scores above this create weaves)</p>
+        </div>
+      )}
+
+      {/* Glossary Comparison */}
+      <div className="wl-focus-glossaries">
+        <div className="wl-focus-glossary">
+          <h3>thomasdavis/blocks</h3>
+          {blocks ? (
+            <>
+              <StatusBadge status={blocks.status} />
+              {blocks.status === 'COMPLETE' && (
+                <div className="wl-focus-glossary-content">
+                  <div className="wl-focus-section-item">
+                    <strong>Philosophy</strong>
+                    <ul>
+                      {(blocks.philosophy as { beliefs?: string[] })?.beliefs?.map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Virtues</strong>
+                    <div className="wl-terms">
+                      {(blocks.philosophy as { virtues?: string[] })?.virtues?.map((v, i) => (
+                        <span key={i} className="wl-term wl-term--positive">
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Resentments</strong>
+                    <div className="wl-resentments">
+                      {(blocks.resentments as { hates?: string[] })?.hates?.map((h, i) => (
+                        <span key={i} className="wl-hate">
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Defines Against</strong>
+                    <div className="wl-resentments">
+                      {(blocks.resentments as { definesAgainst?: string[] })?.definesAgainst?.map(
+                        (d, i) => (
+                          <span key={i} className="wl-hate">
+                            {d}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="wl-focus-no-glossary">No glossary extracted</div>
+          )}
+        </div>
+
+        <div className="wl-focus-glossary">
+          <h3>DavinciDreams/carmack</h3>
+          {carmack ? (
+            <>
+              <StatusBadge status={carmack.status} />
+              {carmack.status === 'COMPLETE' && (
+                <div className="wl-focus-glossary-content">
+                  <div className="wl-focus-section-item">
+                    <strong>Philosophy</strong>
+                    <ul>
+                      {(carmack.philosophy as { beliefs?: string[] })?.beliefs?.map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Virtues</strong>
+                    <div className="wl-terms">
+                      {(carmack.philosophy as { virtues?: string[] })?.virtues?.map((v, i) => (
+                        <span key={i} className="wl-term wl-term--positive">
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Resentments</strong>
+                    <div className="wl-resentments">
+                      {(carmack.resentments as { hates?: string[] })?.hates?.map((h, i) => (
+                        <span key={i} className="wl-hate">
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="wl-focus-section-item">
+                    <strong>Defines Against</strong>
+                    <div className="wl-resentments">
+                      {(carmack.resentments as { definesAgainst?: string[] })?.definesAgainst?.map(
+                        (d, i) => (
+                          <span key={i} className="wl-hate">
+                            {d}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="wl-focus-no-glossary">No glossary extracted</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function WeavesTab({ weaves }: { weaves: WeaveWithRepos[] }) {
   return (
     <div className="wl-section">
@@ -375,6 +623,7 @@ export function WeaveLogs({
   repos,
   glossaries,
   weaves,
+  focusPair,
 }: WeaveLogsProps) {
   // Always show the latest run (first in the array, sorted by startedAt desc)
   const latestRun = runs[0] || null
@@ -385,6 +634,9 @@ export function WeaveLogs({
         title="Weave Logs"
         subtitle="Latest discovery run, glossaries, and weave results"
       />
+
+      {/* Focus Pair Section - Blocks ↔ Carmack */}
+      <FocusPairSection focusPair={focusPair} latestRun={latestRun} />
 
       <Tabs.Root defaultValue="runs">
         <Tabs.List>
