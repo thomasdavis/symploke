@@ -617,14 +617,7 @@ function WeavesTab({ weaves }: { weaves: WeaveWithRepos[] }) {
   )
 }
 
-export function WeaveLogs({
-  plexusId: _plexusId,
-  runs,
-  repos,
-  glossaries,
-  weaves,
-  focusPair,
-}: WeaveLogsProps) {
+export function WeaveLogs({ runs, repos, glossaries, weaves, focusPair }: WeaveLogsProps) {
   // Always show the latest run (first in the array, sorted by startedAt desc)
   const latestRun = runs[0] || null
 
