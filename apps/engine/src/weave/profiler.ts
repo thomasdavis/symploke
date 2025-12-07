@@ -23,36 +23,6 @@ import {
 } from './ontology'
 
 /**
- * Zod schema for LLM extraction
- */
-const RepoProfileSchema = z.object({
-  purpose: z
-    .string()
-    .describe('One sentence describing what this repository does and why it exists'),
-  capabilities: z
-    .array(z.enum(CAPABILITIES))
-    .describe('What this repository CAN DO - its core capabilities'),
-  producesArtifacts: z
-    .array(z.enum(ARTIFACTS))
-    .describe('What artifacts this repository PRODUCES/OUTPUTS'),
-  consumesArtifacts: z
-    .array(z.enum(ARTIFACTS))
-    .describe('What artifacts this repository CONSUMES/REQUIRES as input'),
-  domains: z.array(z.enum(DOMAINS)).describe('What problem domains this repository operates in'),
-  roles: z
-    .array(z.enum(ROLES))
-    .describe('What roles this repository plays in a development workflow'),
-  keywords: z.array(z.string()).describe('Key technical terms and concepts from the repository'),
-  problemsSolved: z.array(z.string()).describe('Specific problems this repository helps solve'),
-  targetUsers: z
-    .array(z.string())
-    .describe('Who would use this repository (e.g., "frontend developers", "DevOps engineers")'),
-  confidence: z.number().min(0).max(1).describe('How confident are you in this analysis (0-1)'),
-})
-
-type ExtractedProfile = z.infer<typeof RepoProfileSchema>
-
-/**
  * Extract README content from a repository's files
  */
 async function getReadmeContent(repoId: string): Promise<string | null> {
@@ -146,10 +116,59 @@ export async function profileRepository(repoId: string): Promise<RepoProfile | n
     logger.warn({ repoId }, 'No README or package.json description found, using minimal context')
   }
 
+  // Common synonyms/shortcuts that LLMs use instead of exact enum values
+  const ARTIFACT_CORRECTIONS: Record<string, Artifact> = {
+    configs: 'configurations',
+    config: 'configurations',
+    code: 'source_code',
+    docs: 'documents',
+    doc: 'documents',
+    api: 'apis',
+    schema: 'schemas',
+    type: 'types',
+    test: 'tests',
+    template: 'templates',
+    model: 'models',
+    prompt: 'prompts',
+    event: 'events',
+    workflow: 'workflows',
+    package: 'packages',
+    component: 'components',
+    tool: 'tools',
+    report: 'reports',
+    embedding: 'embeddings',
+  }
+
+  function normalizeArtifacts(artifacts: string[]): Artifact[] {
+    const validArtifacts = new Set(ARTIFACTS)
+    return artifacts
+      .map((a) => {
+        const lower = a.toLowerCase()
+        if (validArtifacts.has(lower as Artifact)) return lower as Artifact
+        if (ARTIFACT_CORRECTIONS[lower]) return ARTIFACT_CORRECTIONS[lower]
+        return null
+      })
+      .filter((a): a is Artifact => a !== null)
+  }
+
   try {
+    // Use a more lenient schema that accepts strings, then normalize
+    const LenientProfileSchema = z.object({
+      purpose: z.string(),
+      capabilities: z.array(z.string()),
+      producesArtifacts: z.array(z.string()),
+      consumesArtifacts: z.array(z.string()),
+      domains: z.array(z.string()),
+      roles: z.array(z.string()),
+      keywords: z.array(z.string()),
+      problemsSolved: z.array(z.string()),
+      targetUsers: z.array(z.string()),
+      confidence: z.number().min(0).max(1),
+    })
+
     const { object: extracted } = await generateObject({
       model: openai('gpt-4o-mini'),
-      schema: RepoProfileSchema,
+      schema: LenientProfileSchema,
       system: `You are an expert software architect analyzing repositories.
 Your job is to understand what a repository DOES, not what its code looks like.
 Focus on:
@@ -159,29 +178,36 @@ Focus on:
 - Its ROLE in a development workflow
 - Its DOMAIN (what problem space does it operate in?)
 
-CRITICAL: You MUST ONLY use values from the provided enum lists. Do not invent new values.
-- For roles: ONLY use producer, consumer, analyzer, validator, orchestrator, transformer, renderer, compiler, library, application, framework, plugin, utility
-- For artifacts: ONLY use components, tools, schemas, documents, configurations, embeddings, events, workflows, source_code, packages, apis, reports, templates, types, tests, data, models, prompts
-- For capabilities: ONLY use the provided enum values
-- For domains: ONLY use the provided enum values
+IMPORTANT: Use these exact values from our ontology:
+- Capabilities: ${CAPABILITIES.join(', ')}
+- Artifacts: ${ARTIFACTS.join(', ')}
+- Domains: ${DOMAINS.join(', ')}
+- Roles: ${ROLES.join(', ')}
 
 Be specific and concrete. Avoid vague descriptions.
 If the information is limited, make reasonable inferences but lower your confidence score.`,
       prompt: context,
     })
 
+    // Normalize and filter to valid enum values
+    const validCapabilities = new Set(CAPABILITIES)
+    const validDomains = new Set(DOMAINS)
+    const validRoles = new Set(ROLES)
+
     const profile: RepoProfile = {
       repoId: repo.id,
       name: repo.name,
       fullName: repo.fullName,
       purpose: extracted.purpose,
-      capabilities: extracted.capabilities as Capability[],
+      capabilities: extracted.capabilities.filter((c): c is Capability =>
+        validCapabilities.has(c as Capability),
+      ),
       artifacts: {
-        produces: extracted.producesArtifacts as Artifact[],
-        consumes: extracted.consumesArtifacts as Artifact[],
+        produces: normalizeArtifacts(extracted.producesArtifacts),
+        consumes: normalizeArtifacts(extracted.consumesArtifacts),
       },
-      domains: extracted.domains as Domain[],
-      roles: extracted.roles as Role[],
+      domains: extracted.domains.filter((d): d is Domain => validDomains.has(d as Domain)),
+      roles: extracted.roles.filter((r): r is Role => validRoles.has(r as Role)),
       keywords: extracted.keywords,
       problemsSolved: extracted.problemsSolved,
       targetUsers: extracted.targetUsers,
