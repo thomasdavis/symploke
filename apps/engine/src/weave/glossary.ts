@@ -1,43 +1,56 @@
 /**
  * Repository Glossary Extraction
  *
- * A Glossary is a hybrid profile of a repository: practical information about
- * what it does, and philosophical insights about what it believes.
+ * A Glossary captures what a repository DOES, what it NEEDS, and what it PROVIDES.
+ * This enables finding actionable connections like:
+ * - "Repo A needs X, Repo B provides X"
+ * - "Both repos solve the same problem differently"
+ * - "Repo A's output is Repo B's input"
  *
  * Input: README only (simpler, more reliable than parsing code)
- * Output: Structured profile for AI-powered comparison
+ * Output: Structured profile optimized for finding real integrations
  */
 
-import { generateObject } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import { z } from 'zod'
 import { db, GlossaryStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
+import { generateObject } from 'ai'
+import { z } from 'zod'
 
 // ============================================================================
 // GLOSSARY TYPES
 // ============================================================================
 
 /**
- * A repository glossary profile
+ * A repository glossary profile - focused on finding actionable connections
  */
 export interface RepoGlossaryData {
-  // PRACTICAL
-  purpose: string // One-sentence: what problem does this solve?
-  features: string[] // Key capabilities/features
-  techStack: string[] // Languages, frameworks, tools mentioned
-  targetUsers: string[] // Who is this for?
-  kpis: string[] // Metrics, measures, what success looks like
-  roadmap: string[] // Future plans, TODOs, aspirations
+  // WHAT IT IS
+  purpose: string // One sentence: what problem does this solve?
+  category: string // e.g., "CLI tool", "React component library", "API service", "AI agent"
+  domain: string // e.g., "resume/CV", "code transformation", "package management"
 
-  // PHILOSOPHICAL
-  values: string[] // Core beliefs, virtues, what it considers "good"
-  enemies: string[] // What it fights against, defines itself against
-  aesthetic: string // Design philosophy, code style preferences
+  // WHAT IT PROVIDES (outputs others could use)
+  provides: string[] // What this repo offers: "JSON schema validation", "PDF generation", "code analysis"
+  outputs: string[] // Data/artifacts it produces: "validated JSON", "transformed code", "embeddings"
+  apis: string[] // Interfaces it exposes: "REST API", "CLI commands", "npm package", "MCP tools"
+
+  // WHAT IT NEEDS (inputs it could consume)
+  consumes: string[] // What it takes as input: "markdown files", "TypeScript code", "JSON data"
+  dependencies: string[] // External things it relies on: "OpenAI API", "PostgreSQL", "Node.js"
+  gaps: string[] // What it's missing or wants: "better error handling", "more themes", "plugin system"
+
+  // TECHNICAL DETAILS
+  techStack: string[] // Languages, frameworks, tools
+  patterns: string[] // Architectural patterns: "monorepo", "microservices", "event-driven"
+
+  // BELIEFS (for philosophical alignment)
+  values: string[] // What it considers important
+  antipatterns: string[] // What it explicitly avoids or fights against
 
   // META
   confidence: number // 0-1, based on README quality
-  summary: string // 2-3 sentence overall summary
+  summary: string // 2-3 sentence summary
 }
 
 // ============================================================================
@@ -45,55 +58,89 @@ export interface RepoGlossaryData {
 // ============================================================================
 
 const GlossarySchema = z.object({
-  // PRACTICAL
+  // WHAT IT IS
   purpose: z
     .string()
     .describe(
-      'One clear sentence describing what problem this repository solves. Be specific, not generic.',
+      'One clear sentence: what specific problem does this solve? Be concrete, not generic.',
     ),
-  features: z
-    .array(z.string())
-    .describe('3-8 key features or capabilities this repository provides'),
-  techStack: z
-    .array(z.string())
-    .describe('Languages, frameworks, libraries, and tools mentioned or implied'),
-  targetUsers: z
-    .array(z.string())
-    .describe('Who is this repository for? Be specific about the type of developer or user'),
-  kpis: z
+  category: z
+    .string()
+    .describe(
+      'What type of software is this? Examples: "CLI tool", "React component library", "API service", "VS Code extension", "AI agent framework", "npm package"',
+    ),
+  domain: z
+    .string()
+    .describe(
+      'What domain or problem space? Examples: "resume/CV generation", "code transformation", "package management", "file synchronization", "data validation"',
+    ),
+
+  // WHAT IT PROVIDES (for others to use)
+  provides: z
     .array(z.string())
     .describe(
-      'What metrics or measures indicate success? What does this repo care about optimizing?',
+      'What capabilities does this offer that OTHER projects could use? Be specific: "JSON schema validation", "PDF generation from templates", "AST-based code transformation", "GitHub API wrapper"',
     ),
-  roadmap: z
+  outputs: z
     .array(z.string())
-    .describe('Future plans, TODOs, aspirations, or areas for improvement mentioned'),
+    .describe(
+      'What data or artifacts does it produce? Examples: "validated JSON objects", "transformed TypeScript files", "vector embeddings", "HTML from markdown"',
+    ),
+  apis: z
+    .array(z.string())
+    .describe(
+      'What interfaces does it expose? Examples: "REST API endpoints", "CLI commands", "npm package exports", "MCP tool definitions", "React hooks", "GitHub Actions"',
+    ),
 
-  // PHILOSOPHICAL
+  // WHAT IT NEEDS (could consume from others)
+  consumes: z
+    .array(z.string())
+    .describe(
+      'What does it take as INPUT? Examples: "markdown files", "TypeScript source code", "JSON resume data", "GitHub repository URLs"',
+    ),
+  dependencies: z
+    .array(z.string())
+    .describe(
+      'What external services or tools does it rely on? Examples: "OpenAI API", "PostgreSQL database", "GitHub API", "Vercel hosting"',
+    ),
+  gaps: z
+    .array(z.string())
+    .describe(
+      'What is it MISSING or wanting? Look for TODOs, roadmap items, "help wanted", limitations mentioned. Examples: "plugin system", "more themes", "better error messages"',
+    ),
+
+  // TECHNICAL
+  techStack: z
+    .array(z.string())
+    .describe('Languages, frameworks, and key libraries: "TypeScript", "React", "Prisma", "Zod"'),
+  patterns: z
+    .array(z.string())
+    .describe(
+      'Architectural patterns used: "monorepo", "microservices", "event-driven", "serverless", "MCP server", "CLI with subcommands"',
+    ),
+
+  // BELIEFS
   values: z
     .array(z.string())
     .describe(
-      'Core beliefs and virtues this repository embodies. What does it consider "good" or important?',
+      'What does it consider important? Examples: "type safety", "developer experience", "performance", "correctness over convenience"',
     ),
-  enemies: z
+  antipatterns: z
     .array(z.string())
     .describe(
-      'What does this repository fight against? What problems, patterns, or approaches does it reject?',
+      'What does it explicitly avoid or fight against? Examples: "runtime type errors", "vendor lock-in", "magic/implicit behavior"',
     ),
-  aesthetic: z.string().describe('The design philosophy and coding style this repository prefers'),
 
   // META
   confidence: z
     .number()
     .min(0)
     .max(1)
-    .describe(
-      'Confidence in this analysis (0-1). Lower if README is sparse, vague, or marketing-heavy.',
-    ),
+    .describe('Confidence in this analysis (0-1). Lower if README is sparse or marketing-heavy.'),
   summary: z
     .string()
     .describe(
-      '2-3 sentence summary capturing both what this repo DOES and what it BELIEVES. Be opinionated.',
+      '2-3 sentences: what it does, who it is for, and what makes it distinctive. Be specific.',
     ),
 })
 
@@ -101,32 +148,39 @@ const GlossarySchema = z.object({
 // EXTRACTION PROMPTS
 // ============================================================================
 
-const GLOSSARY_SYSTEM_PROMPT = `You are analyzing a software repository to create a comprehensive profile.
+const GLOSSARY_SYSTEM_PROMPT = `You are analyzing a software repository to understand what it DOES, what it PROVIDES, and what it NEEDS.
 
-Your task is to extract both PRACTICAL and PHILOSOPHICAL information from the README.
+Your goal is to enable finding ACTIONABLE connections between repositories:
+- "Repo A needs X, Repo B provides X" (supply/demand match)
+- "Repo A outputs Y, Repo B consumes Y" (pipeline connection)
+- "Both repos work in the same domain" (potential collaboration)
+- "Repo A has a gap that Repo B could fill" (integration opportunity)
 
-PRACTICAL (what it does):
-- Purpose: What specific problem does this solve?
-- Features: What can users do with it?
-- Tech Stack: What technologies does it use?
-- Target Users: Who should use this?
-- KPIs: What does success look like?
-- Roadmap: What's planned or missing?
+Focus on CONCRETE, SPECIFIC details:
 
-PHILOSOPHICAL (what it believes):
-- Values: What does it consider important or "good"?
-- Enemies: What does it fight against or reject?
-- Aesthetic: What style or approach does it prefer?
+WHAT IT IS:
+- Purpose: What SPECIFIC problem does it solve? Not "helps developers" but "validates JSON resume data against a schema"
+- Category: What TYPE of software? CLI tool, library, service, framework, etc.
+- Domain: What problem SPACE? Resume generation, code transformation, etc.
 
-Be specific and opinionated. Avoid generic statements like "makes development easier."
-If the README is sparse, acknowledge this with lower confidence.
-If the README is marketing-heavy with little substance, call that out.
+WHAT IT PROVIDES (things OTHER repos could use):
+- Provides: Specific capabilities - "PDF generation", "schema validation", "code parsing"
+- Outputs: What data/artifacts it produces - "validated JSON", "AST nodes", "embeddings"
+- APIs: How to consume it - "npm exports", "CLI commands", "REST endpoints", "MCP tools"
 
-Look for:
-- Explicit statements of philosophy (e.g., "we believe in...")
-- Implicit values (what they choose to emphasize)
-- What problems they describe with emotional language (enemies)
-- Technical choices that reveal priorities`
+WHAT IT NEEDS (things it could get FROM other repos):
+- Consumes: What inputs it accepts - "TypeScript files", "JSON data", "URLs"
+- Dependencies: External services it relies on - "OpenAI", "GitHub API"
+- Gaps: What it's missing - look for TODOs, roadmap, limitations, "help wanted"
+
+TECHNICAL & PHILOSOPHICAL:
+- Tech Stack: Languages and frameworks
+- Patterns: Architecture patterns - "monorepo", "plugin system", "MCP server"
+- Values: What it prioritizes - "type safety", "performance", "DX"
+- Antipatterns: What it rejects - "runtime errors", "magic behavior"
+
+BE SPECIFIC. Instead of "improves productivity", say "generates TypeScript types from JSON schemas".
+If the README is vague, lower confidence and note gaps.`
 
 function buildGlossaryPrompt(fullName: string, readme: string): string {
   return `## Repository: ${fullName}
@@ -250,20 +304,27 @@ export async function extractGlossary(
         status: GlossaryStatus.COMPLETE,
         terms: [],
         empirics: {
+          // What it is
           purpose: glossary.purpose,
-          features: glossary.features,
+          category: glossary.category,
+          domain: glossary.domain,
+          // What it provides
+          provides: glossary.provides,
+          outputs: glossary.outputs,
+          apis: glossary.apis,
+          // What it needs
+          consumes: glossary.consumes,
+          dependencies: glossary.dependencies,
+          gaps: glossary.gaps,
+          // Technical
           techStack: glossary.techStack,
-          targetUsers: glossary.targetUsers,
-          kpis: glossary.kpis,
-          roadmap: glossary.roadmap,
+          patterns: glossary.patterns,
         },
         psychology: {},
-        poetics: {
-          aesthetic: glossary.aesthetic,
-        },
+        poetics: {},
         philosophy: {
           values: glossary.values,
-          enemies: glossary.enemies,
+          antipatterns: glossary.antipatterns,
         },
         resentments: {},
         futureVision: glossary.summary,
@@ -276,9 +337,9 @@ export async function extractGlossary(
       {
         repoId,
         fullName: repo.fullName,
-        featureCount: glossary.features.length,
-        valueCount: glossary.values.length,
-        enemyCount: glossary.enemies.length,
+        providesCount: glossary.provides.length,
+        consumesCount: glossary.consumes.length,
+        gapsCount: glossary.gaps.length,
         confidence: glossary.confidence,
       },
       'Glossary extraction complete',
@@ -306,7 +367,6 @@ export async function extractGlossary(
  */
 function parseGlossaryFromDb(record: {
   empirics: unknown
-  poetics: unknown
   philosophy: unknown
   futureVision: string | null
   confidence: number | null
@@ -314,18 +374,32 @@ function parseGlossaryFromDb(record: {
   try {
     const empirics = record.empirics as Record<string, unknown>
     const philosophy = record.philosophy as Record<string, unknown>
-    const poetics = record.poetics as Record<string, unknown>
 
     return {
+      // WHAT IT IS
       purpose: (empirics?.purpose as string) || '',
-      features: (empirics?.features as string[]) || [],
+      category: (empirics?.category as string) || '',
+      domain: (empirics?.domain as string) || '',
+
+      // WHAT IT PROVIDES
+      provides: (empirics?.provides as string[]) || [],
+      outputs: (empirics?.outputs as string[]) || [],
+      apis: (empirics?.apis as string[]) || [],
+
+      // WHAT IT NEEDS
+      consumes: (empirics?.consumes as string[]) || [],
+      dependencies: (empirics?.dependencies as string[]) || [],
+      gaps: (empirics?.gaps as string[]) || [],
+
+      // TECHNICAL
       techStack: (empirics?.techStack as string[]) || [],
-      targetUsers: (empirics?.targetUsers as string[]) || [],
-      kpis: (empirics?.kpis as string[]) || [],
-      roadmap: (empirics?.roadmap as string[]) || [],
+      patterns: (empirics?.patterns as string[]) || [],
+
+      // BELIEFS
       values: (philosophy?.values as string[]) || [],
-      enemies: (philosophy?.enemies as string[]) || [],
-      aesthetic: (poetics?.aesthetic as string) || '',
+      antipatterns: (philosophy?.antipatterns as string[]) || [],
+
+      // META
       confidence: record.confidence || 0,
       summary: record.futureVision || '',
     }

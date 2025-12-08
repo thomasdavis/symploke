@@ -8,17 +8,24 @@ import './glossary-detail.css'
 type GlossaryData = {
   id: string
   status: GlossaryStatus
-  // Practical
+  // What it is
   purpose: string
-  features: string[]
+  category: string
+  domain: string
+  // What it provides
+  provides: string[]
+  outputs: string[]
+  apis: string[]
+  // What it needs
+  consumes: string[]
+  dependencies: string[]
+  gaps: string[]
+  // Technical
   techStack: string[]
-  targetUsers: string[]
-  kpis: string[]
-  roadmap: string[]
+  patterns: string[]
   // Philosophical
   values: string[]
-  enemies: string[]
-  aesthetic: string
+  antipatterns: string[]
   // Meta
   confidence: number | null
   summary: string | null
@@ -170,60 +177,91 @@ export function GlossaryDetailClient({ plexusId, repo, glossary }: GlossaryDetai
             </Section>
           )}
 
-          {/* Purpose */}
-          <Section title="Purpose">
-            <TextBlock text={glossary.purpose} fallback="Purpose not determined" />
-          </Section>
-
-          {/* What It Does (Practical) */}
-          <Section title="What It Does">
+          {/* What It Is */}
+          <Section title="What It Is">
             <div className="gd-practical-grid">
               <div className="gd-subsection">
-                <h4>Features</h4>
-                <BulletList items={glossary.features || []} />
+                <h4>Purpose</h4>
+                <TextBlock text={glossary.purpose} fallback="Not specified" />
               </div>
+              <div className="gd-subsection">
+                <h4>Category</h4>
+                <TextBlock text={glossary.category} fallback="Not specified" />
+              </div>
+              <div className="gd-subsection">
+                <h4>Domain</h4>
+                <TextBlock text={glossary.domain} fallback="Not specified" />
+              </div>
+            </div>
+          </Section>
+
+          {/* What It Provides */}
+          <Section title="What It Provides">
+            <div className="gd-practical-grid">
+              <div className="gd-subsection">
+                <h4>Capabilities</h4>
+                <BulletList items={glossary.provides || []} />
+              </div>
+              <div className="gd-subsection">
+                <h4>Outputs</h4>
+                <TagList items={glossary.outputs || []} variant="positive" />
+              </div>
+              <div className="gd-subsection">
+                <h4>APIs / Interfaces</h4>
+                <TagList items={glossary.apis || []} variant="tech" />
+              </div>
+            </div>
+          </Section>
+
+          {/* What It Needs */}
+          <Section title="What It Needs">
+            <div className="gd-practical-grid">
+              <div className="gd-subsection">
+                <h4>Consumes</h4>
+                <TagList items={glossary.consumes || []} />
+              </div>
+              <div className="gd-subsection">
+                <h4>Dependencies</h4>
+                <TagList items={glossary.dependencies || []} variant="tech" />
+              </div>
+              {glossary.gaps && glossary.gaps.length > 0 && (
+                <div className="gd-subsection">
+                  <h4>Gaps / Wants</h4>
+                  <TagList items={glossary.gaps} variant="sacred" />
+                </div>
+              )}
+            </div>
+          </Section>
+
+          {/* Technical */}
+          <Section title="Technical">
+            <div className="gd-practical-grid">
               <div className="gd-subsection">
                 <h4>Tech Stack</h4>
                 <TagList items={glossary.techStack || []} variant="tech" />
               </div>
               <div className="gd-subsection">
-                <h4>Target Users</h4>
-                <TagList items={glossary.targetUsers || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Success Metrics</h4>
-                <BulletList items={glossary.kpis || []} />
+                <h4>Patterns</h4>
+                <TagList items={glossary.patterns || []} />
               </div>
             </div>
           </Section>
 
-          {/* Roadmap */}
-          {glossary.roadmap && glossary.roadmap.length > 0 && (
-            <Section title="Roadmap">
-              <BulletList items={glossary.roadmap} />
-            </Section>
-          )}
-
-          {/* What It Believes (Philosophical) */}
-          <Section title="What It Believes">
+          {/* Philosophy */}
+          <Section title="Philosophy">
             <div className="gd-philosophy-grid">
               <div className="gd-subsection">
                 <h4>Values</h4>
                 <TagList items={glossary.values || []} variant="positive" />
               </div>
-              <div className="gd-subsection">
-                <h4>Aesthetic</h4>
-                <TextBlock text={glossary.aesthetic} />
-              </div>
+              {glossary.antipatterns && glossary.antipatterns.length > 0 && (
+                <div className="gd-subsection">
+                  <h4>Avoids</h4>
+                  <TagList items={glossary.antipatterns} variant="negative" />
+                </div>
+              )}
             </div>
           </Section>
-
-          {/* What It Fights (Enemies) */}
-          {glossary.enemies && glossary.enemies.length > 0 && (
-            <Section title="What It Fights" className="gd-enemies-section">
-              <TagList items={glossary.enemies} variant="negative" />
-            </Section>
-          )}
         </>
       )}
     </div>

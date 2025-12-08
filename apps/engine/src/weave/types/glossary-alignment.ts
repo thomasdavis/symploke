@@ -96,10 +96,10 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
         sourceRepoId,
         targetRepoId,
         score: comparison.overallScore,
-        complementary: comparison.complementary,
-        competing: comparison.competing,
-        synergies: comparison.synergies.length,
-        tensions: comparison.tensions.length,
+        relationshipType: comparison.relationshipType,
+        integrationOpportunities: comparison.integrationOpportunities.length,
+        supplyDemandMatches: comparison.supplyDemandMatches.length,
+        pipelineConnections: comparison.pipelineConnections.length,
       },
       'Glossary AI comparison complete',
     )
@@ -118,9 +118,8 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
     const title = generateTitle(
       sourceRepo.name,
       targetRepo.name,
-      comparison.complementary,
-      comparison.competing,
-      comparison.synergies,
+      comparison.relationshipType,
+      comparison.integrationOpportunities,
     )
 
     // Create synthetic file pairs for metadata compatibility
@@ -139,9 +138,11 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
     const metadata: GlossaryAlignmentMetadata = {
       narrative: comparison.narrative,
       overallScore: comparison.overallScore,
-      complementary: comparison.complementary,
-      competing: comparison.competing,
-      synergies: comparison.synergies,
+      relationshipType: comparison.relationshipType,
+      integrationOpportunities: comparison.integrationOpportunities,
+      supplyDemandMatches: comparison.supplyDemandMatches,
+      pipelineConnections: comparison.pipelineConnections,
+      sharedChallenges: comparison.sharedChallenges,
       tensions: comparison.tensions,
       sourceGlossaryId: sourceGlossaryRecord.id,
       targetGlossaryId: targetGlossaryRecord.id,
@@ -172,53 +173,84 @@ const ComparisonResultSchema = z.object({
   narrative: z
     .string()
     .describe(
-      '2-3 sentences explaining the relationship between these repositories. Be specific about what connects or separates them.',
+      '2-3 sentences explaining the ACTIONABLE relationship between these repositories. Focus on specific integrations possible, not vague similarities.',
     ),
   overallScore: z
     .number()
     .min(0)
     .max(1)
     .describe(
-      'Alignment score from 0 to 1. 0 = completely unrelated, 0.5 = some overlap, 1 = nearly identical purpose/values',
+      'Integration potential from 0 to 1. 0 = no practical connection, 0.5 = some overlap worth exploring, 1 = strong integration opportunity',
     ),
-  complementary: z
-    .boolean()
-    .describe('True if these repos complement each other (different strengths that work together)'),
-  competing: z
-    .boolean()
-    .describe('True if these repos are in the same space (solving similar problems)'),
-  synergies: z
+  relationshipType: z
+    .enum([
+      'supply_demand',
+      'pipeline',
+      'shared_domain',
+      'complementary_tools',
+      'philosophical_alignment',
+      'competing',
+    ])
+    .describe(
+      'Primary relationship type: supply_demand (A provides what B needs), pipeline (A outputs what B inputs), shared_domain (same problem space), complementary_tools (different strengths), philosophical_alignment (shared values/enemies), competing (similar solutions)',
+    ),
+  integrationOpportunities: z
     .array(z.string())
-    .describe('Specific ways these repos could integrate or help each other (2-5 items)'),
+    .describe(
+      'SPECIFIC integration ideas. Not "could work together" but "B could use A\'s PDF generation for its resume output" or "A\'s CLI could load B\'s MCP tools"',
+    ),
+  supplyDemandMatches: z
+    .array(z.string())
+    .describe('Specific matches: "A provides X, B needs X". List actual matches found.'),
+  pipelineConnections: z
+    .array(z.string())
+    .describe(
+      'Data flow opportunities: "A outputs Y, B consumes Y". List actual data/artifact connections.',
+    ),
+  sharedChallenges: z
+    .array(z.string())
+    .describe('Problems both repos face that could be solved together.'),
   tensions: z
     .array(z.string())
-    .describe('Potential conflicts or incompatibilities between these repos (0-3 items)'),
+    .describe(
+      'Technical or philosophical conflicts that would make integration difficult (0-3 items)',
+    ),
 })
 
 type ComparisonResult = z.infer<typeof ComparisonResultSchema>
 
-const COMPARISON_SYSTEM_PROMPT = `You are analyzing two software repositories to find potential connections.
+const COMPARISON_SYSTEM_PROMPT = `You are finding ACTIONABLE integration opportunities between two software repositories.
 
-Your task is to compare their profiles and determine:
-1. How aligned are they in purpose, values, and approach?
-2. Do they complement each other or compete?
-3. What specific integration opportunities exist?
-4. What tensions might arise if they were used together?
+Your goal is NOT to describe vague similarities. Your goal is to find SPECIFIC, PRACTICAL ways these repos could work together.
 
-Be specific and practical. Focus on:
-- Shared enemies (problems they both fight against)
-- Complementary features (one has what the other lacks)
-- Shared values (similar beliefs about good software)
-- Technical compatibility (could they actually integrate?)
+PRIORITY ORDER:
+1. SUPPLY/DEMAND: Does A provide something B needs? Does B provide something A needs?
+   - Check A's "provides" against B's "consumes" and "gaps"
+   - Check B's "provides" against A's "consumes" and "gaps"
 
-Score guidelines:
-- 0.0-0.2: Completely unrelated domains
-- 0.2-0.4: Some philosophical overlap but different focus
-- 0.4-0.6: Meaningful connection, potential for integration
-- 0.6-0.8: Strong alignment, natural partners
-- 0.8-1.0: Nearly identical purpose/values
+2. PIPELINE: Could data flow between them?
+   - Does A output something B could consume?
+   - Do their APIs connect naturally?
 
-Be conservative with high scores. Two repos in the same general area (e.g., both are web frameworks) might only score 0.3-0.4 unless they have specific philosophical or feature alignment.`
+3. SHARED DOMAIN: Do they work on the same problems?
+   - Could they share code, tools, or approaches?
+   - Would users of one benefit from the other?
+
+4. COMPLEMENTARY: Do they have different strengths that combine well?
+   - CLI + library, frontend + backend, analysis + generation
+
+5. PHILOSOPHICAL: Do they share values or fight the same enemies?
+   - This is the WEAKEST form of connection - only mention if strong
+
+SCORING:
+- 0.0-0.2: No practical connection (just "both are software")
+- 0.2-0.4: Vague domain overlap, no clear integration path
+- 0.4-0.6: Real integration possible with some work
+- 0.6-0.8: Natural fit - clear integration opportunity
+- 0.8-1.0: Perfect match - A provides exactly what B needs or vice versa
+
+BE CONCRETE. Instead of "could work together", say "B's resume templates could use A's PDF generation API".
+If there's no real integration opportunity, say so honestly and score low.`
 
 function buildComparisonPrompt(
   sourceFullName: string,
@@ -228,23 +260,28 @@ function buildComparisonPrompt(
 ): string {
   return `## Repository A: ${sourceFullName}
 
-**Purpose**: ${sourceGlossary.purpose}
+**What It Is**
+- Purpose: ${sourceGlossary.purpose}
+- Category: ${sourceGlossary.category || 'Not specified'}
+- Domain: ${sourceGlossary.domain || 'Not specified'}
 
-**Features**: ${sourceGlossary.features.join(', ') || 'Not specified'}
+**What It PROVIDES** (things others could use)
+- Capabilities: ${sourceGlossary.provides.join(', ') || 'Not specified'}
+- Outputs: ${sourceGlossary.outputs.join(', ') || 'Not specified'}
+- APIs/Interfaces: ${sourceGlossary.apis.join(', ') || 'Not specified'}
 
-**Tech Stack**: ${sourceGlossary.techStack.join(', ') || 'Not specified'}
+**What It NEEDS** (things it could get from others)
+- Consumes: ${sourceGlossary.consumes.join(', ') || 'Not specified'}
+- Dependencies: ${sourceGlossary.dependencies.join(', ') || 'Not specified'}
+- Gaps/Wants: ${sourceGlossary.gaps.join(', ') || 'Not specified'}
 
-**Target Users**: ${sourceGlossary.targetUsers.join(', ') || 'Not specified'}
+**Technical**
+- Stack: ${sourceGlossary.techStack.join(', ') || 'Not specified'}
+- Patterns: ${sourceGlossary.patterns.join(', ') || 'Not specified'}
 
-**KPIs**: ${sourceGlossary.kpis.join(', ') || 'Not specified'}
-
-**Roadmap**: ${sourceGlossary.roadmap.join(', ') || 'Not specified'}
-
-**Values**: ${sourceGlossary.values.join(', ') || 'Not specified'}
-
-**Enemies**: ${sourceGlossary.enemies.join(', ') || 'Not specified'}
-
-**Aesthetic**: ${sourceGlossary.aesthetic || 'Not specified'}
+**Philosophy**
+- Values: ${sourceGlossary.values.join(', ') || 'Not specified'}
+- Avoids: ${sourceGlossary.antipatterns.join(', ') || 'Not specified'}
 
 **Summary**: ${sourceGlossary.summary}
 
@@ -252,33 +289,39 @@ function buildComparisonPrompt(
 
 ## Repository B: ${targetFullName}
 
-**Purpose**: ${targetGlossary.purpose}
+**What It Is**
+- Purpose: ${targetGlossary.purpose}
+- Category: ${targetGlossary.category || 'Not specified'}
+- Domain: ${targetGlossary.domain || 'Not specified'}
 
-**Features**: ${targetGlossary.features.join(', ') || 'Not specified'}
+**What It PROVIDES** (things others could use)
+- Capabilities: ${targetGlossary.provides.join(', ') || 'Not specified'}
+- Outputs: ${targetGlossary.outputs.join(', ') || 'Not specified'}
+- APIs/Interfaces: ${targetGlossary.apis.join(', ') || 'Not specified'}
 
-**Tech Stack**: ${targetGlossary.techStack.join(', ') || 'Not specified'}
+**What It NEEDS** (things it could get from others)
+- Consumes: ${targetGlossary.consumes.join(', ') || 'Not specified'}
+- Dependencies: ${targetGlossary.dependencies.join(', ') || 'Not specified'}
+- Gaps/Wants: ${targetGlossary.gaps.join(', ') || 'Not specified'}
 
-**Target Users**: ${targetGlossary.targetUsers.join(', ') || 'Not specified'}
+**Technical**
+- Stack: ${targetGlossary.techStack.join(', ') || 'Not specified'}
+- Patterns: ${targetGlossary.patterns.join(', ') || 'Not specified'}
 
-**KPIs**: ${targetGlossary.kpis.join(', ') || 'Not specified'}
-
-**Roadmap**: ${targetGlossary.roadmap.join(', ') || 'Not specified'}
-
-**Values**: ${targetGlossary.values.join(', ') || 'Not specified'}
-
-**Enemies**: ${targetGlossary.enemies.join(', ') || 'Not specified'}
-
-**Aesthetic**: ${targetGlossary.aesthetic || 'Not specified'}
+**Philosophy**
+- Values: ${targetGlossary.values.join(', ') || 'Not specified'}
+- Avoids: ${targetGlossary.antipatterns.join(', ') || 'Not specified'}
 
 **Summary**: ${targetGlossary.summary}
 
 ---
 
-Compare these two repositories. Consider:
-1. Do they solve related problems?
-2. Do they share values or enemies?
-3. Could they work together?
-4. What might cause friction if combined?`
+Find ACTIONABLE integration opportunities:
+1. Does A provide something B needs or wants?
+2. Does B provide something A needs or wants?
+3. Could A's outputs feed into B's inputs (or vice versa)?
+4. Do they work in the same domain where integration makes sense?
+5. What technical or philosophical tensions would block integration?`
 }
 
 async function compareGlossariesWithAI(
@@ -317,27 +360,38 @@ async function compareGlossariesWithAI(
 // HELPERS
 // ============================================================================
 
+type RelationshipType =
+  | 'supply_demand'
+  | 'pipeline'
+  | 'shared_domain'
+  | 'complementary_tools'
+  | 'philosophical_alignment'
+  | 'competing'
+
 function generateTitle(
   sourceName: string,
   targetName: string,
-  complementary: boolean,
-  competing: boolean,
-  synergies: string[],
+  relationshipType: RelationshipType,
+  integrationOpportunities: string[],
 ): string {
-  if (complementary && synergies.length > 0) {
-    // Pick a keyword from first synergy
-    const firstSynergy = synergies[0]!
-    const keywords = firstSynergy.split(' ').slice(0, 3).join(' ')
-    return `${sourceName} + ${targetName}: ${keywords}`
+  // If we have a specific integration opportunity, use it
+  if (integrationOpportunities.length > 0) {
+    const firstOpp = integrationOpportunities[0]!
+    // Truncate to first ~40 chars at word boundary
+    const truncated =
+      firstOpp.length > 45 ? firstOpp.slice(0, 42).replace(/\s+\S*$/, '...') : firstOpp
+    return `${sourceName} + ${targetName}: ${truncated}`
   }
 
-  if (competing) {
-    return `${sourceName} & ${targetName}: Same arena`
+  // Fall back to relationship type
+  const typeLabels: Record<RelationshipType, string> = {
+    supply_demand: 'Supply meets demand',
+    pipeline: 'Data pipeline',
+    shared_domain: 'Same domain',
+    complementary_tools: 'Complementary tools',
+    philosophical_alignment: 'Shared values',
+    competing: 'Alternative approaches',
   }
 
-  if (complementary) {
-    return `${sourceName} & ${targetName}: Complementary tools`
-  }
-
-  return `${sourceName} & ${targetName}: Kindred spirits`
+  return `${sourceName} & ${targetName}: ${typeLabels[relationshipType]}`
 }

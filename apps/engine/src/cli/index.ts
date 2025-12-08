@@ -1186,40 +1186,45 @@ program
         console.log('PURPOSE:')
         console.log(`  ${glossary.purpose}`)
 
+        console.log('\nCATEGORY/DOMAIN:')
+        console.log(`  ${glossary.category} / ${glossary.domain}`)
+
         console.log('\nSUMMARY:')
         console.log(`  ${glossary.summary}`)
 
-        console.log('\nFEATURES:')
-        for (const feature of glossary.features) {
-          console.log(`  - ${feature}`)
+        console.log('\nPROVIDES:')
+        for (const item of glossary.provides) {
+          console.log(`  - ${item}`)
+        }
+
+        console.log('\nOUTPUTS:')
+        console.log(`  ${glossary.outputs.join(', ') || 'none'}`)
+
+        console.log('\nAPIs:')
+        console.log(`  ${glossary.apis.join(', ') || 'none'}`)
+
+        console.log('\nCONSUMES:')
+        console.log(`  ${glossary.consumes.join(', ') || 'none'}`)
+
+        console.log('\nDEPENDENCIES:')
+        console.log(`  ${glossary.dependencies.join(', ') || 'none'}`)
+
+        console.log('\nGAPS/WANTS:')
+        for (const gap of glossary.gaps) {
+          console.log(`  - ${gap}`)
         }
 
         console.log('\nTECH STACK:')
         console.log(`  ${glossary.techStack.join(', ') || 'none'}`)
 
-        console.log('\nTARGET USERS:')
-        for (const user of glossary.targetUsers) {
-          console.log(`  - ${user}`)
-        }
-
-        console.log('\nKPIs:')
-        for (const kpi of glossary.kpis) {
-          console.log(`  - ${kpi}`)
-        }
-
-        console.log('\nROADMAP:')
-        for (const item of glossary.roadmap) {
-          console.log(`  - ${item}`)
-        }
+        console.log('\nPATTERNS:')
+        console.log(`  ${glossary.patterns.join(', ') || 'none'}`)
 
         console.log('\nVALUES:')
         console.log(`  ${glossary.values.join(', ') || 'none'}`)
 
-        console.log('\nENEMIES:')
-        console.log(`  ${glossary.enemies.join(', ') || 'none'}`)
-
-        console.log('\nAESTHETIC:')
-        console.log(`  ${glossary.aesthetic}`)
+        console.log('\nAVOIDS:')
+        console.log(`  ${glossary.antipatterns.join(', ') || 'none'}`)
 
         console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
       } else {
@@ -1297,40 +1302,45 @@ program
       console.log('PURPOSE:')
       console.log(`  ${glossary.purpose}`)
 
+      console.log('\nCATEGORY/DOMAIN:')
+      console.log(`  ${glossary.category} / ${glossary.domain}`)
+
       console.log('\nSUMMARY:')
       console.log(`  ${glossary.summary}`)
 
-      console.log('\nFEATURES:')
-      for (const feature of glossary.features) {
-        console.log(`  - ${feature}`)
+      console.log('\nPROVIDES:')
+      for (const item of glossary.provides) {
+        console.log(`  - ${item}`)
+      }
+
+      console.log('\nOUTPUTS:')
+      console.log(`  ${glossary.outputs.join(', ') || 'none'}`)
+
+      console.log('\nAPIs:')
+      console.log(`  ${glossary.apis.join(', ') || 'none'}`)
+
+      console.log('\nCONSUMES:')
+      console.log(`  ${glossary.consumes.join(', ') || 'none'}`)
+
+      console.log('\nDEPENDENCIES:')
+      console.log(`  ${glossary.dependencies.join(', ') || 'none'}`)
+
+      console.log('\nGAPS/WANTS:')
+      for (const gap of glossary.gaps) {
+        console.log(`  - ${gap}`)
       }
 
       console.log('\nTECH STACK:')
       console.log(`  ${glossary.techStack.join(', ') || 'none'}`)
 
-      console.log('\nTARGET USERS:')
-      for (const user of glossary.targetUsers) {
-        console.log(`  - ${user}`)
-      }
-
-      console.log('\nKPIs:')
-      for (const kpi of glossary.kpis) {
-        console.log(`  - ${kpi}`)
-      }
-
-      console.log('\nROADMAP:')
-      for (const item of glossary.roadmap) {
-        console.log(`  - ${item}`)
-      }
+      console.log('\nPATTERNS:')
+      console.log(`  ${glossary.patterns.join(', ') || 'none'}`)
 
       console.log('\nVALUES:')
       console.log(`  ${glossary.values.join(', ') || 'none'}`)
 
-      console.log('\nENEMIES:')
-      console.log(`  ${glossary.enemies.join(', ') || 'none'}`)
-
-      console.log('\nAESTHETIC:')
-      console.log(`  ${glossary.aesthetic}`)
+      console.log('\nAVOIDS:')
+      console.log(`  ${glossary.antipatterns.join(', ') || 'none'}`)
 
       console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
     } catch (error: unknown) {

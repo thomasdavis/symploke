@@ -43,29 +43,34 @@ export default async function WeaveDetailPage({ params }: WeaveDetailPageProps) 
   }
 
   // Serialize glossary data for client component
-  // Extract fields from JSON columns (empirics, philosophy, poetics)
+  // Extract fields from JSON columns (empirics, philosophy)
   const serializeGlossary = (glossary: typeof weave.sourceRepo.glossary) => {
     if (!glossary) return null
 
     const empirics = glossary.empirics as Record<string, unknown> | null
     const philosophy = glossary.philosophy as Record<string, unknown> | null
-    const poetics = glossary.poetics as Record<string, unknown> | null
 
     return {
       id: glossary.id,
       status: glossary.status,
-      // Practical (from empirics)
+      // What it is
       purpose: (empirics?.purpose as string) || null,
-      features: (empirics?.features as string[]) || null,
+      category: (empirics?.category as string) || null,
+      domain: (empirics?.domain as string) || null,
+      // What it provides
+      provides: (empirics?.provides as string[]) || null,
+      outputs: (empirics?.outputs as string[]) || null,
+      apis: (empirics?.apis as string[]) || null,
+      // What it needs
+      consumes: (empirics?.consumes as string[]) || null,
+      dependencies: (empirics?.dependencies as string[]) || null,
+      gaps: (empirics?.gaps as string[]) || null,
+      // Technical
       techStack: (empirics?.techStack as string[]) || null,
-      targetUsers: (empirics?.targetUsers as string[]) || null,
-      kpis: (empirics?.kpis as string[]) || null,
-      roadmap: (empirics?.roadmap as string[]) || null,
-      // Philosophical (from philosophy)
+      patterns: (empirics?.patterns as string[]) || null,
+      // Philosophy
       values: (philosophy?.values as string[]) || null,
-      enemies: (philosophy?.enemies as string[]) || null,
-      // Poetic (from poetics)
-      aesthetic: (poetics?.aesthetic as string) || null,
+      antipatterns: (philosophy?.antipatterns as string[]) || null,
       // Meta
       confidence: glossary.confidence,
       summary: glossary.futureVision,

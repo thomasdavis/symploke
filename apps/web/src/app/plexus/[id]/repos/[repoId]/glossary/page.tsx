@@ -12,7 +12,6 @@ function parseGlossaryFromDb(glossary: {
   status: string
   empirics: unknown
   philosophy: unknown
-  poetics: unknown
   futureVision: string | null
   confidence: number | null
   unglossableReason: string | null
@@ -20,20 +19,29 @@ function parseGlossaryFromDb(glossary: {
 }) {
   const empirics = glossary.empirics as Record<string, unknown> | null
   const philosophy = glossary.philosophy as Record<string, unknown> | null
-  const poetics = glossary.poetics as Record<string, unknown> | null
 
   return {
     id: glossary.id,
     status: glossary.status as 'PENDING' | 'EXTRACTING' | 'COMPLETE' | 'FAILED' | 'UNGLOSSABLE',
+    // What it is
     purpose: (empirics?.purpose as string) || '',
-    features: (empirics?.features as string[]) || [],
+    category: (empirics?.category as string) || '',
+    domain: (empirics?.domain as string) || '',
+    // What it provides
+    provides: (empirics?.provides as string[]) || [],
+    outputs: (empirics?.outputs as string[]) || [],
+    apis: (empirics?.apis as string[]) || [],
+    // What it needs
+    consumes: (empirics?.consumes as string[]) || [],
+    dependencies: (empirics?.dependencies as string[]) || [],
+    gaps: (empirics?.gaps as string[]) || [],
+    // Technical
     techStack: (empirics?.techStack as string[]) || [],
-    targetUsers: (empirics?.targetUsers as string[]) || [],
-    kpis: (empirics?.kpis as string[]) || [],
-    roadmap: (empirics?.roadmap as string[]) || [],
+    patterns: (empirics?.patterns as string[]) || [],
+    // Philosophy
     values: (philosophy?.values as string[]) || [],
-    enemies: (philosophy?.enemies as string[]) || [],
-    aesthetic: (poetics?.aesthetic as string) || '',
+    antipatterns: (philosophy?.antipatterns as string[]) || [],
+    // Meta
     confidence: glossary.confidence,
     summary: glossary.futureVision,
     unglossableReason: glossary.unglossableReason,

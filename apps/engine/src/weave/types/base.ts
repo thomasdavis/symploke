@@ -56,16 +56,24 @@ export interface WeaveCandidate {
  */
 export interface GlossaryAlignmentMetadata {
   // AI-generated narrative comparison
-  narrative: string // 2-3 sentences explaining relationship
-  overallScore: number // 0-1 alignment score
+  narrative: string // 2-3 sentences explaining actionable relationship
+  overallScore: number // 0-1 integration potential
 
-  // Relationship type
-  complementary: boolean // Do they complement each other?
-  competing: boolean // Are they in the same space?
+  // Relationship classification
+  relationshipType:
+    | 'supply_demand'
+    | 'pipeline'
+    | 'shared_domain'
+    | 'complementary_tools'
+    | 'philosophical_alignment'
+    | 'competing'
 
-  // Specific insights
-  synergies: string[] // Specific integration opportunities
-  tensions: string[] // Potential conflicts
+  // Actionable insights
+  integrationOpportunities: string[] // Specific integration ideas
+  supplyDemandMatches: string[] // "A provides X, B needs X"
+  pipelineConnections: string[] // "A outputs Y, B consumes Y"
+  sharedChallenges: string[] // Problems both face
+  tensions: string[] // Technical/philosophical conflicts
 
   // Source info
   sourceGlossaryId: string

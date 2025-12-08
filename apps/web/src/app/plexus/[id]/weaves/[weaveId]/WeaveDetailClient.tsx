@@ -40,15 +40,25 @@ type WeaveData = {
 type GlossaryData = {
   id: string
   status: string
+  // What it is
   purpose: string | null
-  features: string[] | null
+  category: string | null
+  domain: string | null
+  // What it provides
+  provides: string[] | null
+  outputs: string[] | null
+  apis: string[] | null
+  // What it needs
+  consumes: string[] | null
+  dependencies: string[] | null
+  gaps: string[] | null
+  // Technical
   techStack: string[] | null
-  targetUsers: string[] | null
-  kpis: string[] | null
-  roadmap: string[] | null
+  patterns: string[] | null
+  // Philosophy
   values: string[] | null
-  enemies: string[] | null
-  aesthetic: string | null
+  antipatterns: string[] | null
+  // Meta
   confidence: number | null
   summary: string | null
 }
@@ -95,9 +105,17 @@ function ScoreDisplay({ score, label = 'Score' }: { score: number; label?: strin
 type GlossaryAlignmentMetadata = {
   narrative: string
   overallScore: number
-  complementary: boolean
-  competing: boolean
-  synergies: string[]
+  relationshipType:
+    | 'supply_demand'
+    | 'pipeline'
+    | 'shared_domain'
+    | 'complementary_tools'
+    | 'philosophical_alignment'
+    | 'competing'
+  integrationOpportunities: string[]
+  supplyDemandMatches: string[]
+  pipelineConnections: string[]
+  sharedChallenges: string[]
   tensions: string[]
   sourceSummary?: string
   targetSummary?: string
@@ -164,17 +182,45 @@ function GlossaryColumn({
         </div>
       )}
 
-      {glossary.features && glossary.features.length > 0 && (
+      {(glossary.category || glossary.domain) && (
         <div className="wd-glossary-row">
-          <strong>Features</strong>
+          <strong>Type</strong>
+          <p>{[glossary.category, glossary.domain].filter(Boolean).join(' / ')}</p>
+        </div>
+      )}
+
+      {glossary.provides && glossary.provides.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Provides</strong>
           <ul className="wd-compact-list">
-            {glossary.features.slice(0, 4).map((f, i) => (
+            {glossary.provides.slice(0, 4).map((f, i) => (
               <li key={i}>{f}</li>
             ))}
-            {glossary.features.length > 4 && (
-              <li className="wd-more">+{glossary.features.length - 4} more</li>
+            {glossary.provides.length > 4 && (
+              <li className="wd-more">+{glossary.provides.length - 4} more</li>
             )}
           </ul>
+        </div>
+      )}
+
+      {glossary.consumes && glossary.consumes.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Consumes</strong>
+          <TagList items={glossary.consumes} />
+        </div>
+      )}
+
+      {glossary.gaps && glossary.gaps.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Gaps/Wants</strong>
+          <TagList items={glossary.gaps} variant="sacred" />
+        </div>
+      )}
+
+      {glossary.apis && glossary.apis.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>APIs</strong>
+          <TagList items={glossary.apis} variant="tech" />
         </div>
       )}
 
@@ -192,17 +238,10 @@ function GlossaryColumn({
         </div>
       )}
 
-      {glossary.enemies && glossary.enemies.length > 0 && (
+      {glossary.antipatterns && glossary.antipatterns.length > 0 && (
         <div className="wd-glossary-row">
-          <strong>Enemies</strong>
-          <TagList items={glossary.enemies} variant="negative" />
-        </div>
-      )}
-
-      {glossary.targetUsers && glossary.targetUsers.length > 0 && (
-        <div className="wd-glossary-row">
-          <strong>Target Users</strong>
-          <TagList items={glossary.targetUsers} />
+          <strong>Avoids</strong>
+          <TagList items={glossary.antipatterns} variant="negative" />
         </div>
       )}
     </div>
@@ -212,6 +251,15 @@ function GlossaryColumn({
 type WeaveWithGlossary = WeaveData & {
   sourceRepo: RepoData & { glossary?: GlossaryData | null }
   targetRepo: RepoData & { glossary?: GlossaryData | null }
+}
+
+const RELATIONSHIP_LABELS: Record<GlossaryAlignmentMetadata['relationshipType'], string> = {
+  supply_demand: 'Supply/Demand Match',
+  pipeline: 'Data Pipeline',
+  shared_domain: 'Shared Domain',
+  complementary_tools: 'Complementary Tools',
+  philosophical_alignment: 'Philosophical Alignment',
+  competing: 'Alternative Approaches',
 }
 
 function GlossaryAlignmentDetail({
@@ -237,20 +285,55 @@ function GlossaryAlignmentDetail({
         <h3>AI Analysis</h3>
         <p className="wd-narrative">{metadata.narrative}</p>
         <div className="wd-relationship-badges">
-          {metadata.complementary && (
-            <span className="wd-badge wd-badge--complementary">Complementary</span>
-          )}
-          {metadata.competing && <span className="wd-badge wd-badge--competing">Same Arena</span>}
+          <span className={`wd-badge wd-badge--${metadata.relationshipType}`}>
+            {RELATIONSHIP_LABELS[metadata.relationshipType]}
+          </span>
         </div>
       </div>
 
-      {/* Synergies */}
-      {metadata.synergies && metadata.synergies.length > 0 && (
+      {/* Integration Opportunities - THE MAIN THING */}
+      {metadata.integrationOpportunities && metadata.integrationOpportunities.length > 0 && (
+        <div className="wd-section wd-integration-section">
+          <h3>Integration Opportunities</h3>
+          <ul className="wd-integration-list">
+            {metadata.integrationOpportunities.map((opp, i) => (
+              <li key={i}>{opp}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Supply/Demand Matches */}
+      {metadata.supplyDemandMatches && metadata.supplyDemandMatches.length > 0 && (
         <div className="wd-section">
-          <h3>Synergies</h3>
+          <h3>Supply/Demand Matches</h3>
           <ul className="wd-synergies-list">
-            {metadata.synergies.map((synergy, i) => (
-              <li key={i}>{synergy}</li>
+            {metadata.supplyDemandMatches.map((match, i) => (
+              <li key={i}>{match}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Pipeline Connections */}
+      {metadata.pipelineConnections && metadata.pipelineConnections.length > 0 && (
+        <div className="wd-section">
+          <h3>Data Pipeline Connections</h3>
+          <ul className="wd-synergies-list">
+            {metadata.pipelineConnections.map((conn, i) => (
+              <li key={i}>{conn}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Shared Challenges */}
+      {metadata.sharedChallenges && metadata.sharedChallenges.length > 0 && (
+        <div className="wd-section">
+          <h3>Shared Challenges</h3>
+          <ul className="wd-synergies-list">
+            {metadata.sharedChallenges.map((challenge, i) => (
+              <li key={i}>{challenge}</li>
             ))}
           </ul>
         </div>
