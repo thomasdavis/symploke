@@ -21,14 +21,45 @@ export default async function WeavesPage({ params }: WeavesPageProps) {
   })
 
   // Get all weaves for this plexus (excluding dismissed)
+  // Include glossary data for showing breakdowns in glossary_alignment weaves
   const weaves = await db.weave.findMany({
     where: {
       plexusId: id,
       dismissed: false,
     },
     include: {
-      sourceRepo: { select: { name: true, fullName: true } },
-      targetRepo: { select: { name: true, fullName: true } },
+      sourceRepo: {
+        select: {
+          name: true,
+          fullName: true,
+          glossary: {
+            select: {
+              status: true,
+              empirics: true,
+              philosophy: true,
+              poetics: true,
+              futureVision: true,
+              confidence: true,
+            },
+          },
+        },
+      },
+      targetRepo: {
+        select: {
+          name: true,
+          fullName: true,
+          glossary: {
+            select: {
+              status: true,
+              empirics: true,
+              philosophy: true,
+              poetics: true,
+              futureVision: true,
+              confidence: true,
+            },
+          },
+        },
+      },
     },
     orderBy: {
       score: 'desc',

@@ -1,25 +1,26 @@
 'use client'
 
-import { useCallback, useMemo, useState, useEffect } from 'react'
+import type { WeaveType } from '@symploke/db'
 import {
-  ReactFlow,
   Background,
   Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  useReactFlow,
-  ReactFlowProvider,
-  Handle,
-  Position,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type Node,
   type Edge,
-  type NodeProps,
+  EdgeLabelRenderer,
   type EdgeProps,
+  getBezierPath,
+  Handle,
+  MiniMap,
+  type Node,
+  type NodeProps,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
+  useReactFlow,
 } from '@xyflow/react'
-import type { WeaveType } from '@symploke/db'
+import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getElkLayout } from '@/hooks/useElkLayout'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
@@ -54,6 +55,7 @@ type RepoNodeData = {
 
 type WeaveEdgeData = {
   weave: Weave
+  plexusId: string
 }
 
 function formatTimeAgo(date: Date | string | null): string {
@@ -231,6 +233,22 @@ function WeaveEdge({
                 </svg>
                 <span>{weave.targetRepo.name}</span>
               </div>
+              <Link
+                href={`/plexus/${data?.plexusId}/weaves/${weave.id}`}
+                className="weave-edge__tooltip-link"
+                onClick={(e) => e.stopPropagation()}
+              >
+                View Full Details
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 4L10 8L6 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
             </div>
           )}
         </button>
@@ -280,6 +298,7 @@ function calculateNodePositions(repos: Repo[]): Node<RepoNodeData>[] {
 function createEdgesFromWeaves(
   weaves: Weave[],
   nodes: Node<RepoNodeData>[],
+  plexusId: string,
 ): Edge<WeaveEdgeData>[] {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
 
@@ -317,7 +336,7 @@ function createEdgesFromWeaves(
       sourceHandle,
       targetHandle,
       type: 'weave',
-      data: { weave },
+      data: { weave, plexusId },
       animated: false,
     }
   })
@@ -358,15 +377,16 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
         }))
 
         // Run ELK layout to get optimized positions
+        // Use 'layered' algorithm for clean separation of nodes
         const layoutedNodes = await getElkLayout(nodesToLayout, initialEdges, {
-          direction: 'RIGHT',
+          direction: 'DOWN',
           algorithm: 'layered',
-          nodeSpacing: 80,
+          nodeSpacing: 100,
           layerSpacing: 150,
         })
 
         // Update edges with proper handles based on new positions
-        const layoutedEdges = createEdgesFromWeaves(weaves, layoutedNodes)
+        const layoutedEdges = createEdgesFromWeaves(weaves, layoutedNodes, plexusId)
 
         setNodes(layoutedNodes)
         setEdges(layoutedEdges)
@@ -379,7 +399,7 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
         console.error('Layout error:', error)
         // Fallback to grid layout
         const fallbackNodes = calculateNodePositions(repos)
-        const fallbackEdges = createEdgesFromWeaves(weaves, fallbackNodes)
+        const fallbackEdges = createEdgesFromWeaves(weaves, fallbackNodes, plexusId)
         setNodes(fallbackNodes)
         setEdges(fallbackEdges)
       } finally {
@@ -388,7 +408,7 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
     }
 
     runLayout()
-  }, [repos, weaves, setNodes, setEdges, fitView])
+  }, [repos, weaves, plexusId, setNodes, setEdges, fitView])
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {

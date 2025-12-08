@@ -13,6 +13,7 @@ import {
 } from '../queue/processor.js'
 import { findWeaves, listWeaves, listDiscoveryRuns, getDiscoveryRun } from '../weave/finder.js'
 import { findWeavesV2, profileRepository } from '../weave/finder-v2.js'
+import { findActionableWeaves } from '../weave/finder-actionable.js'
 import { extractGlossary, extractPlexusGlossaries, getGlossary } from '../weave/glossary.js'
 import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
@@ -732,6 +733,80 @@ program
           }
         }
       }
+    } catch (error: unknown) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+  })
+
+// Find actionable weaves command - evidence-based approach
+program
+  .command('find-actionable-weaves')
+  .description('Discover actionable integration opportunities (evidence-based, v3)')
+  .requiredOption('--plexus-id <id>', 'Plexus ID to analyze')
+  .option('--min-score <n>', 'Minimum score threshold (0.0-1.0)', parseFloat, 0.3)
+  .option('--skip-screening', 'Skip cheap screening pass (always do deep analysis)')
+  .option('--dry-run', 'Find weaves but do not save to database')
+  .option('--verbose', 'Enable verbose debug logging')
+  .action(async (options) => {
+    try {
+      // Verify plexus exists
+      const plexus = await db.plexus.findUnique({
+        where: { id: options.plexusId },
+        select: { id: true, name: true, slug: true },
+      })
+
+      if (!plexus) {
+        console.error(`Plexus not found: ${options.plexusId}`)
+        process.exit(1)
+      }
+
+      console.log(`\nFinding ACTIONABLE weaves in plexus: ${plexus.name} (${plexus.slug})`)
+      console.log(`  Algorithm: Evidence-Based Actionable (v3)`)
+      console.log(`  Min score: ${options.minScore}`)
+      console.log(`  Skip screening: ${options.skipScreening ? 'yes' : 'no'}`)
+      console.log(`  Dry run: ${options.dryRun ? 'yes' : 'no'}`)
+      console.log(`  Verbose: ${options.verbose ? 'yes' : 'no'}`)
+      console.log('')
+
+      const result = await findActionableWeaves(options.plexusId, {
+        minScore: options.minScore,
+        skipScreening: options.skipScreening,
+        dryRun: options.dryRun,
+        verbose: options.verbose,
+      })
+
+      console.log('\nActionable Weave Discovery Results:')
+      console.log('====================================')
+      console.log(`Run ID:              ${result.runId}`)
+      console.log(`Repo pairs:          ${result.repoPairs}`)
+      console.log(`Screened:            ${result.screened}`)
+      console.log(`Deep analyzed:       ${result.deepAnalyzed}`)
+      console.log(`Weaves saved:        ${result.weavesSaved}`)
+      console.log(`Duration:            ${(result.duration / 1000).toFixed(1)}s`)
+
+      if (result.weaves.length > 0) {
+        const withOpportunities = result.weaves.filter((w) => w.opportunities.length > 0)
+        console.log(`\nWeaves with opportunities: ${withOpportunities.length}`)
+
+        for (const weave of withOpportunities.slice(0, 10)) {
+          console.log(
+            `\n  [Score: ${(weave.score * 100).toFixed(0)}%] ${weave.opportunities.length} opportunities`,
+          )
+          for (const opp of weave.opportunities.slice(0, 3)) {
+            console.log(`    - [${opp.type}] ${opp.title}`)
+            console.log(
+              `      ${opp.description.slice(0, 100)}${opp.description.length > 100 ? '...' : ''}`,
+            )
+            console.log(`      Effort: ${opp.effort}, Steps: ${opp.steps.length}`)
+            if (opp.evidence.files && opp.evidence.files.length > 0) {
+              console.log(`      Files: ${opp.evidence.files.slice(0, 3).join(', ')}`)
+            }
+          }
+        }
+      }
+
+      console.log(`\nView detailed logs: pnpm engine discovery-run --run-id ${result.runId}`)
     } catch (error: unknown) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
       process.exit(1)

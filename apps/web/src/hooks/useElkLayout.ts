@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import type { Edge, Node } from '@xyflow/react'
 import ELK from 'elkjs/lib/elk.bundled.js'
-import type { Node, Edge } from '@xyflow/react'
+import { useCallback, useEffect, useState } from 'react'
 
 const elk = new ELK()
 
@@ -42,15 +42,24 @@ export async function getElkLayout<T extends Record<string, unknown>>(
     layoutOptions: {
       'elk.algorithm': opts.algorithm,
       'elk.direction': opts.direction,
+      // Core spacing
       'elk.spacing.nodeNode': String(opts.nodeSpacing),
-      'elk.layered.spacing.nodeNodeBetweenLayers': String(opts.layerSpacing),
       'elk.spacing.edgeEdge': String(opts.edgeSpacing),
+      'elk.spacing.edgeNode': String(Math.floor(opts.nodeSpacing / 2)),
+      // Layered algorithm options
+      'elk.layered.spacing.nodeNodeBetweenLayers': String(opts.layerSpacing),
       'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
       'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
       'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
-      // For force-directed layouts
-      'elk.force.iterations': '300',
-      'elk.stress.desiredEdgeLength': String(opts.layerSpacing),
+      // Force/stress algorithm options
+      'elk.force.iterations': '500',
+      'elk.stress.desiredEdgeLength': String(opts.layerSpacing * 1.5),
+      'elk.stress.epsilon': '0.0001',
+      // Node overlap prevention (critical for stress algorithm)
+      'elk.spacing.componentComponent': String(opts.nodeSpacing * 2),
+      'elk.separateConnectedComponents': 'true',
+      // Padding around the entire graph
+      'elk.padding': '[top=50,left=50,bottom=50,right=50]',
     },
     children: nodes.map((node) => ({
       id: node.id,

@@ -53,24 +53,28 @@ function formatRunDate(date: Date): string {
 export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: DashboardClientProps) {
   // Default to 'latest' which shows the most recent run's weaves (or all if none have runIds)
   const [selectedRunId, setSelectedRunId] = useState<string>('latest')
+  const [minScore, setMinScore] = useState<number>(0.3)
 
-  // Filter weaves by selected run
+  // Filter weaves by selected run and score
   const filteredWeaves = useMemo(() => {
+    let result = weaves
+
+    // Filter by run
     if (selectedRunId === 'all') {
-      return weaves // Show all weaves
-    }
-    if (selectedRunId === 'latest') {
-      // Show weaves from latest run, or all weaves without runIds if no runs exist
+      result = weaves
+    } else if (selectedRunId === 'latest') {
       const latestRunId = discoveryRuns[0]?.id
       if (latestRunId) {
         const runWeaves = weaves.filter((w) => w.discoveryRunId === latestRunId)
-        // If latest run has no weaves, show legacy weaves (those without runIds)
-        return runWeaves.length > 0 ? runWeaves : weaves.filter((w) => !w.discoveryRunId)
+        result = runWeaves.length > 0 ? runWeaves : weaves.filter((w) => !w.discoveryRunId)
       }
-      return weaves // Show all if no runs exist
+    } else {
+      result = weaves.filter((w) => w.discoveryRunId === selectedRunId)
     }
-    return weaves.filter((w) => w.discoveryRunId === selectedRunId)
-  }, [weaves, selectedRunId, discoveryRuns])
+
+    // Filter by minimum score
+    return result.filter((w) => w.score >= minScore)
+  }, [weaves, selectedRunId, discoveryRuns, minScore])
 
   const selectedRun =
     selectedRunId !== 'latest' && selectedRunId !== 'all'
@@ -102,7 +106,7 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                       : 'Select run'}
               </Select.Value>
               <Select.Icon>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                   <path
                     d="M3 4.5L6 7.5L9 4.5"
                     stroke="currentColor"
@@ -120,7 +124,13 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                     <Select.Item value="latest">
                       <Select.ItemText>Latest run</Select.ItemText>
                       <Select.ItemIndicator>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
                           <path
                             d="M2.5 6L5 8.5L9.5 3.5"
                             stroke="currentColor"
@@ -134,7 +144,13 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                     <Select.Item value="all">
                       <Select.ItemText>All runs</Select.ItemText>
                       <Select.ItemIndicator>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
                           <path
                             d="M2.5 6L5 8.5L9.5 3.5"
                             stroke="currentColor"
@@ -152,7 +168,13 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                           {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
                         </Select.ItemText>
                         <Select.ItemIndicator>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            aria-hidden="true"
+                          >
                             <path
                               d="M2.5 6L5 8.5L9.5 3.5"
                               stroke="currentColor"
@@ -171,6 +193,27 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
           </Select.Root>
         </div>
       </div>
+
+      <div className="dashboard-score-filter">
+        <div className="dashboard-score-filter__control">
+          <label htmlFor="dashboard-min-score">
+            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
+          </label>
+          <input
+            id="dashboard-min-score"
+            type="range"
+            min="0"
+            max="100"
+            value={minScore * 100}
+            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
+            className="dashboard-score-slider"
+          />
+        </div>
+        <span className="dashboard-score-filter__count">
+          {filteredWeaves.length} weave{filteredWeaves.length !== 1 ? 's' : ''} shown
+        </span>
+      </div>
+
       <RepoFlowGraph repos={repos} weaves={filteredWeaves} plexusId={plexusId} />
     </div>
   )

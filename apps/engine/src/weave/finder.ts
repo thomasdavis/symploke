@@ -2,14 +2,14 @@ import { db, type WeaveType as PrismaWeaveType, WeaveDiscoveryStatus } from '@sy
 import { logger } from '@symploke/logger'
 import { findTopSimilarChunks, getRepoChunkCounts } from './similarity.js'
 import type { WeaveCandidate, WeaveOptions, WeaveTypeHandler } from './types/base.js'
-import { IntegrationOpportunityWeave } from './types/integration-opportunity.js'
+// import { IntegrationOpportunityWeave } from './types/integration-opportunity.js'
 import { GlossaryAlignmentWeave } from './types/glossary-alignment.js'
 import { notifyWeavesDiscovered } from '../discord/service.js'
 
 /**
  * Registry of all weave type handlers
  */
-const WEAVE_TYPES: WeaveTypeHandler[] = [IntegrationOpportunityWeave, GlossaryAlignmentWeave]
+const WEAVE_TYPES: WeaveTypeHandler[] = [GlossaryAlignmentWeave]
 
 export interface FinderOptions extends WeaveOptions {
   weaveTypes?: PrismaWeaveType[] // Which types to run (default: all)
