@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import type { WeaveType } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
+import Link from 'next/link'
 import './weave-detail.css'
 
 // Types
@@ -37,9 +37,28 @@ type WeaveData = {
   }>
 }
 
+type GlossaryData = {
+  id: string
+  status: string
+  purpose: string | null
+  features: string[] | null
+  techStack: string[] | null
+  targetUsers: string[] | null
+  kpis: string[] | null
+  roadmap: string[] | null
+  values: string[] | null
+  enemies: string[] | null
+  aesthetic: string | null
+  confidence: number | null
+  summary: string | null
+}
+
 type WeaveDetailClientProps = {
   plexusId: string
-  weave: WeaveData
+  weave: WeaveData & {
+    sourceRepo: RepoData & { glossary?: GlossaryData | null }
+    targetRepo: RepoData & { glossary?: GlossaryData | null }
+  }
 }
 
 // Shared Components
@@ -84,7 +103,124 @@ type GlossaryAlignmentMetadata = {
   targetSummary?: string
 }
 
-function GlossaryAlignmentDetail({ weave, plexusId }: { weave: WeaveData; plexusId: string }) {
+// Helper components for glossary display
+function TagList({
+  items,
+  variant = 'default',
+}: {
+  items: string[] | null | undefined
+  variant?: string
+}) {
+  if (!items || items.length === 0) {
+    return <span className="wd-empty-inline">None specified</span>
+  }
+  return (
+    <div className="wd-tags">
+      {items.map((item, i) => (
+        <span key={i} className={`wd-tag wd-tag--${variant}`}>
+          {item}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function GlossaryColumn({
+  glossary,
+  repoName,
+  repoId,
+  plexusId,
+}: {
+  glossary: GlossaryData | null | undefined
+  repoName: string
+  repoId: string
+  plexusId: string
+}) {
+  if (!glossary || glossary.status !== 'COMPLETE') {
+    return (
+      <div className="wd-glossary-column wd-glossary-column--empty">
+        <h4>{repoName}</h4>
+        <p className="wd-empty">No glossary extracted</p>
+        <Link href={`/plexus/${plexusId}/repos/${repoId}/glossary`} className="wd-glossary-link">
+          View Profile
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="wd-glossary-column">
+      <div className="wd-glossary-column-header">
+        <h4>{repoName}</h4>
+        <Link href={`/plexus/${plexusId}/repos/${repoId}/glossary`} className="wd-glossary-link">
+          Full Profile
+        </Link>
+      </div>
+
+      {glossary.purpose && (
+        <div className="wd-glossary-row">
+          <strong>Purpose</strong>
+          <p>{glossary.purpose}</p>
+        </div>
+      )}
+
+      {glossary.features && glossary.features.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Features</strong>
+          <ul className="wd-compact-list">
+            {glossary.features.slice(0, 4).map((f, i) => (
+              <li key={i}>{f}</li>
+            ))}
+            {glossary.features.length > 4 && (
+              <li className="wd-more">+{glossary.features.length - 4} more</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {glossary.techStack && glossary.techStack.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Tech Stack</strong>
+          <TagList items={glossary.techStack} variant="tech" />
+        </div>
+      )}
+
+      {glossary.values && glossary.values.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Values</strong>
+          <TagList items={glossary.values} variant="positive" />
+        </div>
+      )}
+
+      {glossary.enemies && glossary.enemies.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Enemies</strong>
+          <TagList items={glossary.enemies} variant="negative" />
+        </div>
+      )}
+
+      {glossary.targetUsers && glossary.targetUsers.length > 0 && (
+        <div className="wd-glossary-row">
+          <strong>Target Users</strong>
+          <TagList items={glossary.targetUsers} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+type WeaveWithGlossary = WeaveData & {
+  sourceRepo: RepoData & { glossary?: GlossaryData | null }
+  targetRepo: RepoData & { glossary?: GlossaryData | null }
+}
+
+function GlossaryAlignmentDetail({
+  weave,
+  plexusId,
+}: {
+  weave: WeaveWithGlossary
+  plexusId: string
+}) {
   const metadata = weave.metadata as GlossaryAlignmentMetadata | null
 
   if (!metadata?.narrative) {
@@ -132,34 +268,25 @@ function GlossaryAlignmentDetail({ weave, plexusId }: { weave: WeaveData; plexus
         </div>
       )}
 
-      {/* Repository Summaries */}
-      {(metadata.sourceSummary || metadata.targetSummary) && (
-        <div className="wd-section">
-          <h3>Repository Summaries</h3>
-          <div className="wd-summaries-compare">
-            <div className="wd-summary-card">
-              <h4>{weave.sourceRepo.fullName}</h4>
-              <p>{metadata.sourceSummary || 'No summary available'}</p>
-              <Link
-                href={`/plexus/${plexusId}/repos/${weave.sourceRepo.id}/glossary`}
-                className="wd-glossary-link"
-              >
-                View Full Profile
-              </Link>
-            </div>
-            <div className="wd-summary-card">
-              <h4>{weave.targetRepo.fullName}</h4>
-              <p>{metadata.targetSummary || 'No summary available'}</p>
-              <Link
-                href={`/plexus/${plexusId}/repos/${weave.targetRepo.id}/glossary`}
-                className="wd-glossary-link"
-              >
-                View Full Profile
-              </Link>
-            </div>
-          </div>
+      {/* Full Glossary Comparison */}
+      <div className="wd-section">
+        <h3>Glossary Comparison</h3>
+        <div className="wd-glossary-compare-full">
+          <GlossaryColumn
+            glossary={weave.sourceRepo.glossary}
+            repoName={weave.sourceRepo.fullName}
+            repoId={weave.sourceRepo.id}
+            plexusId={plexusId}
+          />
+          <div className="wd-glossary-divider" />
+          <GlossaryColumn
+            glossary={weave.targetRepo.glossary}
+            repoName={weave.targetRepo.fullName}
+            repoId={weave.targetRepo.id}
+            plexusId={plexusId}
+          />
         </div>
-      )}
+      </div>
     </div>
   )
 }

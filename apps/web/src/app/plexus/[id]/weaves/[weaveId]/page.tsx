@@ -43,54 +43,32 @@ export default async function WeaveDetailPage({ params }: WeaveDetailPageProps) 
   }
 
   // Serialize the data for client component
+  // Extract v2 fields from v1 JSON columns (empirics, philosophy, poetics)
   const serializeGlossary = (glossary: typeof weave.sourceRepo.glossary) => {
     if (!glossary) return null
+
+    const empirics = glossary.empirics as Record<string, unknown> | null
+    const philosophy = glossary.philosophy as Record<string, unknown> | null
+    const poetics = glossary.poetics as Record<string, unknown> | null
+
     return {
       id: glossary.id,
       status: glossary.status,
-      terms: glossary.terms as Array<{
-        term: string
-        definition: string
-        context: string
-        emotionalValence: string
-      }>,
-      philosophy: glossary.philosophy as {
-        beliefs: string[]
-        assumptions: string[]
-        virtues: string[]
-        epistemology: string
-        ontology: string
-        teleology: string
-      },
-      psychology: glossary.psychology as {
-        fears: string[]
-        confidences: string[]
-        defenses: string[]
-        attachments: string[]
-        blindSpots: string[]
-      },
-      resentments: glossary.resentments as {
-        hates: string[]
-        definesAgainst: string[]
-        allergies: string[]
-        warnings: string[]
-        enemies: string[]
-      },
-      poetics: glossary.poetics as {
-        metaphors: string[]
-        namingPatterns: string[]
-        aesthetic: string
-        rhythm: string
-        voice: string
-      },
-      empirics: glossary.empirics as {
-        measures: string[]
-        evidenceTypes: string[]
-        truthClaims: string[]
-        uncertainties: string[]
-      },
-      futureVision: glossary.futureVision,
+      // Practical (from empirics)
+      purpose: (empirics?.purpose as string) || null,
+      features: (empirics?.features as string[]) || null,
+      techStack: (empirics?.techStack as string[]) || null,
+      targetUsers: (empirics?.targetUsers as string[]) || null,
+      kpis: (empirics?.kpis as string[]) || null,
+      roadmap: (empirics?.roadmap as string[]) || null,
+      // Philosophical (from philosophy)
+      values: (philosophy?.values as string[]) || null,
+      enemies: (philosophy?.enemies as string[]) || null,
+      // Poetic (from poetics)
+      aesthetic: (poetics?.aesthetic as string) || null,
+      // Meta
       confidence: glossary.confidence,
+      summary: glossary.futureVision,
     }
   }
 
