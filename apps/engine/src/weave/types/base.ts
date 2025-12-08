@@ -52,23 +52,28 @@ export interface WeaveCandidate {
 }
 
 /**
- * Metadata specific to glossary_alignment weaves
+ * Metadata specific to glossary_alignment weaves (v2 - AI narrative comparison)
  */
 export interface GlossaryAlignmentMetadata {
-  alignmentScores: {
-    vocabulary: number
-    resentment: number
-    philosophy: number
-    poetics: number
-    psychology: number
-    final: number
-  }
-  sharedTerms: string[]
-  sharedEnemies: string[]
-  sharedVirtues: string[]
-  sharedMetaphors: string[]
+  // AI-generated narrative comparison
+  narrative: string // 2-3 sentences explaining relationship
+  overallScore: number // 0-1 alignment score
+
+  // Relationship type
+  complementary: boolean // Do they complement each other?
+  competing: boolean // Are they in the same space?
+
+  // Specific insights
+  synergies: string[] // Specific integration opportunities
+  tensions: string[] // Potential conflicts
+
+  // Source info
   sourceGlossaryId: string
   targetGlossaryId: string
+
+  // Comparison inputs (for debugging)
+  sourceSummary: string
+  targetSummary: string
 }
 
 /**

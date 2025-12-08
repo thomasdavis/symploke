@@ -5,56 +5,26 @@ import type { GlossaryStatus } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import './glossary-detail.css'
 
-type GlossaryTerm = {
-  term: string
-  definition: string
-  context: string
-  emotionalValence: string
-}
-
-type GlossaryData = {
+// v2 Glossary data structure
+type GlossaryDataV2 = {
   id: string
   status: GlossaryStatus
-  terms: GlossaryTerm[]
-  empirics: {
-    measures: string[]
-    evidenceTypes: string[]
-    truthClaims: string[]
-    uncertainties: string[]
-  }
-  psychology: {
-    fears: string[]
-    confidences: string[]
-    defenses: string[]
-    attachments: string[]
-    blindSpots: string[]
-  }
-  poetics: {
-    metaphors: string[]
-    namingPatterns: string[]
-    aesthetic: string
-    rhythm: string
-    voice: string
-  }
-  philosophy: {
-    beliefs: string[]
-    assumptions: string[]
-    virtues: string[]
-    epistemology: string
-    ontology: string
-    teleology: string
-  }
-  resentments: {
-    hates: string[]
-    definesAgainst: string[]
-    allergies: string[]
-    warnings: string[]
-    enemies: string[]
-  }
-  futureVision: string | null
+  // Practical
+  purpose: string
+  features: string[]
+  techStack: string[]
+  targetUsers: string[]
+  kpis: string[]
+  roadmap: string[]
+  // Philosophical
+  values: string[]
+  enemies: string[]
+  aesthetic: string
+  // Meta
   confidence: number | null
-  unglossableReason: string | null
+  summary: string | null
   extractedAt: string | null
+  unglossableReason: string | null
 }
 
 type Repo = {
@@ -66,7 +36,7 @@ type Repo = {
 type GlossaryDetailClientProps = {
   plexusId: string
   repo: Repo
-  glossary: GlossaryData | null
+  glossary: GlossaryDataV2 | null
 }
 
 function StatusBadge({ status }: { status: GlossaryStatus }) {
@@ -106,10 +76,10 @@ function TagList({
   variant = 'default',
 }: {
   items: string[]
-  variant?: 'default' | 'positive' | 'negative' | 'sacred' | 'profane'
+  variant?: 'default' | 'positive' | 'negative' | 'sacred' | 'tech'
 }) {
   if (!items || items.length === 0) {
-    return <span className="gd-empty">None</span>
+    return <span className="gd-empty">None specified</span>
   }
   return (
     <div className="gd-tags">
@@ -137,7 +107,7 @@ function TextBlock({
 
 function BulletList({ items }: { items: string[] }) {
   if (!items || items.length === 0) {
-    return <span className="gd-empty">None</span>
+    return <span className="gd-empty">None specified</span>
   }
   return (
     <ul className="gd-list">
@@ -158,26 +128,26 @@ export function GlossaryDetailClient({ plexusId, repo, glossary }: GlossaryDetai
       </div>
 
       <PageHeader
-        title={`Glossary: ${repo.fullName}`}
-        subtitle="The soul of this codebase - its vocabulary, psychology, philosophy, and resentments"
+        title={`Profile: ${repo.fullName}`}
+        subtitle="What this repository does, believes, and fights against"
       />
 
       {!glossary ? (
         <div className="gd-empty-state">
-          <h3>No Glossary Extracted</h3>
-          <p>Run the glossary extraction command to generate a glossary for this repository:</p>
+          <h3>No Profile Extracted</h3>
+          <p>Run the glossary extraction command to generate a profile for this repository:</p>
           <code>pnpm engine extract-glossary --repo-id {repo.id}</code>
         </div>
       ) : glossary.status === 'UNGLOSSABLE' ? (
         <div className="gd-unglossable">
           <StatusBadge status={glossary.status} />
-          <h3>Repository is Unglossable</h3>
-          <p>{glossary.unglossableReason || 'No reason provided'}</p>
+          <h3>Repository Cannot Be Profiled</h3>
+          <p>{glossary.unglossableReason || 'README is missing or too short'}</p>
         </div>
       ) : glossary.status !== 'COMPLETE' ? (
         <div className="gd-pending">
           <StatusBadge status={glossary.status} />
-          <p>Glossary extraction is {glossary.status.toLowerCase()}...</p>
+          <p>Profile extraction is {glossary.status.toLowerCase()}...</p>
         </div>
       ) : (
         <>
@@ -192,164 +162,67 @@ export function GlossaryDetailClient({ plexusId, repo, glossary }: GlossaryDetai
             )}
           </div>
 
-          {/* Terms */}
-          <Section title="Terms" className="gd-terms-section">
-            {glossary.terms && glossary.terms.length > 0 ? (
-              <div className="gd-terms-grid">
-                {glossary.terms.map((term, i) => (
-                  <div key={i} className={`gd-term-card gd-term-card--${term.emotionalValence}`}>
-                    <div className="gd-term-header">
-                      <span className="gd-term-name">{term.term}</span>
-                      <span className={`gd-term-valence gd-term-valence--${term.emotionalValence}`}>
-                        {term.emotionalValence}
-                      </span>
-                    </div>
-                    <p className="gd-term-definition">{term.definition}</p>
-                    {term.context && <p className="gd-term-context">{term.context}</p>}
-                  </div>
-                ))}
+          {/* Summary */}
+          {glossary.summary && (
+            <Section title="Summary" className="gd-summary-section">
+              <div className="gd-summary">
+                <p>{glossary.summary}</p>
               </div>
-            ) : (
-              <span className="gd-empty">No terms extracted</span>
-            )}
+            </Section>
+          )}
+
+          {/* Purpose */}
+          <Section title="Purpose">
+            <TextBlock text={glossary.purpose} fallback="Purpose not determined" />
           </Section>
 
-          {/* Philosophy */}
-          <Section title="Philosophy">
+          {/* What It Does (Practical) */}
+          <Section title="What It Does">
+            <div className="gd-practical-grid">
+              <div className="gd-subsection">
+                <h4>Features</h4>
+                <BulletList items={glossary.features || []} />
+              </div>
+              <div className="gd-subsection">
+                <h4>Tech Stack</h4>
+                <TagList items={glossary.techStack || []} variant="tech" />
+              </div>
+              <div className="gd-subsection">
+                <h4>Target Users</h4>
+                <TagList items={glossary.targetUsers || []} />
+              </div>
+              <div className="gd-subsection">
+                <h4>Success Metrics</h4>
+                <BulletList items={glossary.kpis || []} />
+              </div>
+            </div>
+          </Section>
+
+          {/* Roadmap */}
+          {glossary.roadmap && glossary.roadmap.length > 0 && (
+            <Section title="Roadmap">
+              <BulletList items={glossary.roadmap} />
+            </Section>
+          )}
+
+          {/* What It Believes (Philosophical) */}
+          <Section title="What It Believes">
             <div className="gd-philosophy-grid">
               <div className="gd-subsection">
-                <h4>Beliefs</h4>
-                <BulletList items={glossary.philosophy?.beliefs || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Assumptions</h4>
-                <BulletList items={glossary.philosophy?.assumptions || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Virtues</h4>
-                <TagList items={glossary.philosophy?.virtues || []} variant="positive" />
-              </div>
-              <div className="gd-subsection gd-subsection--full">
-                <h4>Epistemology</h4>
-                <TextBlock text={glossary.philosophy?.epistemology} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Ontology</h4>
-                <TextBlock text={glossary.philosophy?.ontology} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Teleology</h4>
-                <TextBlock text={glossary.philosophy?.teleology} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Psychology */}
-          <Section title="Psychology">
-            <div className="gd-psychology-grid">
-              <div className="gd-subsection">
-                <h4>Fears</h4>
-                <TagList items={glossary.psychology?.fears || []} variant="negative" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Confidences</h4>
-                <TagList items={glossary.psychology?.confidences || []} variant="positive" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Defenses</h4>
-                <TagList items={glossary.psychology?.defenses || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Attachments</h4>
-                <TagList items={glossary.psychology?.attachments || []} variant="sacred" />
-              </div>
-              <div className="gd-subsection gd-subsection--full">
-                <h4>Blind Spots</h4>
-                <BulletList items={glossary.psychology?.blindSpots || []} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Resentments */}
-          <Section title="Resentments" className="gd-resentments-section">
-            <div className="gd-resentments-grid">
-              <div className="gd-subsection">
-                <h4>Hates</h4>
-                <TagList items={glossary.resentments?.hates || []} variant="negative" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Defines Against</h4>
-                <TagList items={glossary.resentments?.definesAgainst || []} variant="negative" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Enemies</h4>
-                <TagList items={glossary.resentments?.enemies || []} variant="negative" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Allergies</h4>
-                <TagList items={glossary.resentments?.allergies || []} variant="profane" />
-              </div>
-              <div className="gd-subsection gd-subsection--full">
-                <h4>Warnings</h4>
-                <BulletList items={glossary.resentments?.warnings || []} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Poetics */}
-          <Section title="Poetics">
-            <div className="gd-poetics-grid">
-              <div className="gd-subsection">
-                <h4>Metaphors</h4>
-                <TagList items={glossary.poetics?.metaphors || []} variant="sacred" />
-              </div>
-              <div className="gd-subsection">
-                <h4>Naming Patterns</h4>
-                <TagList items={glossary.poetics?.namingPatterns || []} />
+                <h4>Values</h4>
+                <TagList items={glossary.values || []} variant="positive" />
               </div>
               <div className="gd-subsection">
                 <h4>Aesthetic</h4>
-                <TextBlock text={glossary.poetics?.aesthetic} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Voice</h4>
-                <TextBlock text={glossary.poetics?.voice} />
-              </div>
-              <div className="gd-subsection gd-subsection--full">
-                <h4>Rhythm</h4>
-                <TextBlock text={glossary.poetics?.rhythm} />
+                <TextBlock text={glossary.aesthetic} />
               </div>
             </div>
           </Section>
 
-          {/* Empirics */}
-          <Section title="Empirics">
-            <div className="gd-empirics-grid">
-              <div className="gd-subsection">
-                <h4>Measures</h4>
-                <TagList items={glossary.empirics?.measures || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Evidence Types</h4>
-                <TagList items={glossary.empirics?.evidenceTypes || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Truth Claims</h4>
-                <BulletList items={glossary.empirics?.truthClaims || []} />
-              </div>
-              <div className="gd-subsection">
-                <h4>Uncertainties</h4>
-                <BulletList items={glossary.empirics?.uncertainties || []} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Future Vision */}
-          {glossary.futureVision && (
-            <Section title="Future Vision" className="gd-future-section">
-              <div className="gd-future-vision">
-                <p>{glossary.futureVision}</p>
-              </div>
+          {/* What It Fights (Enemies) */}
+          {glossary.enemies && glossary.enemies.length > 0 && (
+            <Section title="What It Fights" className="gd-enemies-section">
+              <TagList items={glossary.enemies} variant="negative" />
             </Section>
           )}
         </>

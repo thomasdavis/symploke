@@ -154,7 +154,7 @@ function WeaveDetail({
 }
 
 export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientProps) {
-  const [selectedRunId, setSelectedRunId] = useState<string>('all')
+  const [selectedRunId, setSelectedRunId] = useState<string>('latest')
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
 
   const filteredWeaves = useMemo(() => {

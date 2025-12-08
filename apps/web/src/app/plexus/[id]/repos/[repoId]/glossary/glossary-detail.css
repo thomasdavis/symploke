@@ -146,7 +146,8 @@
 .gd-psychology-grid,
 .gd-resentments-grid,
 .gd-poetics-grid,
-.gd-empirics-grid {
+.gd-empirics-grid,
+.gd-practical-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-4);
@@ -185,6 +186,13 @@
 .gd-tag--profane {
   background: oklch(55% 0.18 45 / 0.15);
   color: oklch(55% 0.18 45);
+}
+
+.gd-tag--tech {
+  background: oklch(60% 0.15 220 / 0.15);
+  color: oklch(55% 0.15 220);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
 }
 
 /* Lists */
@@ -323,11 +331,31 @@
   margin: 0;
 }
 
-/* Resentments section styling */
-.gd-resentments-section {
+/* Resentments/Enemies section styling */
+.gd-resentments-section,
+.gd-enemies-section {
   border-color: oklch(55% 0.22 25 / 0.2);
 }
 
-.gd-resentments-section .gd-section-title {
+.gd-resentments-section .gd-section-title,
+.gd-enemies-section .gd-section-title {
   color: oklch(55% 0.22 25);
+}
+
+/* Summary section */
+.gd-summary-section {
+  background: linear-gradient(
+    135deg,
+    oklch(60% 0.15 220 / 0.05) 0%,
+    oklch(55% 0.15 145 / 0.05) 100%
+  );
+}
+
+.gd-summary {
+  font-size: var(--text-base);
+  line-height: 1.8;
+}
+
+.gd-summary p {
+  margin: 0;
 }

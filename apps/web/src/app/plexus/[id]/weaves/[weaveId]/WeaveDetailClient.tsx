@@ -1,65 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import type { WeaveType, GlossaryStatus } from '@symploke/db'
+import type { WeaveType } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import './weave-detail.css'
 
 // Types
-type GlossaryData = {
-  id: string
-  status: GlossaryStatus
-  terms: Array<{
-    term: string
-    definition: string
-    context: string
-    emotionalValence: string
-  }>
-  philosophy: {
-    beliefs: string[]
-    assumptions: string[]
-    virtues: string[]
-    epistemology: string
-    ontology: string
-    teleology: string
-  }
-  psychology: {
-    fears: string[]
-    confidences: string[]
-    defenses: string[]
-    attachments: string[]
-    blindSpots: string[]
-  }
-  resentments: {
-    hates: string[]
-    definesAgainst: string[]
-    allergies: string[]
-    warnings: string[]
-    enemies: string[]
-  }
-  poetics: {
-    metaphors: string[]
-    namingPatterns: string[]
-    aesthetic: string
-    rhythm: string
-    voice: string
-  }
-  empirics: {
-    measures: string[]
-    evidenceTypes: string[]
-    truthClaims: string[]
-    uncertainties: string[]
-  }
-  futureVision: string | null
-  confidence: number | null
-}
-
 type RepoData = {
   id: string
   name: string
   fullName: string
   url: string
-  glossary: GlossaryData | null
 }
 
 type WeaveData = {
@@ -92,11 +43,6 @@ type WeaveDetailClientProps = {
 }
 
 // Shared Components
-function StatusBadge({ status }: { status: string }) {
-  const statusLower = status.toLowerCase()
-  return <span className={`wd-status wd-status--${statusLower}`}>{status}</span>
-}
-
 function WeaveTypeBadge({ type }: { type: WeaveType }) {
   const formatted = type.replace(/_/g, ' ')
   return <span className={`wd-type-badge wd-type-badge--${type}`}>{formatted}</span>
@@ -123,219 +69,94 @@ function ScoreDisplay({ score, label = 'Score' }: { score: number; label?: strin
   )
 }
 
-function TagList({
-  items,
-  variant = 'default',
-}: {
-  items: string[]
-  variant?: 'default' | 'positive' | 'negative' | 'sacred'
-}) {
-  if (!items || items.length === 0) {
-    return <span className="wd-empty">None</span>
-  }
-  return (
-    <div className="wd-tags">
-      {items.map((item, i) => (
-        <span key={i} className={`wd-tag wd-tag--${variant}`}>
-          {item}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 // ============================================================================
 // GLOSSARY ALIGNMENT DETAIL
 // ============================================================================
 
-function GlossaryAlignmentDetail({ weave, plexusId }: { weave: WeaveData; plexusId: string }) {
-  const metadata = weave.metadata as {
-    alignmentScores?: {
-      vocabulary: number
-      resentment: number
-      philosophy: number
-      poetics: number
-      psychology: number
-      final: number
-    }
-    sharedTerms?: string[]
-    sharedEnemies?: string[]
-    sharedVirtues?: string[]
-    sharedMetaphors?: string[]
-  } | null
-
-  const alignmentScores = metadata?.alignmentScores
-  const sourceGlossary = weave.sourceRepo.glossary
-  const targetGlossary = weave.targetRepo.glossary
-
-  return (
-    <div className="wd-type-detail wd-glossary-detail">
-      {/* Alignment Scores */}
-      {alignmentScores && (
-        <div className="wd-section">
-          <h3>Alignment Scores</h3>
-          <div className="wd-alignment-grid">
-            <div className="wd-alignment-score">
-              <span className="wd-alignment-label">Vocabulary (30%)</span>
-              <div className="wd-alignment-bar">
-                <div
-                  className="wd-alignment-fill"
-                  style={{ width: `${alignmentScores.vocabulary * 100}%` }}
-                />
-              </div>
-              <span className="wd-alignment-value">
-                {(alignmentScores.vocabulary * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="wd-alignment-score">
-              <span className="wd-alignment-label">Resentment (25%)</span>
-              <div className="wd-alignment-bar">
-                <div
-                  className="wd-alignment-fill wd-alignment-fill--resentment"
-                  style={{ width: `${alignmentScores.resentment * 100}%` }}
-                />
-              </div>
-              <span className="wd-alignment-value">
-                {(alignmentScores.resentment * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="wd-alignment-score">
-              <span className="wd-alignment-label">Philosophy (20%)</span>
-              <div className="wd-alignment-bar">
-                <div
-                  className="wd-alignment-fill wd-alignment-fill--philosophy"
-                  style={{ width: `${alignmentScores.philosophy * 100}%` }}
-                />
-              </div>
-              <span className="wd-alignment-value">
-                {(alignmentScores.philosophy * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="wd-alignment-score">
-              <span className="wd-alignment-label">Poetics (15%)</span>
-              <div className="wd-alignment-bar">
-                <div
-                  className="wd-alignment-fill wd-alignment-fill--poetics"
-                  style={{ width: `${alignmentScores.poetics * 100}%` }}
-                />
-              </div>
-              <span className="wd-alignment-value">
-                {(alignmentScores.poetics * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="wd-alignment-score">
-              <span className="wd-alignment-label">Psychology (10%)</span>
-              <div className="wd-alignment-bar">
-                <div
-                  className="wd-alignment-fill wd-alignment-fill--psychology"
-                  style={{ width: `${alignmentScores.psychology * 100}%` }}
-                />
-              </div>
-              <span className="wd-alignment-value">
-                {(alignmentScores.psychology * 100).toFixed(0)}%
-              </span>
-            </div>
-          </div>
-          <p className="wd-threshold-note">Threshold: 25% (scores above this create weaves)</p>
-        </div>
-      )}
-
-      {/* Shared Items */}
-      {metadata && (
-        <div className="wd-section">
-          <h3>Shared Characteristics</h3>
-          <div className="wd-shared-grid">
-            {metadata.sharedTerms && metadata.sharedTerms.length > 0 && (
-              <div className="wd-shared-item">
-                <h4>Shared Terms</h4>
-                <TagList items={metadata.sharedTerms} />
-              </div>
-            )}
-            {metadata.sharedEnemies && metadata.sharedEnemies.length > 0 && (
-              <div className="wd-shared-item">
-                <h4>Shared Enemies</h4>
-                <TagList items={metadata.sharedEnemies} variant="negative" />
-              </div>
-            )}
-            {metadata.sharedVirtues && metadata.sharedVirtues.length > 0 && (
-              <div className="wd-shared-item">
-                <h4>Shared Virtues</h4>
-                <TagList items={metadata.sharedVirtues} variant="positive" />
-              </div>
-            )}
-            {metadata.sharedMetaphors && metadata.sharedMetaphors.length > 0 && (
-              <div className="wd-shared-item">
-                <h4>Shared Metaphors</h4>
-                <TagList items={metadata.sharedMetaphors} variant="sacred" />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Side-by-side Glossaries */}
-      <div className="wd-section">
-        <h3>Glossary Comparison</h3>
-        <div className="wd-glossary-compare">
-          <GlossaryCard repo={weave.sourceRepo} glossary={sourceGlossary} plexusId={plexusId} />
-          <GlossaryCard repo={weave.targetRepo} glossary={targetGlossary} plexusId={plexusId} />
-        </div>
-      </div>
-    </div>
-  )
+type GlossaryAlignmentMetadata = {
+  narrative: string
+  overallScore: number
+  complementary: boolean
+  competing: boolean
+  synergies: string[]
+  tensions: string[]
+  sourceSummary?: string
+  targetSummary?: string
 }
 
-function GlossaryCard({
-  repo,
-  glossary,
-  plexusId,
-}: {
-  repo: RepoData
-  glossary: GlossaryData | null
-  plexusId: string
-}) {
+function GlossaryAlignmentDetail({ weave, plexusId }: { weave: WeaveData; plexusId: string }) {
+  const metadata = weave.metadata as GlossaryAlignmentMetadata | null
+
+  if (!metadata?.narrative) {
+    return (
+      <div className="wd-type-detail wd-glossary-detail">
+        <p className="wd-empty">No comparison data available</p>
+      </div>
+    )
+  }
   return (
-    <div className="wd-glossary-card">
-      <div className="wd-glossary-header">
-        <h4>{repo.fullName}</h4>
-        {glossary && <StatusBadge status={glossary.status} />}
-        <Link href={`/plexus/${plexusId}/repos/${repo.id}/glossary`} className="wd-glossary-link">
-          View Full Glossary
-        </Link>
+    <div className="wd-type-detail wd-glossary-detail">
+      {/* Narrative */}
+      <div className="wd-section wd-narrative-section">
+        <h3>AI Analysis</h3>
+        <p className="wd-narrative">{metadata.narrative}</p>
+        <div className="wd-relationship-badges">
+          {metadata.complementary && (
+            <span className="wd-badge wd-badge--complementary">Complementary</span>
+          )}
+          {metadata.competing && <span className="wd-badge wd-badge--competing">Same Arena</span>}
+        </div>
       </div>
 
-      {!glossary || glossary.status !== 'COMPLETE' ? (
-        <div className="wd-glossary-empty">
-          {glossary ? `Status: ${glossary.status}` : 'No glossary extracted'}
+      {/* Synergies */}
+      {metadata.synergies && metadata.synergies.length > 0 && (
+        <div className="wd-section">
+          <h3>Synergies</h3>
+          <ul className="wd-synergies-list">
+            {metadata.synergies.map((synergy, i) => (
+              <li key={i}>{synergy}</li>
+            ))}
+          </ul>
         </div>
-      ) : (
-        <div className="wd-glossary-content">
-          {/* Philosophy */}
-          <div className="wd-glossary-section">
-            <strong>Beliefs</strong>
-            <ul>
-              {glossary.philosophy?.beliefs?.slice(0, 3).map((b, i) => (
-                <li key={i}>{b}</li>
-              ))}
-            </ul>
-          </div>
+      )}
 
-          {/* Virtues */}
-          <div className="wd-glossary-section">
-            <strong>Virtues</strong>
-            <TagList items={glossary.philosophy?.virtues?.slice(0, 5) || []} variant="positive" />
-          </div>
+      {/* Tensions */}
+      {metadata.tensions && metadata.tensions.length > 0 && (
+        <div className="wd-section wd-tensions-section">
+          <h3>Potential Tensions</h3>
+          <ul className="wd-tensions-list">
+            {metadata.tensions.map((tension, i) => (
+              <li key={i}>{tension}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-          {/* Resentments */}
-          <div className="wd-glossary-section">
-            <strong>Resentments</strong>
-            <TagList items={glossary.resentments?.hates?.slice(0, 5) || []} variant="negative" />
-          </div>
-
-          {/* Enemies */}
-          <div className="wd-glossary-section">
-            <strong>Enemies</strong>
-            <TagList items={glossary.resentments?.enemies?.slice(0, 5) || []} variant="negative" />
+      {/* Repository Summaries */}
+      {(metadata.sourceSummary || metadata.targetSummary) && (
+        <div className="wd-section">
+          <h3>Repository Summaries</h3>
+          <div className="wd-summaries-compare">
+            <div className="wd-summary-card">
+              <h4>{weave.sourceRepo.fullName}</h4>
+              <p>{metadata.sourceSummary || 'No summary available'}</p>
+              <Link
+                href={`/plexus/${plexusId}/repos/${weave.sourceRepo.id}/glossary`}
+                className="wd-glossary-link"
+              >
+                View Full Profile
+              </Link>
+            </div>
+            <div className="wd-summary-card">
+              <h4>{weave.targetRepo.fullName}</h4>
+              <p>{metadata.targetSummary || 'No summary available'}</p>
+              <Link
+                href={`/plexus/${plexusId}/repos/${weave.targetRepo.id}/glossary`}
+                className="wd-glossary-link"
+              >
+                View Full Profile
+              </Link>
+            </div>
           </div>
         </div>
       )}

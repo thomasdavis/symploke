@@ -1,3 +1,6 @@
+import { generateObject } from 'ai'
+import { openai } from '@ai-sdk/openai'
+import { z } from 'zod'
 import { db, WeaveType as PrismaWeaveType, GlossaryStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
 import type {
@@ -7,28 +10,21 @@ import type {
   FilePairMatch,
   GlossaryAlignmentMetadata,
 } from './base.js'
-import type {
-  RepoGlossaryData,
-  GlossaryTerm,
-  GlossaryResentments,
-  GlossaryPhilosophy,
-  GlossaryPoetics,
-  GlossaryPsychology,
-} from '../glossary.js'
+import { getGlossary, type RepoGlossaryData } from '../glossary.js'
 
 /**
- * Glossary Alignment WeaveType
+ * Glossary Alignment WeaveType (v2 - AI Narrative Comparison)
  *
- * Discovers connections between repositories through their glossaries -
- * shared vocabulary, aligned resentments, complementary beliefs, and poetic resonance.
- *
- * This is the soul-to-soul matching that embeddings cannot find.
+ * Uses AI to compare two repository glossaries and generate:
+ * - A narrative explanation of their relationship
+ * - An overall alignment score
+ * - Specific synergies and tensions
  */
 export const GlossaryAlignmentWeave: WeaveTypeHandler = {
   id: PrismaWeaveType.glossary_alignment,
   name: 'Glossary Alignment',
   description:
-    'Discovers repositories with aligned vocabulary, beliefs, resentments, and aesthetic sensibilities',
+    'Discovers repositories with aligned purposes, values, and enemies using AI-powered comparison',
 
   async findWeaves(
     plexusId: string,
@@ -36,7 +32,7 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
     targetRepoId: string,
     _options: WeaveOptions = {},
   ): Promise<WeaveCandidate[]> {
-    logger.info({ plexusId, sourceRepoId, targetRepoId }, 'Finding glossary alignments')
+    logger.info({ plexusId, sourceRepoId, targetRepoId }, 'Finding glossary alignments (v2)')
 
     // Get both repos
     const [sourceRepo, targetRepo] = await Promise.all([
@@ -49,7 +45,13 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
       return []
     }
 
-    // Get glossaries
+    // Get glossaries in v2 format
+    const [sourceGlossary, targetGlossary] = await Promise.all([
+      getGlossary(sourceRepoId),
+      getGlossary(targetRepoId),
+    ])
+
+    // Get glossary records for IDs
     const [sourceGlossaryRecord, targetGlossaryRecord] = await Promise.all([
       db.repoGlossary.findUnique({ where: { repoId: sourceRepoId } }),
       db.repoGlossary.findUnique({ where: { repoId: targetRepoId } }),
@@ -57,6 +59,8 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
 
     // Check if both have complete glossaries
     if (
+      !sourceGlossary ||
+      !targetGlossary ||
       !sourceGlossaryRecord ||
       sourceGlossaryRecord.status !== GlossaryStatus.COMPLETE ||
       !targetGlossaryRecord ||
@@ -66,126 +70,92 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
         {
           sourceRepoId,
           targetRepoId,
-          sourceStatus: sourceGlossaryRecord?.status,
-          targetStatus: targetGlossaryRecord?.status,
+          hasSourceGlossary: !!sourceGlossary,
+          hasTargetGlossary: !!targetGlossary,
         },
         'One or both repos missing complete glossary',
       )
       return []
     }
 
-    // Parse glossaries from JSON
-    const sourceGlossary = parseGlossary(sourceGlossaryRecord)
-    const targetGlossary = parseGlossary(targetGlossaryRecord)
+    // Use AI to compare glossaries
+    const comparison = await compareGlossariesWithAI(
+      sourceRepo.fullName,
+      targetRepo.fullName,
+      sourceGlossary,
+      targetGlossary,
+    )
 
-    if (!sourceGlossary || !targetGlossary) {
-      logger.warn({ sourceRepoId, targetRepoId }, 'Failed to parse glossaries')
+    if (!comparison) {
+      logger.warn({ sourceRepoId, targetRepoId }, 'AI comparison failed')
       return []
     }
-
-    // Calculate alignment scores
-    const vocabularyScore = calculateVocabularyAlignment(sourceGlossary.terms, targetGlossary.terms)
-    const resentmentScore = calculateResentmentAlignment(
-      sourceGlossary.resentments,
-      targetGlossary.resentments,
-    )
-    const philosophyScore = calculatePhilosophyAlignment(
-      sourceGlossary.philosophy,
-      targetGlossary.philosophy,
-    )
-    const poeticsScore = calculatePoeticsAlignment(sourceGlossary.poetics, targetGlossary.poetics)
-    const psychologyScore = calculatePsychologyAlignment(
-      sourceGlossary.psychology,
-      targetGlossary.psychology,
-    )
-
-    // Weighted final score
-    const finalScore =
-      vocabularyScore.score * 0.3 +
-      resentmentScore.score * 0.25 +
-      philosophyScore.score * 0.2 +
-      poeticsScore.score * 0.15 +
-      psychologyScore.score * 0.1
 
     logger.info(
       {
         sourceRepoId,
         targetRepoId,
-        vocabularyScore: vocabularyScore.score,
-        resentmentScore: resentmentScore.score,
-        philosophyScore: philosophyScore.score,
-        poeticsScore: poeticsScore.score,
-        psychologyScore: psychologyScore.score,
-        finalScore,
+        score: comparison.overallScore,
+        complementary: comparison.complementary,
+        competing: comparison.competing,
+        synergies: comparison.synergies.length,
+        tensions: comparison.tensions.length,
       },
-      'Glossary alignment scores calculated',
+      'Glossary AI comparison complete',
     )
 
-    // Threshold check
-    const threshold = 0.25 // Lower threshold to capture more nuanced connections
-    if (finalScore < threshold) {
+    // Threshold check (25% minimum)
+    const threshold = 0.25
+    if (comparison.overallScore < threshold) {
       logger.debug(
-        { sourceRepoId, targetRepoId, finalScore, threshold },
+        { sourceRepoId, targetRepoId, score: comparison.overallScore, threshold },
         'Below glossary threshold',
       )
       return []
     }
 
-    // Build description
-    const alignments: string[] = []
-    if (vocabularyScore.sharedTerms.length > 0) {
-      alignments.push(`Shared vocabulary: ${vocabularyScore.sharedTerms.slice(0, 5).join(', ')}`)
-    }
-    if (resentmentScore.sharedEnemies.length > 0) {
-      alignments.push(`Shared enemies: ${resentmentScore.sharedEnemies.slice(0, 3).join(', ')}`)
-    }
-    if (philosophyScore.sharedVirtues.length > 0) {
-      alignments.push(`Shared virtues: ${philosophyScore.sharedVirtues.slice(0, 3).join(', ')}`)
-    }
-    if (poeticsScore.similarVoice) {
-      alignments.push(`Similar voice: ${poeticsScore.similarVoice}`)
-    }
-
-    const title = generateTitle(sourceRepo.name, targetRepo.name, vocabularyScore, resentmentScore)
-    const description = `${alignments.join('. ')}.`
+    // Generate title based on relationship
+    const title = generateTitle(
+      sourceRepo.name,
+      targetRepo.name,
+      comparison.complementary,
+      comparison.competing,
+      comparison.synergies,
+    )
 
     // Create synthetic file pairs for metadata compatibility
     const filePairs: FilePairMatch[] = [
       {
         sourceFile: 'glossary',
         targetFile: 'glossary',
-        avgSimilarity: finalScore,
-        maxSimilarity: finalScore,
+        avgSimilarity: comparison.overallScore,
+        maxSimilarity: comparison.overallScore,
         chunkCount: 1,
         matches: [],
       },
     ]
 
-    // Build metadata with all alignment details for debugging UI
+    // Build metadata
     const metadata: GlossaryAlignmentMetadata = {
-      alignmentScores: {
-        vocabulary: vocabularyScore.score,
-        resentment: resentmentScore.score,
-        philosophy: philosophyScore.score,
-        poetics: poeticsScore.score,
-        psychology: psychologyScore.score,
-        final: finalScore,
-      },
-      sharedTerms: vocabularyScore.sharedTerms,
-      sharedEnemies: resentmentScore.sharedEnemies,
-      sharedVirtues: philosophyScore.sharedVirtues,
-      sharedMetaphors: poeticsScore.sharedMetaphors,
+      narrative: comparison.narrative,
+      overallScore: comparison.overallScore,
+      complementary: comparison.complementary,
+      competing: comparison.competing,
+      synergies: comparison.synergies,
+      tensions: comparison.tensions,
       sourceGlossaryId: sourceGlossaryRecord.id,
       targetGlossaryId: targetGlossaryRecord.id,
+      sourceSummary: sourceGlossary.summary,
+      targetSummary: targetGlossary.summary,
     }
 
     const candidate: WeaveCandidate = {
       sourceRepoId,
       targetRepoId,
       type: PrismaWeaveType.glossary_alignment,
-      score: finalScore,
+      score: comparison.overallScore,
       title,
-      description,
+      description: comparison.narrative,
       filePairs,
       metadata: metadata as unknown as Record<string, unknown>,
     }
@@ -195,242 +165,151 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
 }
 
 // ============================================================================
-// ALIGNMENT CALCULATIONS
+// AI COMPARISON
 // ============================================================================
 
-interface VocabularyAlignmentResult {
-  score: number
-  sharedTerms: string[]
-  uniqueToSource: string[]
-  uniqueToTarget: string[]
+const ComparisonResultSchema = z.object({
+  narrative: z
+    .string()
+    .describe(
+      '2-3 sentences explaining the relationship between these repositories. Be specific about what connects or separates them.',
+    ),
+  overallScore: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe(
+      'Alignment score from 0 to 1. 0 = completely unrelated, 0.5 = some overlap, 1 = nearly identical purpose/values',
+    ),
+  complementary: z
+    .boolean()
+    .describe('True if these repos complement each other (different strengths that work together)'),
+  competing: z
+    .boolean()
+    .describe('True if these repos are in the same space (solving similar problems)'),
+  synergies: z
+    .array(z.string())
+    .describe('Specific ways these repos could integrate or help each other (2-5 items)'),
+  tensions: z
+    .array(z.string())
+    .describe('Potential conflicts or incompatibilities between these repos (0-3 items)'),
+})
+
+type ComparisonResult = z.infer<typeof ComparisonResultSchema>
+
+const COMPARISON_SYSTEM_PROMPT = `You are analyzing two software repositories to find potential connections.
+
+Your task is to compare their profiles and determine:
+1. How aligned are they in purpose, values, and approach?
+2. Do they complement each other or compete?
+3. What specific integration opportunities exist?
+4. What tensions might arise if they were used together?
+
+Be specific and practical. Focus on:
+- Shared enemies (problems they both fight against)
+- Complementary features (one has what the other lacks)
+- Shared values (similar beliefs about good software)
+- Technical compatibility (could they actually integrate?)
+
+Score guidelines:
+- 0.0-0.2: Completely unrelated domains
+- 0.2-0.4: Some philosophical overlap but different focus
+- 0.4-0.6: Meaningful connection, potential for integration
+- 0.6-0.8: Strong alignment, natural partners
+- 0.8-1.0: Nearly identical purpose/values
+
+Be conservative with high scores. Two repos in the same general area (e.g., both are web frameworks) might only score 0.3-0.4 unless they have specific philosophical or feature alignment.`
+
+function buildComparisonPrompt(
+  sourceFullName: string,
+  targetFullName: string,
+  sourceGlossary: RepoGlossaryData,
+  targetGlossary: RepoGlossaryData,
+): string {
+  return `## Repository A: ${sourceFullName}
+
+**Purpose**: ${sourceGlossary.purpose}
+
+**Features**: ${sourceGlossary.features.join(', ') || 'Not specified'}
+
+**Tech Stack**: ${sourceGlossary.techStack.join(', ') || 'Not specified'}
+
+**Target Users**: ${sourceGlossary.targetUsers.join(', ') || 'Not specified'}
+
+**KPIs**: ${sourceGlossary.kpis.join(', ') || 'Not specified'}
+
+**Roadmap**: ${sourceGlossary.roadmap.join(', ') || 'Not specified'}
+
+**Values**: ${sourceGlossary.values.join(', ') || 'Not specified'}
+
+**Enemies**: ${sourceGlossary.enemies.join(', ') || 'Not specified'}
+
+**Aesthetic**: ${sourceGlossary.aesthetic || 'Not specified'}
+
+**Summary**: ${sourceGlossary.summary}
+
+---
+
+## Repository B: ${targetFullName}
+
+**Purpose**: ${targetGlossary.purpose}
+
+**Features**: ${targetGlossary.features.join(', ') || 'Not specified'}
+
+**Tech Stack**: ${targetGlossary.techStack.join(', ') || 'Not specified'}
+
+**Target Users**: ${targetGlossary.targetUsers.join(', ') || 'Not specified'}
+
+**KPIs**: ${targetGlossary.kpis.join(', ') || 'Not specified'}
+
+**Roadmap**: ${targetGlossary.roadmap.join(', ') || 'Not specified'}
+
+**Values**: ${targetGlossary.values.join(', ') || 'Not specified'}
+
+**Enemies**: ${targetGlossary.enemies.join(', ') || 'Not specified'}
+
+**Aesthetic**: ${targetGlossary.aesthetic || 'Not specified'}
+
+**Summary**: ${targetGlossary.summary}
+
+---
+
+Compare these two repositories. Consider:
+1. Do they solve related problems?
+2. Do they share values or enemies?
+3. Could they work together?
+4. What might cause friction if combined?`
 }
 
-function calculateVocabularyAlignment(
-  sourceTerms: GlossaryTerm[],
-  targetTerms: GlossaryTerm[],
-): VocabularyAlignmentResult {
-  const sourceTermSet = new Set(sourceTerms.map((t) => t.term.toLowerCase()))
-  const targetTermSet = new Set(targetTerms.map((t) => t.term.toLowerCase()))
+async function compareGlossariesWithAI(
+  sourceFullName: string,
+  targetFullName: string,
+  sourceGlossary: RepoGlossaryData,
+  targetGlossary: RepoGlossaryData,
+): Promise<ComparisonResult | null> {
+  try {
+    const prompt = buildComparisonPrompt(
+      sourceFullName,
+      targetFullName,
+      sourceGlossary,
+      targetGlossary,
+    )
 
-  const sharedTerms: string[] = []
-  for (const term of sourceTermSet) {
-    if (targetTermSet.has(term)) {
-      sharedTerms.push(term)
-    }
-  }
+    const { object: result } = await generateObject({
+      model: openai('gpt-4o'),
+      schema: ComparisonResultSchema,
+      system: COMPARISON_SYSTEM_PROMPT,
+      prompt,
+    })
 
-  const uniqueToSource = [...sourceTermSet].filter((t) => !targetTermSet.has(t))
-  const uniqueToTarget = [...targetTermSet].filter((t) => !sourceTermSet.has(t))
-
-  // Jaccard-like similarity
-  const totalUnique = sourceTermSet.size + targetTermSet.size - sharedTerms.length
-  const score = totalUnique > 0 ? sharedTerms.length / totalUnique : 0
-
-  // Also check for semantic similarity in definitions
-  let semanticBonus = 0
-  for (const sourceTerm of sourceTerms) {
-    for (const targetTerm of targetTerms) {
-      if (sourceTerm.emotionalValence === targetTerm.emotionalValence) {
-        semanticBonus += 0.02
-      }
-    }
-  }
-
-  return {
-    score: Math.min(1, score + semanticBonus),
-    sharedTerms,
-    uniqueToSource,
-    uniqueToTarget,
-  }
-}
-
-interface ResentmentAlignmentResult {
-  score: number
-  sharedEnemies: string[]
-  sharedHates: string[]
-}
-
-function calculateResentmentAlignment(
-  source: GlossaryResentments,
-  target: GlossaryResentments,
-): ResentmentAlignmentResult {
-  // Compare enemies
-  const sourceEnemies = new Set([
-    ...source.enemies.map((e) => e.toLowerCase()),
-    ...source.definesAgainst.map((d) => d.toLowerCase()),
-  ])
-  const targetEnemies = new Set([
-    ...target.enemies.map((e) => e.toLowerCase()),
-    ...target.definesAgainst.map((d) => d.toLowerCase()),
-  ])
-
-  const sharedEnemies: string[] = []
-  for (const enemy of sourceEnemies) {
-    if (targetEnemies.has(enemy)) {
-      sharedEnemies.push(enemy)
-    }
-  }
-
-  // Compare hates
-  const sourceHates = new Set(source.hates.map((h) => h.toLowerCase()))
-  const targetHates = new Set(target.hates.map((h) => h.toLowerCase()))
-
-  const sharedHates: string[] = []
-  for (const hate of sourceHates) {
-    if (targetHates.has(hate)) {
-      sharedHates.push(hate)
-    }
-  }
-
-  // Score based on shared enemies and hates
-  const enemyScore = sharedEnemies.length > 0 ? Math.min(1, sharedEnemies.length * 0.3) : 0
-  const hateScore = sharedHates.length > 0 ? Math.min(1, sharedHates.length * 0.2) : 0
-
-  return {
-    score: Math.min(1, enemyScore + hateScore),
-    sharedEnemies,
-    sharedHates,
-  }
-}
-
-interface PhilosophyAlignmentResult {
-  score: number
-  sharedVirtues: string[]
-  sharedBeliefs: string[]
-  epistemologyMatch: boolean
-}
-
-function calculatePhilosophyAlignment(
-  source: GlossaryPhilosophy,
-  target: GlossaryPhilosophy,
-): PhilosophyAlignmentResult {
-  // Compare virtues
-  const sourceVirtues = new Set(source.virtues.map((v) => v.toLowerCase()))
-  const targetVirtues = new Set(target.virtues.map((v) => v.toLowerCase()))
-
-  const sharedVirtues: string[] = []
-  for (const virtue of sourceVirtues) {
-    if (targetVirtues.has(virtue)) {
-      sharedVirtues.push(virtue)
-    }
-  }
-
-  // Compare beliefs
-  const sourceBeliefs = new Set(source.beliefs.map((b) => b.toLowerCase()))
-  const targetBeliefs = new Set(target.beliefs.map((b) => b.toLowerCase()))
-
-  const sharedBeliefs: string[] = []
-  for (const belief of sourceBeliefs) {
-    if (targetBeliefs.has(belief)) {
-      sharedBeliefs.push(belief)
-    }
-  }
-
-  // Check epistemology similarity (simple keyword match)
-  const epistemologyMatch =
-    source.epistemology.toLowerCase().includes(target.epistemology.toLowerCase().slice(0, 20)) ||
-    target.epistemology.toLowerCase().includes(source.epistemology.toLowerCase().slice(0, 20))
-
-  const virtueScore = sharedVirtues.length > 0 ? Math.min(1, sharedVirtues.length * 0.25) : 0
-  const beliefScore = sharedBeliefs.length > 0 ? Math.min(1, sharedBeliefs.length * 0.15) : 0
-  const epistemologyScore = epistemologyMatch ? 0.3 : 0
-
-  return {
-    score: Math.min(1, virtueScore + beliefScore + epistemologyScore),
-    sharedVirtues,
-    sharedBeliefs,
-    epistemologyMatch,
-  }
-}
-
-interface PoeticsAlignmentResult {
-  score: number
-  sharedMetaphors: string[]
-  similarVoice: string | null
-}
-
-function calculatePoeticsAlignment(
-  source: GlossaryPoetics,
-  target: GlossaryPoetics,
-): PoeticsAlignmentResult {
-  // Compare metaphors
-  const sourceMetaphors = new Set(source.metaphors.map((m) => m.toLowerCase()))
-  const targetMetaphors = new Set(target.metaphors.map((m) => m.toLowerCase()))
-
-  const sharedMetaphors: string[] = []
-  for (const metaphor of sourceMetaphors) {
-    if (targetMetaphors.has(metaphor)) {
-      sharedMetaphors.push(metaphor)
-    }
-  }
-
-  // Check voice similarity
-  const voiceMatch =
-    source.voice.toLowerCase().includes(target.voice.toLowerCase().slice(0, 10)) ||
-    target.voice.toLowerCase().includes(source.voice.toLowerCase().slice(0, 10))
-
-  // Check aesthetic similarity
-  const aestheticMatch =
-    source.aesthetic.toLowerCase().includes(target.aesthetic.toLowerCase().slice(0, 15)) ||
-    target.aesthetic.toLowerCase().includes(source.aesthetic.toLowerCase().slice(0, 15))
-
-  const metaphorScore = sharedMetaphors.length > 0 ? Math.min(1, sharedMetaphors.length * 0.3) : 0
-  const voiceScore = voiceMatch ? 0.4 : 0
-  const aestheticScore = aestheticMatch ? 0.3 : 0
-
-  return {
-    score: Math.min(1, metaphorScore + voiceScore + aestheticScore),
-    sharedMetaphors,
-    similarVoice: voiceMatch ? source.voice : null,
-  }
-}
-
-interface PsychologyAlignmentResult {
-  score: number
-  compatibleFears: boolean
-  complementaryConfidences: boolean
-}
-
-function calculatePsychologyAlignment(
-  source: GlossaryPsychology,
-  target: GlossaryPsychology,
-): PsychologyAlignmentResult {
-  // Check if fears don't conflict (both fear the same things = alignment)
-  const sourceFears = new Set(source.fears.map((f) => f.toLowerCase()))
-  const targetFears = new Set(target.fears.map((f) => f.toLowerCase()))
-
-  let sharedFears = 0
-  for (const fear of sourceFears) {
-    if (targetFears.has(fear)) {
-      sharedFears++
-    }
-  }
-
-  // Check if confidences complement (one is confident where other is uncertain)
-  const sourceConfidences = new Set(source.confidences.map((c) => c.toLowerCase()))
-  const targetConfidences = new Set(target.confidences.map((c) => c.toLowerCase()))
-
-  let complementaryConfidences = 0
-  // If source is confident where target has blind spots, that's complementary
-  for (const confidence of sourceConfidences) {
-    if (target.blindSpots.some((bs) => bs.toLowerCase().includes(confidence.slice(0, 10)))) {
-      complementaryConfidences++
-    }
-  }
-  for (const confidence of targetConfidences) {
-    if (source.blindSpots.some((bs) => bs.toLowerCase().includes(confidence.slice(0, 10)))) {
-      complementaryConfidences++
-    }
-  }
-
-  const fearScore = sharedFears > 0 ? Math.min(1, sharedFears * 0.3) : 0
-  const complementScore =
-    complementaryConfidences > 0 ? Math.min(1, complementaryConfidences * 0.4) : 0
-
-  return {
-    score: Math.min(1, fearScore + complementScore),
-    compatibleFears: sharedFears > 0,
-    complementaryConfidences: complementaryConfidences > 0,
+    return result
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    logger.error(
+      { error: message, sourceFullName, targetFullName },
+      'AI glossary comparison failed',
+    )
+    return null
   }
 }
 
@@ -438,43 +317,27 @@ function calculatePsychologyAlignment(
 // HELPERS
 // ============================================================================
 
-function parseGlossary(record: {
-  terms: unknown
-  empirics: unknown
-  psychology: unknown
-  poetics: unknown
-  philosophy: unknown
-  resentments: unknown
-  futureVision: string | null
-  confidence: number | null
-}): RepoGlossaryData | null {
-  try {
-    return {
-      terms: record.terms as GlossaryTerm[],
-      empirics: record.empirics as RepoGlossaryData['empirics'],
-      psychology: record.psychology as GlossaryPsychology,
-      poetics: record.poetics as GlossaryPoetics,
-      philosophy: record.philosophy as GlossaryPhilosophy,
-      resentments: record.resentments as GlossaryResentments,
-      futureVision: record.futureVision || '',
-      confidence: record.confidence || 0,
-    }
-  } catch {
-    return null
-  }
-}
-
 function generateTitle(
   sourceName: string,
   targetName: string,
-  vocabularyResult: VocabularyAlignmentResult,
-  resentmentResult: ResentmentAlignmentResult,
+  complementary: boolean,
+  competing: boolean,
+  synergies: string[],
 ): string {
-  if (resentmentResult.sharedEnemies.length > 0) {
-    return `${sourceName} & ${targetName}: United against ${resentmentResult.sharedEnemies[0]}`
+  if (complementary && synergies.length > 0) {
+    // Pick a keyword from first synergy
+    const firstSynergy = synergies[0]!
+    const keywords = firstSynergy.split(' ').slice(0, 3).join(' ')
+    return `${sourceName} + ${targetName}: ${keywords}`
   }
-  if (vocabularyResult.sharedTerms.length > 0) {
-    return `${sourceName} & ${targetName}: Shared language of ${vocabularyResult.sharedTerms[0]}`
+
+  if (competing) {
+    return `${sourceName} & ${targetName}: Same arena`
   }
+
+  if (complementary) {
+    return `${sourceName} & ${targetName}: Complementary tools`
+  }
+
   return `${sourceName} & ${targetName}: Kindred spirits`
 }

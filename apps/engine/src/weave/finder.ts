@@ -282,40 +282,12 @@ export async function findWeaves(
 
     // Save candidates to database (unless dry run)
     let saved = 0
-    let skipped = 0
+    const skipped = 0
 
     if (!options.dryRun) {
       for (const candidate of allCandidates) {
         try {
-          // Check if this weave already exists (by repo pair and type)
-          const existing = await db.weave.findFirst({
-            where: {
-              plexusId,
-              OR: [
-                {
-                  sourceRepoId: candidate.sourceRepoId,
-                  targetRepoId: candidate.targetRepoId,
-                },
-                {
-                  sourceRepoId: candidate.targetRepoId,
-                  targetRepoId: candidate.sourceRepoId,
-                },
-              ],
-              type: candidate.type,
-              dismissed: false,
-            },
-          })
-
-          if (existing) {
-            log('debug', `Weave already exists, skipping`, {
-              existingId: existing.id,
-              type: candidate.type,
-            })
-            skipped++
-            continue
-          }
-
-          // Create the weave with metadata
+          // Create the weave with metadata (each run creates its own instances)
           const weave = await db.weave.create({
             data: {
               plexusId,

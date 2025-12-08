@@ -1106,52 +1106,45 @@ program
           process.exit(0)
         }
 
-        console.log('\n=== GLOSSARY ===\n')
+        console.log('\n=== GLOSSARY (v2) ===\n')
 
-        console.log('TERMS:')
-        for (const term of glossary.terms) {
-          console.log(`  ${term.term} [${term.emotionalValence}]`)
-          console.log(`    ${term.definition}`)
+        console.log('PURPOSE:')
+        console.log(`  ${glossary.purpose}`)
+
+        console.log('\nSUMMARY:')
+        console.log(`  ${glossary.summary}`)
+
+        console.log('\nFEATURES:')
+        for (const feature of glossary.features) {
+          console.log(`  - ${feature}`)
         }
 
-        console.log('\nEMPIRICS:')
-        console.log(`  Measures: ${glossary.empirics.measures.join(', ') || 'none'}`)
-        console.log(`  Evidence types: ${glossary.empirics.evidenceTypes.join(', ') || 'none'}`)
-        console.log(`  Truth claims: ${glossary.empirics.truthClaims.join(', ') || 'none'}`)
+        console.log('\nTECH STACK:')
+        console.log(`  ${glossary.techStack.join(', ') || 'none'}`)
 
-        console.log('\nPSYCHOLOGY:')
-        console.log(`  Fears: ${glossary.psychology.fears.join(', ') || 'none'}`)
-        console.log(`  Confidences: ${glossary.psychology.confidences.join(', ') || 'none'}`)
-        console.log(`  Defenses: ${glossary.psychology.defenses.join(', ') || 'none'}`)
-        console.log(`  Attachments: ${glossary.psychology.attachments.join(', ') || 'none'}`)
-        console.log(`  Blind spots: ${glossary.psychology.blindSpots.join(', ') || 'none'}`)
+        console.log('\nTARGET USERS:')
+        for (const user of glossary.targetUsers) {
+          console.log(`  - ${user}`)
+        }
 
-        console.log('\nPOETICS:')
-        console.log(`  Metaphors: ${glossary.poetics.metaphors.join(', ') || 'none'}`)
-        console.log(`  Naming patterns: ${glossary.poetics.namingPatterns.join(', ') || 'none'}`)
-        console.log(`  Aesthetic: ${glossary.poetics.aesthetic}`)
-        console.log(`  Rhythm: ${glossary.poetics.rhythm}`)
-        console.log(`  Voice: ${glossary.poetics.voice}`)
+        console.log('\nKPIs:')
+        for (const kpi of glossary.kpis) {
+          console.log(`  - ${kpi}`)
+        }
 
-        console.log('\nPHILOSOPHY:')
-        console.log(`  Beliefs: ${glossary.philosophy.beliefs.join(', ') || 'none'}`)
-        console.log(`  Assumptions: ${glossary.philosophy.assumptions.join(', ') || 'none'}`)
-        console.log(`  Virtues: ${glossary.philosophy.virtues.join(', ') || 'none'}`)
-        console.log(`  Epistemology: ${glossary.philosophy.epistemology}`)
-        console.log(`  Ontology: ${glossary.philosophy.ontology}`)
-        console.log(`  Teleology: ${glossary.philosophy.teleology}`)
+        console.log('\nROADMAP:')
+        for (const item of glossary.roadmap) {
+          console.log(`  - ${item}`)
+        }
 
-        console.log('\nRESENTMENTS:')
-        console.log(`  Hates: ${glossary.resentments.hates.join(', ') || 'none'}`)
-        console.log(
-          `  Defines against: ${glossary.resentments.definesAgainst.join(', ') || 'none'}`,
-        )
-        console.log(`  Allergies: ${glossary.resentments.allergies.join(', ') || 'none'}`)
-        console.log(`  Warnings: ${glossary.resentments.warnings.join(', ') || 'none'}`)
-        console.log(`  Enemies: ${glossary.resentments.enemies.join(', ') || 'none'}`)
+        console.log('\nVALUES:')
+        console.log(`  ${glossary.values.join(', ') || 'none'}`)
 
-        console.log('\nFUTURE VISION (Year 2500):')
-        console.log(`  ${glossary.futureVision}`)
+        console.log('\nENEMIES:')
+        console.log(`  ${glossary.enemies.join(', ') || 'none'}`)
+
+        console.log('\nAESTHETIC:')
+        console.log(`  ${glossary.aesthetic}`)
 
         console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
       } else {
@@ -1224,50 +1217,45 @@ program
         process.exit(0)
       }
 
-      console.log(`\n=== GLOSSARY: ${repo.fullName} ===\n`)
+      console.log(`\n=== GLOSSARY: ${repo.fullName} (v2) ===\n`)
 
-      console.log('TERMS:')
-      for (const term of glossary.terms) {
-        console.log(`  ${term.term} [${term.emotionalValence}]`)
-        console.log(`    ${term.definition}`)
+      console.log('PURPOSE:')
+      console.log(`  ${glossary.purpose}`)
+
+      console.log('\nSUMMARY:')
+      console.log(`  ${glossary.summary}`)
+
+      console.log('\nFEATURES:')
+      for (const feature of glossary.features) {
+        console.log(`  - ${feature}`)
       }
 
-      console.log('\nEMPIRICS:')
-      console.log(`  Measures: ${glossary.empirics.measures.join(', ') || 'none'}`)
-      console.log(`  Evidence types: ${glossary.empirics.evidenceTypes.join(', ') || 'none'}`)
-      console.log(`  Truth claims: ${glossary.empirics.truthClaims.join(', ') || 'none'}`)
+      console.log('\nTECH STACK:')
+      console.log(`  ${glossary.techStack.join(', ') || 'none'}`)
 
-      console.log('\nPSYCHOLOGY:')
-      console.log(`  Fears: ${glossary.psychology.fears.join(', ') || 'none'}`)
-      console.log(`  Confidences: ${glossary.psychology.confidences.join(', ') || 'none'}`)
-      console.log(`  Defenses: ${glossary.psychology.defenses.join(', ') || 'none'}`)
-      console.log(`  Attachments: ${glossary.psychology.attachments.join(', ') || 'none'}`)
-      console.log(`  Blind spots: ${glossary.psychology.blindSpots.join(', ') || 'none'}`)
+      console.log('\nTARGET USERS:')
+      for (const user of glossary.targetUsers) {
+        console.log(`  - ${user}`)
+      }
 
-      console.log('\nPOETICS:')
-      console.log(`  Metaphors: ${glossary.poetics.metaphors.join(', ') || 'none'}`)
-      console.log(`  Naming patterns: ${glossary.poetics.namingPatterns.join(', ') || 'none'}`)
-      console.log(`  Aesthetic: ${glossary.poetics.aesthetic}`)
-      console.log(`  Rhythm: ${glossary.poetics.rhythm}`)
-      console.log(`  Voice: ${glossary.poetics.voice}`)
+      console.log('\nKPIs:')
+      for (const kpi of glossary.kpis) {
+        console.log(`  - ${kpi}`)
+      }
 
-      console.log('\nPHILOSOPHY:')
-      console.log(`  Beliefs: ${glossary.philosophy.beliefs.join(', ') || 'none'}`)
-      console.log(`  Assumptions: ${glossary.philosophy.assumptions.join(', ') || 'none'}`)
-      console.log(`  Virtues: ${glossary.philosophy.virtues.join(', ') || 'none'}`)
-      console.log(`  Epistemology: ${glossary.philosophy.epistemology}`)
-      console.log(`  Ontology: ${glossary.philosophy.ontology}`)
-      console.log(`  Teleology: ${glossary.philosophy.teleology}`)
+      console.log('\nROADMAP:')
+      for (const item of glossary.roadmap) {
+        console.log(`  - ${item}`)
+      }
 
-      console.log('\nRESENTMENTS:')
-      console.log(`  Hates: ${glossary.resentments.hates.join(', ') || 'none'}`)
-      console.log(`  Defines against: ${glossary.resentments.definesAgainst.join(', ') || 'none'}`)
-      console.log(`  Allergies: ${glossary.resentments.allergies.join(', ') || 'none'}`)
-      console.log(`  Warnings: ${glossary.resentments.warnings.join(', ') || 'none'}`)
-      console.log(`  Enemies: ${glossary.resentments.enemies.join(', ') || 'none'}`)
+      console.log('\nVALUES:')
+      console.log(`  ${glossary.values.join(', ') || 'none'}`)
 
-      console.log('\nFUTURE VISION (Year 2500):')
-      console.log(`  ${glossary.futureVision}`)
+      console.log('\nENEMIES:')
+      console.log(`  ${glossary.enemies.join(', ') || 'none'}`)
+
+      console.log('\nAESTHETIC:')
+      console.log(`  ${glossary.aesthetic}`)
 
       console.log(`\nConfidence: ${(glossary.confidence * 100).toFixed(0)}%`)
     } catch (error: unknown) {

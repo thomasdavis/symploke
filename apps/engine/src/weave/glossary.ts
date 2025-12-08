@@ -1,15 +1,11 @@
 /**
  * Repository Glossary Extraction
  *
- * A Glossary is a repository's self-portrait: its vocabulary, its beliefs,
- * its resentments, its poetry. It is the soul of a codebase made legible.
+ * A Glossary is a hybrid profile of a repository: practical information about
+ * what it does, and philosophical insights about what it believes.
  *
- * The Glossary captures dimensions that code similarity will never find:
- * - Empirical nature: What does it measure? What does it consider evidence?
- * - Psychology: What does it fear? What gives it confidence?
- * - Poetics: What metaphors structure its thinking? What rhythm does its code have?
- * - Philosophy: What does it believe about software, developers, truth?
- * - Resentments: What does it hate? What does it define itself against?
+ * Input: README only (simpler, more reliable than parsing code)
+ * Output: Structured profile for AI-powered comparison
  */
 
 import { generateObject } from 'ai'
@@ -23,227 +19,125 @@ import { logger } from '@symploke/logger'
 // ============================================================================
 
 /**
- * A term in the repository's vocabulary
- */
-export interface GlossaryTerm {
-  term: string
-  definition: string
-  context: string
-  emotionalValence: 'positive' | 'negative' | 'neutral' | 'sacred' | 'profane'
-  frequency: 'ubiquitous' | 'common' | 'rare' | 'once'
-}
-
-/**
- * The empirical nature of the repository - what it measures and considers evidence
- */
-export interface GlossaryEmpirics {
-  measures: string[] // What it measures/counts
-  evidenceTypes: string[] // What it considers proof
-  truthClaims: string[] // Assertions it makes about reality
-  uncertainties: string[] // What it admits not knowing
-}
-
-/**
- * The psychology of the repository - its fears, confidences, and defenses
- */
-export interface GlossaryPsychology {
-  fears: string[] // What threatens its existence
-  confidences: string[] // Where it feels sure of itself
-  defenses: string[] // How it protects itself
-  attachments: string[] // What it can't let go of
-  blindSpots: string[] // What it refuses to see
-}
-
-/**
- * The poetics of the repository - its metaphors, rhythm, and voice
- */
-export interface GlossaryPoetics {
-  metaphors: string[] // Structural metaphors (building, flow, tree, etc)
-  namingPatterns: string[] // How it names things
-  aesthetic: string // Its sense of beauty
-  rhythm: string // Fast/slow, dense/sparse, etc
-  voice: string // How it speaks (formal, casual, urgent, etc)
-}
-
-/**
- * The philosophy of the repository - its beliefs and assumptions
- */
-export interface GlossaryPhilosophy {
-  beliefs: string[] // What it takes as axioms
-  assumptions: string[] // What it assumes without stating
-  virtues: string[] // What it considers good
-  epistemology: string // How it knows what it knows
-  ontology: string // What it thinks exists
-  teleology: string // What it's ultimately for
-}
-
-/**
- * The resentments of the repository - what it hates and defines itself against
- */
-export interface GlossaryResentments {
-  hates: string[] // What it explicitly despises
-  definesAgainst: string[] // What it exists in opposition to
-  allergies: string[] // What makes it uncomfortable
-  warnings: string[] // What it warns against
-  enemies: string[] // Conceptual enemies it fights
-}
-
-/**
- * A complete repository glossary
+ * A repository glossary profile
  */
 export interface RepoGlossaryData {
-  terms: GlossaryTerm[]
-  empirics: GlossaryEmpirics
-  psychology: GlossaryPsychology
-  poetics: GlossaryPoetics
-  philosophy: GlossaryPhilosophy
-  resentments: GlossaryResentments
-  futureVision: string
-  confidence: number
+  // PRACTICAL
+  purpose: string // One-sentence: what problem does this solve?
+  features: string[] // Key capabilities/features
+  techStack: string[] // Languages, frameworks, tools mentioned
+  targetUsers: string[] // Who is this for?
+  kpis: string[] // Metrics, measures, what success looks like
+  roadmap: string[] // Future plans, TODOs, aspirations
+
+  // PHILOSOPHICAL
+  values: string[] // Core beliefs, virtues, what it considers "good"
+  enemies: string[] // What it fights against, defines itself against
+  aesthetic: string // Design philosophy, code style preferences
+
+  // META
+  confidence: number // 0-1, based on README quality
+  summary: string // 2-3 sentence overall summary
 }
 
 // ============================================================================
 // ZOD SCHEMAS FOR LLM EXTRACTION
 // ============================================================================
 
-const GlossaryTermSchema = z.object({
-  term: z.string().describe('A significant word or phrase in this codebase'),
-  definition: z.string().describe('What this term means in the context of this repository'),
-  context: z.string().describe('Where and how this term is used'),
-  emotionalValence: z
-    .enum(['positive', 'negative', 'neutral', 'sacred', 'profane'])
-    .describe('The emotional charge of this term'),
-  frequency: z
-    .enum(['ubiquitous', 'common', 'rare', 'once'])
-    .describe('How often this term appears'),
-})
-
-const GlossaryEmpiricsSchema = z.object({
-  measures: z.array(z.string()).describe('What this repository measures or counts'),
-  evidenceTypes: z.array(z.string()).describe('What it considers proof or evidence'),
-  truthClaims: z.array(z.string()).describe('Assertions it makes about reality'),
-  uncertainties: z.array(z.string()).describe('What it admits not knowing'),
-})
-
-const GlossaryPsychologySchema = z.object({
-  fears: z.array(z.string()).describe('What threatens the existence or purpose of this code'),
-  confidences: z.array(z.string()).describe('Where this code feels sure of itself'),
-  defenses: z.array(z.string()).describe('How this code protects itself from failure'),
-  attachments: z.array(z.string()).describe('Patterns or approaches it cannot let go of'),
-  blindSpots: z.array(z.string()).describe('What this code refuses to see or acknowledge'),
-})
-
-const GlossaryPoeticsSchema = z.object({
-  metaphors: z
-    .array(z.string())
-    .describe('Structural metaphors that shape this codebase (building, flow, tree, etc)'),
-  namingPatterns: z.array(z.string()).describe('Patterns in how things are named'),
-  aesthetic: z.string().describe('The sense of beauty this code aspires to'),
-  rhythm: z.string().describe('The tempo of this code (fast/slow, dense/sparse)'),
-  voice: z.string().describe('How this code speaks (formal, casual, urgent, playful)'),
-})
-
-const GlossaryPhilosophySchema = z.object({
-  beliefs: z.array(z.string()).describe('Core axioms this code takes for granted'),
-  assumptions: z.array(z.string()).describe('Unstated assumptions baked into the design'),
-  virtues: z.array(z.string()).describe('What this code considers good and praiseworthy'),
-  epistemology: z.string().describe('How this code knows what it knows'),
-  ontology: z.string().describe('What entities this code believes exist'),
-  teleology: z.string().describe('The ultimate purpose this code serves'),
-})
-
-const GlossaryResenmentsSchema = z.object({
-  hates: z.array(z.string()).describe('What this code explicitly despises'),
-  definesAgainst: z.array(z.string()).describe('What this code exists in opposition to'),
-  allergies: z.array(z.string()).describe('Things that make this code uncomfortable'),
-  warnings: z.array(z.string()).describe('What this code warns against'),
-  enemies: z.array(z.string()).describe('Conceptual enemies this code fights'),
-})
-
-const FullGlossarySchema = z.object({
-  terms: z.array(GlossaryTermSchema).describe('5-15 significant terms in this repository'),
-  empirics: GlossaryEmpiricsSchema,
-  psychology: GlossaryPsychologySchema,
-  poetics: GlossaryPoeticsSchema,
-  philosophy: GlossaryPhilosophySchema,
-  resentments: GlossaryResenmentsSchema,
-  futureVision: z
+const GlossarySchema = z.object({
+  // PRACTICAL
+  purpose: z
     .string()
     .describe(
-      'What would a historian in the year 2500 write about this repository? What would be remembered?',
+      'One clear sentence describing what problem this repository solves. Be specific, not generic.',
     ),
+  features: z
+    .array(z.string())
+    .describe('3-8 key features or capabilities this repository provides'),
+  techStack: z
+    .array(z.string())
+    .describe('Languages, frameworks, libraries, and tools mentioned or implied'),
+  targetUsers: z
+    .array(z.string())
+    .describe('Who is this repository for? Be specific about the type of developer or user'),
+  kpis: z
+    .array(z.string())
+    .describe(
+      'What metrics or measures indicate success? What does this repo care about optimizing?',
+    ),
+  roadmap: z
+    .array(z.string())
+    .describe('Future plans, TODOs, aspirations, or areas for improvement mentioned'),
+
+  // PHILOSOPHICAL
+  values: z
+    .array(z.string())
+    .describe(
+      'Core beliefs and virtues this repository embodies. What does it consider "good" or important?',
+    ),
+  enemies: z
+    .array(z.string())
+    .describe(
+      'What does this repository fight against? What problems, patterns, or approaches does it reject?',
+    ),
+  aesthetic: z.string().describe('The design philosophy and coding style this repository prefers'),
+
+  // META
   confidence: z
     .number()
     .min(0)
     .max(1)
-    .describe('Confidence in this analysis (0-1). Lower if source material is sparse.'),
+    .describe(
+      'Confidence in this analysis (0-1). Lower if README is sparse, vague, or marketing-heavy.',
+    ),
+  summary: z
+    .string()
+    .describe(
+      '2-3 sentence summary capturing both what this repo DOES and what it BELIEVES. Be opinionated.',
+    ),
 })
 
 // ============================================================================
 // EXTRACTION PROMPTS
 // ============================================================================
 
-const GLOSSARY_SYSTEM_PROMPT = `You are a historian from the year 2500, writing an entry for the Encyclopedia of Lost Technologies.
+const GLOSSARY_SYSTEM_PROMPT = `You are analyzing a software repository to create a comprehensive profile.
 
-You are analyzing a software repository from the early 21st century. Your task is to create a GLOSSARY for this repository - not a technical glossary, but a cultural one.
+Your task is to extract both PRACTICAL and PHILOSOPHICAL information from the README.
 
-What vocabulary would a reader need to understand not just what this code DOES, but what it BELIEVED, what it FEARED, what it RESENTED?
+PRACTICAL (what it does):
+- Purpose: What specific problem does this solve?
+- Features: What can users do with it?
+- Tech Stack: What technologies does it use?
+- Target Users: Who should use this?
+- KPIs: What does success look like?
+- Roadmap: What's planned or missing?
 
-Think like an anthropologist studying an ancient culture through its artifacts:
+PHILOSOPHICAL (what it believes):
+- Values: What does it consider important or "good"?
+- Enemies: What does it fight against or reject?
+- Aesthetic: What style or approach does it prefer?
 
-TERMS: What words carry special meaning? What jargon has emotional weight?
+Be specific and opinionated. Avoid generic statements like "makes development easier."
+If the README is sparse, acknowledge this with lower confidence.
+If the README is marketing-heavy with little substance, call that out.
 
-EMPIRICS: What does it measure? What counts as evidence? What truths does it claim?
+Look for:
+- Explicit statements of philosophy (e.g., "we believe in...")
+- Implicit values (what they choose to emphasize)
+- What problems they describe with emotional language (enemies)
+- Technical choices that reveal priorities`
 
-PSYCHOLOGY: What threatens it? What gives it confidence? What are its blind spots?
+function buildGlossaryPrompt(fullName: string, readme: string): string {
+  return `## Repository: ${fullName}
 
-POETICS: What metaphors structure its thinking? What aesthetic does it pursue?
+**README Content:**
+${readme}
 
-PHILOSOPHY: What does it believe about software? About developers? About truth?
+---
 
-RESENTMENTS: What does it hate? What is it fighting against? What enemy defines it?
-
-Be specific. Be poetic. Be honest about uncertainty.
-If source material is sparse, acknowledge this and lower confidence accordingly.`
-
-function buildGlossaryPrompt(
-  fullName: string,
-  readme: string | null,
-  packageJson: { description?: string; keywords?: string[]; name?: string } | null,
-  sampleCode: string | null,
-): string {
-  let prompt = `## Repository: ${fullName}\n\n`
-
-  if (packageJson?.description) {
-    prompt += `**Package Description**: ${packageJson.description}\n\n`
-  }
-
-  if (packageJson?.keywords?.length) {
-    prompt += `**Keywords**: ${packageJson.keywords.join(', ')}\n\n`
-  }
-
-  if (readme) {
-    const readmeExcerpt = readme.slice(0, 4000)
-    prompt += `**README**:\n${readmeExcerpt}\n\n`
-  }
-
-  if (sampleCode) {
-    prompt += `**Sample Code** (representative excerpts):\n\`\`\`\n${sampleCode}\n\`\`\`\n\n`
-  }
-
-  prompt += `---
-
-Create a comprehensive glossary for this repository. Consider:
-
-1. What VOCABULARY would future historians need to understand this code?
-2. What EMOTIONAL POSTURE did its authors take?
-3. What WAR was this code fighting? Against what enemy?
-4. What BEAUTY did it aspire to?
-5. What would be LOST if this code disappeared?
-
-Remember: You are writing for the year 2500. What would they need to know?`
-
-  return prompt
+Create a comprehensive profile for this repository based on its README.
+Be honest about what you can and cannot determine from this content.`
 }
 
 // ============================================================================
@@ -263,64 +157,12 @@ async function getReadmeContent(repoId: string): Promise<string | null> {
   return readmeFile?.content || null
 }
 
-async function getPackageJson(
-  repoId: string,
-): Promise<{ description?: string; keywords?: string[]; name?: string } | null> {
-  const packageFile = await db.file.findFirst({
-    where: {
-      repoId,
-      path: 'package.json',
-    },
-    select: { content: true },
-  })
-
-  if (!packageFile?.content) return null
-
-  try {
-    return JSON.parse(packageFile.content)
-  } catch {
-    return null
-  }
-}
-
-async function getSampleCode(repoId: string): Promise<string | null> {
-  // Get a few representative source files
-  const files = await db.file.findMany({
-    where: {
-      repoId,
-      content: { not: null },
-      skippedReason: null,
-      OR: [
-        { path: { endsWith: '.ts' } },
-        { path: { endsWith: '.tsx' } },
-        { path: { endsWith: '.js' } },
-        { path: { endsWith: '.py' } },
-        { path: { endsWith: '.go' } },
-        { path: { endsWith: '.rs' } },
-      ],
-    },
-    select: { path: true, content: true },
-    take: 5,
-    orderBy: { path: 'asc' },
-  })
-
-  if (files.length === 0) return null
-
-  // Take first 500 chars of each file
-  const samples = files
-    .filter((f) => f.content)
-    .map((f) => `// ${f.path}\n${f.content!.slice(0, 500)}`)
-    .join('\n\n---\n\n')
-
-  return samples.slice(0, 3000)
-}
-
 // ============================================================================
 // EXTRACTION
 // ============================================================================
 
 /**
- * Extract a glossary for a repository
+ * Extract a glossary for a repository from its README
  */
 export async function extractGlossary(
   repoId: string,
@@ -343,7 +185,7 @@ export async function extractGlossary(
     })
     if (existing && existing.status === GlossaryStatus.COMPLETE) {
       logger.info({ repoId, fullName: repo.fullName }, 'Glossary already exists, skipping')
-      return existing as unknown as RepoGlossaryData
+      return parseGlossaryFromDb(existing)
     }
   }
 
@@ -367,28 +209,21 @@ export async function extractGlossary(
     },
   })
 
-  // Gather source material
-  const [readme, packageJson, sampleCode] = await Promise.all([
-    getReadmeContent(repoId),
-    getPackageJson(repoId),
-    getSampleCode(repoId),
-  ])
+  // Get README only
+  const readme = await getReadmeContent(repoId)
 
   // Check if we have enough content
-  const totalContent =
-    (readme?.length || 0) + (packageJson?.description?.length || 0) + (sampleCode?.length || 0)
-
-  if (totalContent < 200) {
+  if (!readme || readme.length < 100) {
     logger.info(
-      { repoId, fullName: repo.fullName, totalContent },
-      'Not enough content for glossary',
+      { repoId, fullName: repo.fullName, readmeLength: readme?.length || 0 },
+      'README too short for glossary extraction',
     )
 
     await db.repoGlossary.update({
       where: { repoId },
       data: {
         status: GlossaryStatus.UNGLOSSABLE,
-        unglossableReason: `Insufficient content (${totalContent} chars). Some repositories don't have souls.`,
+        unglossableReason: `README is ${readme ? `too short (${readme.length} chars)` : 'missing'}. Cannot extract meaningful profile.`,
       },
     })
 
@@ -396,27 +231,42 @@ export async function extractGlossary(
   }
 
   try {
-    const prompt = buildGlossaryPrompt(repo.fullName, readme, packageJson, sampleCode)
+    // Truncate README if very long
+    const readmeContent = readme.slice(0, 8000)
+
+    const prompt = buildGlossaryPrompt(repo.fullName, readmeContent)
 
     const { object: glossary } = await generateObject({
       model: openai('gpt-4o'),
-      schema: FullGlossarySchema,
+      schema: GlossarySchema,
       system: GLOSSARY_SYSTEM_PROMPT,
       prompt,
     })
 
-    // Store the glossary
+    // Store the glossary - map to existing DB schema (JSON fields)
     await db.repoGlossary.update({
       where: { repoId },
       data: {
         status: GlossaryStatus.COMPLETE,
-        terms: glossary.terms as unknown as object,
-        empirics: glossary.empirics as unknown as object,
-        psychology: glossary.psychology as unknown as object,
-        poetics: glossary.poetics as unknown as object,
-        philosophy: glossary.philosophy as unknown as object,
-        resentments: glossary.resentments as unknown as object,
-        futureVision: glossary.futureVision,
+        terms: [],
+        empirics: {
+          purpose: glossary.purpose,
+          features: glossary.features,
+          techStack: glossary.techStack,
+          targetUsers: glossary.targetUsers,
+          kpis: glossary.kpis,
+          roadmap: glossary.roadmap,
+        },
+        psychology: {},
+        poetics: {
+          aesthetic: glossary.aesthetic,
+        },
+        philosophy: {
+          values: glossary.values,
+          enemies: glossary.enemies,
+        },
+        resentments: {},
+        futureVision: glossary.summary,
         confidence: glossary.confidence,
         extractedAt: new Date(),
       },
@@ -426,7 +276,9 @@ export async function extractGlossary(
       {
         repoId,
         fullName: repo.fullName,
-        termCount: glossary.terms.length,
+        featureCount: glossary.features.length,
+        valueCount: glossary.values.length,
+        enemyCount: glossary.enemies.length,
         confidence: glossary.confidence,
       },
       'Glossary extraction complete',
@@ -445,6 +297,39 @@ export async function extractGlossary(
       },
     })
 
+    return null
+  }
+}
+
+/**
+ * Parse a glossary record from the database into RepoGlossaryData
+ */
+function parseGlossaryFromDb(record: {
+  empirics: unknown
+  poetics: unknown
+  philosophy: unknown
+  futureVision: string | null
+  confidence: number | null
+}): RepoGlossaryData | null {
+  try {
+    const empirics = record.empirics as Record<string, unknown>
+    const philosophy = record.philosophy as Record<string, unknown>
+    const poetics = record.poetics as Record<string, unknown>
+
+    return {
+      purpose: (empirics?.purpose as string) || '',
+      features: (empirics?.features as string[]) || [],
+      techStack: (empirics?.techStack as string[]) || [],
+      targetUsers: (empirics?.targetUsers as string[]) || [],
+      kpis: (empirics?.kpis as string[]) || [],
+      roadmap: (empirics?.roadmap as string[]) || [],
+      values: (philosophy?.values as string[]) || [],
+      enemies: (philosophy?.enemies as string[]) || [],
+      aesthetic: (poetics?.aesthetic as string) || '',
+      confidence: record.confidence || 0,
+      summary: record.futureVision || '',
+    }
+  } catch {
     return null
   }
 }
@@ -505,14 +390,5 @@ export async function getGlossary(repoId: string): Promise<RepoGlossaryData | nu
     return null
   }
 
-  return {
-    terms: glossary.terms as unknown as GlossaryTerm[],
-    empirics: glossary.empirics as unknown as GlossaryEmpirics,
-    psychology: glossary.psychology as unknown as GlossaryPsychology,
-    poetics: glossary.poetics as unknown as GlossaryPoetics,
-    philosophy: glossary.philosophy as unknown as GlossaryPhilosophy,
-    resentments: glossary.resentments as unknown as GlossaryResentments,
-    futureVision: glossary.futureVision || '',
-    confidence: glossary.confidence || 0,
-  }
+  return parseGlossaryFromDb(glossary)
 }
