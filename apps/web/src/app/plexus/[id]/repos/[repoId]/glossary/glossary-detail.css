@@ -21,7 +21,7 @@
 }
 
 .gd-back-link::before {
-  content: '\2190';
+  content: "\2190";
 }
 
 /* Status badges */

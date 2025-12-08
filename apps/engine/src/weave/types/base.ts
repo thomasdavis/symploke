@@ -52,7 +52,7 @@ export interface WeaveCandidate {
 }
 
 /**
- * Metadata specific to glossary_alignment weaves (v2 - AI narrative comparison)
+ * Metadata specific to glossary_alignment weaves
  */
 export interface GlossaryAlignmentMetadata {
   // AI-generated narrative comparison

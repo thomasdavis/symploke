@@ -1,12 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import type { GlossaryStatus } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
+import Link from 'next/link'
 import './glossary-detail.css'
 
-// v2 Glossary data structure
-type GlossaryDataV2 = {
+type GlossaryData = {
   id: string
   status: GlossaryStatus
   // Practical
@@ -36,7 +35,7 @@ type Repo = {
 type GlossaryDetailClientProps = {
   plexusId: string
   repo: Repo
-  glossary: GlossaryDataV2 | null
+  glossary: GlossaryData | null
 }
 
 function StatusBadge({ status }: { status: GlossaryStatus }) {

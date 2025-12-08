@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 import 'dotenv/config'
+import { ChunkJobStatus, db, SyncJobStatus } from '@symploke/db'
 import { Command } from 'commander'
-import { db, SyncJobStatus, ChunkJobStatus } from '@symploke/db'
-import {
-  createSyncJob,
-  getJobStatus,
-  listJobs,
-  getQueueProcessor,
-  createChunkJob,
-  getChunkJobStatus,
-  listChunkJobs,
-} from '../queue/processor.js'
-import { findWeaves, listWeaves, listDiscoveryRuns, getDiscoveryRun } from '../weave/finder.js'
-import { findWeavesV2, profileRepository } from '../weave/finder-v2.js'
-import { findActionableWeaves } from '../weave/finder-actionable.js'
-import { extractGlossary, extractPlexusGlossaries, getGlossary } from '../weave/glossary.js'
-import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
 import { getPusherService } from '../pusher/service.js'
+import {
+  createChunkJob,
+  createSyncJob,
+  getChunkJobStatus,
+  getJobStatus,
+  getQueueProcessor,
+  listChunkJobs,
+  listJobs,
+} from '../queue/processor.js'
+import { failJob, syncRepo } from '../sync/repo-sync.js'
+import { findWeaves, getDiscoveryRun, listDiscoveryRuns, listWeaves } from '../weave/finder.js'
+import { findActionableWeaves } from '../weave/finder-actionable.js'
+import { findWeavesV2, profileRepository } from '../weave/finder-v2.js'
+import { extractGlossary, extractPlexusGlossaries, getGlossary } from '../weave/glossary.js'
 
 const program = new Command()
 
@@ -1181,7 +1181,7 @@ program
           process.exit(0)
         }
 
-        console.log('\n=== GLOSSARY (v2) ===\n')
+        console.log('\n=== GLOSSARY ===\n')
 
         console.log('PURPOSE:')
         console.log(`  ${glossary.purpose}`)
@@ -1292,7 +1292,7 @@ program
         process.exit(0)
       }
 
-      console.log(`\n=== GLOSSARY: ${repo.fullName} (v2) ===\n`)
+      console.log(`\n=== GLOSSARY: ${repo.fullName} ===\n`)
 
       console.log('PURPOSE:')
       console.log(`  ${glossary.purpose}`)

@@ -42,8 +42,8 @@ export default async function WeaveDetailPage({ params }: WeaveDetailPageProps) 
     notFound()
   }
 
-  // Serialize the data for client component
-  // Extract v2 fields from v1 JSON columns (empirics, philosophy, poetics)
+  // Serialize glossary data for client component
+  // Extract fields from JSON columns (empirics, philosophy, poetics)
   const serializeGlossary = (glossary: typeof weave.sourceRepo.glossary) => {
     if (!glossary) return null
 

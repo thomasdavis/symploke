@@ -1,19 +1,19 @@
-import { generateObject } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import { z } from 'zod'
-import { db, WeaveType as PrismaWeaveType, GlossaryStatus } from '@symploke/db'
+import { db, GlossaryStatus, WeaveType as PrismaWeaveType } from '@symploke/db'
 import { logger } from '@symploke/logger'
+import { generateObject } from 'ai'
+import { z } from 'zod'
+import { getGlossary, type RepoGlossaryData } from '../glossary.js'
 import type {
+  FilePairMatch,
+  GlossaryAlignmentMetadata,
   WeaveCandidate,
   WeaveOptions,
   WeaveTypeHandler,
-  FilePairMatch,
-  GlossaryAlignmentMetadata,
 } from './base.js'
-import { getGlossary, type RepoGlossaryData } from '../glossary.js'
 
 /**
- * Glossary Alignment WeaveType (v2 - AI Narrative Comparison)
+ * Glossary Alignment WeaveType
  *
  * Uses AI to compare two repository glossaries and generate:
  * - A narrative explanation of their relationship
@@ -32,7 +32,7 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
     targetRepoId: string,
     _options: WeaveOptions = {},
   ): Promise<WeaveCandidate[]> {
-    logger.info({ plexusId, sourceRepoId, targetRepoId }, 'Finding glossary alignments (v2)')
+    logger.info({ plexusId, sourceRepoId, targetRepoId }, 'Finding glossary alignments')
 
     // Get both repos
     const [sourceRepo, targetRepo] = await Promise.all([
@@ -45,7 +45,7 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
       return []
     }
 
-    // Get glossaries in v2 format
+    // Get glossaries
     const [sourceGlossary, targetGlossary] = await Promise.all([
       getGlossary(sourceRepoId),
       getGlossary(targetRepoId),
