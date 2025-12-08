@@ -299,6 +299,9 @@ export async function findWeaves(
               description: candidate.description,
               score: candidate.score,
               metadata: {
+                // Spread any type-specific metadata from the candidate
+                ...candidate.metadata,
+                // Add file pairs (may override if already present, which is fine)
                 filePairs: candidate.filePairs.map((fp) => ({
                   sourceFile: fp.sourceFile,
                   targetFile: fp.targetFile,
