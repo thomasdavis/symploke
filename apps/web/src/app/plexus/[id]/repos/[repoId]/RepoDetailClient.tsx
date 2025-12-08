@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { getPusherClient } from '@/lib/pusher/client'
@@ -229,6 +230,12 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
         title={repo.fullName}
         actions={
           <div className="repo-detail__actions">
+            <Link
+              href={`/plexus/${plexusId}/repos/${repo.id}/glossary`}
+              className="repo-detail__secondary-link"
+            >
+              View Glossary
+            </Link>
             <a
               href={repo.url}
               target="_blank"

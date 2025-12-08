@@ -1,6 +1,12 @@
 import { db, WeaveType as PrismaWeaveType, GlossaryStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
-import type { WeaveCandidate, WeaveOptions, WeaveTypeHandler, FilePairMatch } from './base.js'
+import type {
+  WeaveCandidate,
+  WeaveOptions,
+  WeaveTypeHandler,
+  FilePairMatch,
+  GlossaryAlignmentMetadata,
+} from './base.js'
 import type {
   RepoGlossaryData,
   GlossaryTerm,
@@ -155,6 +161,24 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
       },
     ]
 
+    // Build metadata with all alignment details for debugging UI
+    const metadata: GlossaryAlignmentMetadata = {
+      alignmentScores: {
+        vocabulary: vocabularyScore.score,
+        resentment: resentmentScore.score,
+        philosophy: philosophyScore.score,
+        poetics: poeticsScore.score,
+        psychology: psychologyScore.score,
+        final: finalScore,
+      },
+      sharedTerms: vocabularyScore.sharedTerms,
+      sharedEnemies: resentmentScore.sharedEnemies,
+      sharedVirtues: philosophyScore.sharedVirtues,
+      sharedMetaphors: poeticsScore.sharedMetaphors,
+      sourceGlossaryId: sourceGlossaryRecord.id,
+      targetGlossaryId: targetGlossaryRecord.id,
+    }
+
     const candidate: WeaveCandidate = {
       sourceRepoId,
       targetRepoId,
@@ -163,6 +187,7 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
       title,
       description,
       filePairs,
+      metadata: metadata as unknown as Record<string, unknown>,
     }
 
     return [candidate]

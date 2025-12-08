@@ -31,6 +31,25 @@
   background: var(--color-bg-subtle);
 }
 
+.repo-detail__secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: oklch(60% 0.15 220);
+  text-decoration: none;
+  border: 1px solid oklch(60% 0.15 220 / 0.3);
+  border-radius: var(--radius-md);
+  background: oklch(60% 0.15 220 / 0.1);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.repo-detail__secondary-link:hover {
+  background: oklch(60% 0.15 220 / 0.2);
+  border-color: oklch(60% 0.15 220 / 0.5);
+}
+
 .repo-detail__content {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Select } from '@symploke/ui/Select/Select'
@@ -62,7 +63,15 @@ function ScoreBadge({ score }: { score: number }) {
   return <span className={`weave-score weave-score--${level}`}>{percentage}%</span>
 }
 
-function WeaveDetail({ weave, onClose }: { weave: Weave; onClose: () => void }) {
+function WeaveDetail({
+  weave,
+  onClose,
+  plexusId,
+}: {
+  weave: Weave
+  onClose: () => void
+  plexusId: string
+}) {
   const metadata = weave.metadata as {
     filePairs?: Array<{ sourceFile: string; targetFile: string; avgSimilarity: number }>
   } | null
@@ -82,6 +91,10 @@ function WeaveDetail({ weave, onClose }: { weave: Weave; onClose: () => void }) 
           </svg>
         </button>
       </div>
+
+      <Link href={`/plexus/${plexusId}/weaves/${weave.id}`} className="weave-detail__view-full">
+        View Full Details
+      </Link>
 
       <div className="weave-detail__meta">
         <div className="weave-detail__badges">
@@ -337,7 +350,11 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
 
         {selectedWeave && (
           <div className="weaves-sidebar">
-            <WeaveDetail weave={selectedWeave} onClose={() => setSelectedWeave(null)} />
+            <WeaveDetail
+              weave={selectedWeave}
+              onClose={() => setSelectedWeave(null)}
+              plexusId={plexusId}
+            />
           </div>
         )}
       </div>

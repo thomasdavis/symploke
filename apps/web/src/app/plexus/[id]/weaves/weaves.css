@@ -158,6 +158,23 @@
   color: var(--color-fg);
 }
 
+.weave-detail__view-full {
+  display: block;
+  padding: var(--space-3) var(--space-6);
+  background: oklch(60% 0.15 220 / 0.1);
+  color: oklch(60% 0.15 220);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--duration-fast);
+}
+
+.weave-detail__view-full:hover {
+  background: oklch(60% 0.15 220 / 0.2);
+}
+
 .weave-detail__meta {
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--color-border);

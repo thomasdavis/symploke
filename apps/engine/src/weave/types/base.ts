@@ -48,6 +48,27 @@ export interface WeaveCandidate {
   title: string
   description: string
   filePairs: FilePairMatch[]
+  metadata?: Record<string, unknown> // Additional type-specific metadata
+}
+
+/**
+ * Metadata specific to glossary_alignment weaves
+ */
+export interface GlossaryAlignmentMetadata {
+  alignmentScores: {
+    vocabulary: number
+    resentment: number
+    philosophy: number
+    poetics: number
+    psychology: number
+    final: number
+  }
+  sharedTerms: string[]
+  sharedEnemies: string[]
+  sharedVirtues: string[]
+  sharedMetaphors: string[]
+  sourceGlossaryId: string
+  targetGlossaryId: string
 }
 
 /**

@@ -1,0 +1,333 @@
+.gd-page {
+  padding: var(--space-8);
+}
+
+.gd-nav {
+  margin-bottom: var(--space-4);
+}
+
+.gd-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: color var(--duration-fast);
+}
+
+.gd-back-link:hover {
+  color: var(--color-fg);
+}
+
+.gd-back-link::before {
+  content: '\2190';
+}
+
+/* Status badges */
+.gd-status {
+  display: inline-flex;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gd-status--pending,
+.gd-status--extracting {
+  background: oklch(50% 0.15 220 / 0.15);
+  color: oklch(60% 0.15 220);
+}
+
+.gd-status--complete {
+  background: oklch(55% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+}
+
+.gd-status--failed,
+.gd-status--unglossable {
+  background: oklch(55% 0.22 25 / 0.15);
+  color: oklch(55% 0.22 25);
+}
+
+/* Meta info */
+.gd-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+}
+
+.gd-meta-item {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+/* Empty states */
+.gd-empty-state,
+.gd-unglossable,
+.gd-pending {
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-6);
+}
+
+.gd-empty-state h3,
+.gd-unglossable h3 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-lg);
+}
+
+.gd-empty-state p,
+.gd-unglossable p {
+  color: var(--color-fg-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.gd-empty-state code {
+  display: block;
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Sections */
+.gd-section {
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.gd-section-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gd-section-content {
+  /* Contains the section content */
+}
+
+/* Subsections */
+.gd-subsection {
+  margin-bottom: var(--space-4);
+}
+
+.gd-subsection:last-child {
+  margin-bottom: 0;
+}
+
+.gd-subsection h4 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.gd-subsection--full {
+  grid-column: 1 / -1;
+}
+
+/* Grids */
+.gd-philosophy-grid,
+.gd-psychology-grid,
+.gd-resentments-grid,
+.gd-poetics-grid,
+.gd-empirics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+/* Tags */
+.gd-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gd-tag {
+  display: inline-flex;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-bg-subtle);
+}
+
+.gd-tag--positive {
+  background: oklch(55% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+}
+
+.gd-tag--negative {
+  background: oklch(55% 0.22 25 / 0.15);
+  color: oklch(55% 0.22 25);
+}
+
+.gd-tag--sacred {
+  background: oklch(60% 0.2 280 / 0.15);
+  color: oklch(60% 0.2 280);
+}
+
+.gd-tag--profane {
+  background: oklch(55% 0.18 45 / 0.15);
+  color: oklch(55% 0.18 45);
+}
+
+/* Lists */
+.gd-list {
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.gd-list li {
+  margin-bottom: var(--space-1);
+}
+
+/* Text blocks */
+.gd-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.gd-empty {
+  color: var(--color-fg-muted);
+  font-style: italic;
+  font-size: var(--text-sm);
+}
+
+/* Terms grid */
+.gd-terms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.gd-term-card {
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-border);
+}
+
+.gd-term-card--positive {
+  border-left-color: oklch(55% 0.15 145);
+}
+
+.gd-term-card--negative {
+  border-left-color: oklch(55% 0.22 25);
+}
+
+.gd-term-card--sacred {
+  border-left-color: oklch(60% 0.2 280);
+}
+
+.gd-term-card--profane {
+  border-left-color: oklch(55% 0.18 45);
+}
+
+.gd-term-card--neutral {
+  border-left-color: var(--color-fg-muted);
+}
+
+.gd-term-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.gd-term-name {
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+.gd-term-valence {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+}
+
+.gd-term-valence--positive {
+  background: oklch(55% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+}
+
+.gd-term-valence--negative {
+  background: oklch(55% 0.22 25 / 0.15);
+  color: oklch(55% 0.22 25);
+}
+
+.gd-term-valence--sacred {
+  background: oklch(60% 0.2 280 / 0.15);
+  color: oklch(60% 0.2 280);
+}
+
+.gd-term-valence--profane {
+  background: oklch(55% 0.18 45 / 0.15);
+  color: oklch(55% 0.18 45);
+}
+
+.gd-term-valence--neutral {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
+}
+
+.gd-term-definition {
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-2);
+}
+
+.gd-term-context {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Future Vision */
+.gd-future-section {
+  background: linear-gradient(
+    135deg,
+    oklch(60% 0.2 280 / 0.05) 0%,
+    oklch(55% 0.15 145 / 0.05) 100%
+  );
+  border-color: oklch(60% 0.2 280 / 0.3);
+}
+
+.gd-future-vision {
+  font-size: var(--text-base);
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--color-fg);
+}
+
+.gd-future-vision p {
+  margin: 0;
+}
+
+/* Resentments section styling */
+.gd-resentments-section {
+  border-color: oklch(55% 0.22 25 / 0.2);
+}
+
+.gd-resentments-section .gd-section-title {
+  color: oklch(55% 0.22 25);
+}
