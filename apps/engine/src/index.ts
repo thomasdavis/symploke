@@ -14,10 +14,15 @@ const PORT = process.env.PORT || 3001
 let isHealthy = true
 let healthError: string | null = null
 
-// Track running weave discovery jobs
+// Whether to use Redis/BullMQ or fallback to in-memory polling
+const USE_REDIS_QUEUE = Boolean(
+  process.env.REDIS_URL || process.env.REDISHOST || process.env.REDIS_PASSWORD,
+)
+
+// Track running weave discovery jobs (only used in non-Redis mode)
 const runningWeaveJobs = new Map<string, { startedAt: Date; runId: string }>()
 
-// Track running daily sync jobs
+// Track running daily sync jobs (only used in non-Redis mode)
 const runningSyncJobs = new Map<string, { startedAt: Date; reposQueued: number }>()
 
 console.log('Starting engine, PORT:', PORT)
@@ -47,26 +52,10 @@ const healthServer = http.createServer(async (req, res) => {
       return
     }
 
-    // Check if a weave run is already in progress for this plexus
-    if (runningWeaveJobs.has(plexusId)) {
-      const running = runningWeaveJobs.get(plexusId)!
-      res.writeHead(409, { 'Content-Type': 'application/json' })
-      res.end(
-        JSON.stringify({
-          error: 'Weave discovery already in progress',
-          runId: running.runId,
-          startedAt: running.startedAt.toISOString(),
-        }),
-      )
-      return
-    }
-
     try {
-      // Dynamically import to avoid issues during startup
-      const { findWeaves } = await import('./weave/finder.js')
       const { db } = await import('@symploke/db')
 
-      // Also check database for any RUNNING status (in case of restart)
+      // Check database for any RUNNING status
       const existingRun = await db.weaveDiscoveryRun.findFirst({
         where: {
           plexusId,
@@ -86,7 +75,39 @@ const healthServer = http.createServer(async (req, res) => {
         return
       }
 
-      // Start the job in the background
+      // Use Redis queue if available
+      if (USE_REDIS_QUEUE) {
+        const { addWeaveJob } = await import('./queue/redis.js')
+        const job = await addWeaveJob(plexusId, 'manual')
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'queued',
+            message: 'Weave discovery job queued',
+            plexusId,
+            jobId: job.id,
+          }),
+        )
+        return
+      }
+
+      // Fallback: Check in-memory tracking
+      if (runningWeaveJobs.has(plexusId)) {
+        const running = runningWeaveJobs.get(plexusId)!
+        res.writeHead(409, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            error: 'Weave discovery already in progress',
+            runId: running.runId,
+            startedAt: running.startedAt.toISOString(),
+          }),
+        )
+        return
+      }
+
+      // Start the job in the background (non-Redis mode)
+      const { findWeaves } = await import('./weave/finder.js')
       const startedAt = new Date()
 
       // Create a placeholder to track the job (will be updated with actual runId)
@@ -139,20 +160,6 @@ const healthServer = http.createServer(async (req, res) => {
       return
     }
 
-    // Check if a sync is already in progress for this plexus
-    if (runningSyncJobs.has(plexusId)) {
-      const running = runningSyncJobs.get(plexusId)!
-      res.writeHead(409, { 'Content-Type': 'application/json' })
-      res.end(
-        JSON.stringify({
-          error: 'Sync already in progress for this plexus',
-          startedAt: running.startedAt.toISOString(),
-          reposQueued: running.reposQueued,
-        }),
-      )
-      return
-    }
-
     try {
       const { db, SyncJobStatus } = await import('@symploke/db')
 
@@ -184,8 +191,6 @@ const healthServer = http.createServer(async (req, res) => {
       })
 
       const reposWithExistingJobs = new Set(existingJobs.map((j) => j.repoId))
-
-      // Create sync jobs for repos that don't already have one pending
       const reposToSync = repos.filter((r) => !reposWithExistingJobs.has(r.id))
 
       if (reposToSync.length === 0) {
@@ -200,7 +205,44 @@ const healthServer = http.createServer(async (req, res) => {
         return
       }
 
-      // Create sync jobs for all repos
+      // Use Redis queue if available
+      if (USE_REDIS_QUEUE) {
+        const { addSyncJob } = await import('./queue/redis.js')
+
+        // Add jobs to Redis queue
+        const jobPromises = reposToSync.map((repo) => addSyncJob(repo.id, 'manual'))
+        const jobs = await Promise.all(jobPromises)
+
+        console.log(`Queued sync for ${jobs.length} repos in plexus ${plexusId} via Redis`)
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'queued',
+            message: `Sync jobs queued for ${jobs.length} repos`,
+            reposQueued: jobs.length,
+            reposSkipped: reposWithExistingJobs.size,
+            jobIds: jobs.map((j) => j.id),
+          }),
+        )
+        return
+      }
+
+      // Fallback: Check in-memory tracking
+      if (runningSyncJobs.has(plexusId)) {
+        const running = runningSyncJobs.get(plexusId)!
+        res.writeHead(409, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            error: 'Sync already in progress for this plexus',
+            startedAt: running.startedAt.toISOString(),
+            reposQueued: running.reposQueued,
+          }),
+        )
+        return
+      }
+
+      // Create sync jobs in database for polling processor
       const createdJobs = await db.repoSyncJob.createManyAndReturn({
         data: reposToSync.map((repo) => ({
           repoId: repo.id,
@@ -484,11 +526,11 @@ async function runHourlySync() {
 async function main() {
   // Now import modules that depend on config
   const { logger } = await import('@symploke/logger')
-  const { getQueueProcessor } = await import('./queue/processor.js')
   const { getPusherService } = await import('./pusher/service.js')
   const { recoverStuckJobs } = await import('./queue/recovery.js')
 
   logger.info('Starting Symploke File Sync Engine...')
+  logger.info({ useRedisQueue: USE_REDIS_QUEUE }, 'Queue mode')
 
   // Recover any jobs that were interrupted by the last restart
   try {
@@ -506,29 +548,57 @@ async function main() {
     logger.info('Pusher service configured for real-time updates')
   }
 
-  // Start the queue processor
-  const processor = getQueueProcessor()
+  if (USE_REDIS_QUEUE) {
+    // Use BullMQ with Redis
+    const { startWorkers, stopWorkers } = await import('./queue/workers.js')
+    const { scheduleHourlySync, closeQueues } = await import('./queue/redis.js')
 
-  // Start hourly sync scheduler
-  const HOUR_MS = 60 * 60 * 1000
-  setInterval(runHourlySync, HOUR_MS)
-  logger.info('Hourly sync scheduler started (runs every hour)')
+    // Start BullMQ workers
+    await startWorkers()
 
-  // Run initial sync after a short delay to let the system stabilize
-  setTimeout(runHourlySync, 30 * 1000) // 30 seconds after startup
+    // Schedule hourly sync as a repeatable BullMQ job
+    await scheduleHourlySync()
 
-  // Handle shutdown signals
-  const shutdown = async () => {
-    logger.info('Received shutdown signal, stopping...')
-    await processor.stop()
-    process.exit(0)
+    // Handle shutdown signals
+    const shutdown = async () => {
+      logger.info('Received shutdown signal, stopping BullMQ workers...')
+      await stopWorkers()
+      await closeQueues()
+      process.exit(0)
+    }
+
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
+
+    logger.info('Engine running with Redis/BullMQ queue...')
+  } else {
+    // Fallback to polling-based processor
+    const { getQueueProcessor } = await import('./queue/processor.js')
+
+    // Start the polling queue processor
+    const processor = getQueueProcessor()
+
+    // Start hourly sync scheduler with setInterval
+    const HOUR_MS = 60 * 60 * 1000
+    setInterval(runHourlySync, HOUR_MS)
+    logger.info('Hourly sync scheduler started (runs every hour)')
+
+    // Run initial sync after a short delay to let the system stabilize
+    setTimeout(runHourlySync, 30 * 1000) // 30 seconds after startup
+
+    // Handle shutdown signals
+    const shutdown = async () => {
+      logger.info('Received shutdown signal, stopping...')
+      await processor.stop()
+      process.exit(0)
+    }
+
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
+
+    await processor.start()
+    logger.info('Engine running with polling-based queue...')
   }
-
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
-
-  await processor.start()
-  logger.info('Engine running, processing sync jobs...')
 
   // Keep the process alive
   await new Promise(() => {})
