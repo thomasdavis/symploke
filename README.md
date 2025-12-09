@@ -4,6 +4,57 @@ AI-powered tool that finds connections between team projects.
 
 > *συμπλοκή (symplokē)* — Greek for "interweaving, entanglement"
 
+## How It Works
+
+Symploke automatically keeps your repositories in sync and discovers connections (Weaves) between them.
+
+### Automatic Sync Pipeline
+
+```
+Add Repo → File Sync → Chunking → Embeddings → Weave Discovery
+```
+
+**1. Repository Added**
+- When you add a repo to a Plexus, a sync job is automatically created
+- The engine fetches the file tree from GitHub and downloads all text files
+- Binary files and common non-code directories (node_modules, .git, etc.) are skipped
+
+**2. Hourly Incremental Sync**
+- Every hour, all repos are checked for changes
+- Only new or modified files are fetched (compared by SHA)
+- Deleted files are removed from the database
+- No action needed - this happens automatically in the background
+
+**3. Automatic Embedding**
+- After each sync completes, the system checks if files need embedding
+- New/modified files are split into semantic chunks
+- Each chunk gets a vector embedding via OpenAI
+- Embeddings enable semantic search and Weave discovery
+
+**4. Weave Discovery**
+- Can be triggered manually via the Dashboard or Weaves page
+- Compares all repo pairs using vector similarity
+- AI analyzes high-scoring matches to identify integration opportunities
+- Discovered Weaves show shared concepts, APIs, and collaboration potential
+
+### What to Expect
+
+| Event | What Happens | Notification |
+|-------|--------------|--------------|
+| Add a repo | Sync starts immediately | Discord notification when complete |
+| Hourly sync (no changes) | Files checked, all skipped | No notification (silent) |
+| Hourly sync (changes found) | Only changed files synced + embedded | Discord notification |
+| Sync failure | Job marked failed | Discord notification with error |
+| Run Weave Discovery | All repo pairs analyzed | Discord notification with results |
+
+### Discord Notifications
+
+Notifications are sent only when something meaningful happens:
+- New files synced (not when all files unchanged)
+- New embeddings generated
+- New Weaves discovered
+- Errors or failures
+
 ## Tech Stack
 
 - **Monorepo**: Turborepo + pnpm + Changesets
@@ -52,7 +103,8 @@ pnpm dev
 ```
 symploke/
 ├── apps/
-│   └── web/              # Next.js application
+│   ├── web/              # Next.js application (Vercel)
+│   └── engine/           # Background sync engine (Railway)
 ├── packages/
 │   ├── ai/               # AI SDK integration
 │   ├── config/           # Shared Biome config
@@ -70,6 +122,16 @@ symploke/
 │   └── utils/            # Utility functions
 └── turbo.json
 ```
+
+### Engine Service
+
+The engine (`apps/engine`) runs as a separate service that handles:
+- File sync queue processing
+- Chunking and embedding generation
+- Hourly sync scheduling
+- Discord notifications
+
+It exposes HTTP endpoints for triggering syncs and checking status.
 
 ## Scripts
 
