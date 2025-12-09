@@ -5,6 +5,7 @@ import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Select } from '@symploke/ui/Select/Select'
 import { RepoFlowGraph } from './RepoFlowGraph'
+import { RunWeavesButton } from '@/components/RunWeavesButton'
 import './dashboard.css'
 
 type Repo = {
@@ -90,83 +91,41 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
           title="Dashboard"
           subtitle={`${repos.length} repositories · ${filteredWeaves.length} weaves`}
         />
-        <div className="dashboard-run-selector">
-          <Select.Root
-            value={selectedRunId}
-            onValueChange={(val) => setSelectedRunId(typeof val === 'string' ? val : 'latest')}
-          >
-            <Select.Trigger className="run-selector-trigger">
-              <Select.Value>
-                {selectedRunId === 'latest'
-                  ? `Latest${selectedRun ? ` (${formatRunDate(selectedRun.startedAt)})` : ''}`
-                  : selectedRunId === 'all'
-                    ? 'All runs'
-                    : selectedRun
-                      ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
-                      : 'Select run'}
-              </Select.Value>
-              <Select.Icon>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path
-                    d="M3 4.5L6 7.5L9 4.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Select.Icon>
-            </Select.Trigger>
-            <Select.Portal>
-              <Select.Positioner>
-                <Select.Popup>
-                  <Select.List>
-                    <Select.Item value="latest">
-                      <Select.ItemText>Latest run</Select.ItemText>
-                      <Select.ItemIndicator>
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M2.5 6L5 8.5L9.5 3.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item value="all">
-                      <Select.ItemText>All runs</Select.ItemText>
-                      <Select.ItemIndicator>
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M2.5 6L5 8.5L9.5 3.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    {discoveryRuns.length > 0 && <Select.Separator />}
-                    {discoveryRuns.map((run) => (
-                      <Select.Item key={run.id} value={run.id}>
-                        <Select.ItemText>
-                          {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
-                        </Select.ItemText>
+        <div className="dashboard-header__actions">
+          <RunWeavesButton plexusId={plexusId} variant="secondary" size="sm" />
+          <div className="dashboard-run-selector">
+            <Select.Root
+              value={selectedRunId}
+              onValueChange={(val) => setSelectedRunId(typeof val === 'string' ? val : 'latest')}
+            >
+              <Select.Trigger className="run-selector-trigger">
+                <Select.Value>
+                  {selectedRunId === 'latest'
+                    ? `Latest${selectedRun ? ` (${formatRunDate(selectedRun.startedAt)})` : ''}`
+                    : selectedRunId === 'all'
+                      ? 'All runs'
+                      : selectedRun
+                        ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
+                        : 'Select run'}
+                </Select.Value>
+                <Select.Icon>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 4.5L6 7.5L9 4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Positioner>
+                  <Select.Popup>
+                    <Select.List>
+                      <Select.Item value="latest">
+                        <Select.ItemText>Latest run</Select.ItemText>
                         <Select.ItemIndicator>
                           <svg
                             width="12"
@@ -185,12 +144,57 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                           </svg>
                         </Select.ItemIndicator>
                       </Select.Item>
-                    ))}
-                  </Select.List>
-                </Select.Popup>
-              </Select.Positioner>
-            </Select.Portal>
-          </Select.Root>
+                      <Select.Item value="all">
+                        <Select.ItemText>All runs</Select.ItemText>
+                        <Select.ItemIndicator>
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M2.5 6L5 8.5L9.5 3.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                      {discoveryRuns.length > 0 && <Select.Separator />}
+                      {discoveryRuns.map((run) => (
+                        <Select.Item key={run.id} value={run.id}>
+                          <Select.ItemText>
+                            {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
+                          </Select.ItemText>
+                          <Select.ItemIndicator>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M2.5 6L5 8.5L9.5 3.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      ))}
+                    </Select.List>
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            </Select.Root>
+          </div>
         </div>
       </div>
 

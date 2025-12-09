@@ -18,6 +18,13 @@
   margin-bottom: 0;
 }
 
+.dashboard-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
 .dashboard-run-selector {
   flex-shrink: 0;
 }

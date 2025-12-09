@@ -14,10 +14,15 @@ const PORT = process.env.PORT || 3001
 let isHealthy = true
 let healthError: string | null = null
 
+// Track running weave discovery jobs
+const runningWeaveJobs = new Map<string, { startedAt: Date; runId: string }>()
+
 console.log('Starting engine, PORT:', PORT)
 
-const healthServer = http.createServer((req, res) => {
-  console.log('Health check request:', req.url)
+const healthServer = http.createServer(async (req, res) => {
+  console.log('Request:', req.method, req.url)
+
+  // Health check endpoints
   if (req.url === '/health' || req.url === '/') {
     if (isHealthy) {
       res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -26,10 +31,180 @@ const healthServer = http.createServer((req, res) => {
       res.writeHead(503, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ status: 'error', error: healthError }))
     }
-  } else {
-    res.writeHead(404)
-    res.end()
+    return
   }
+
+  // Trigger weave discovery endpoint
+  if (req.method === 'POST' && req.url?.startsWith('/trigger-weaves/')) {
+    const plexusId = req.url.replace('/trigger-weaves/', '')
+
+    if (!plexusId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Missing plexusId' }))
+      return
+    }
+
+    // Check if a weave run is already in progress for this plexus
+    if (runningWeaveJobs.has(plexusId)) {
+      const running = runningWeaveJobs.get(plexusId)!
+      res.writeHead(409, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: 'Weave discovery already in progress',
+          runId: running.runId,
+          startedAt: running.startedAt.toISOString(),
+        }),
+      )
+      return
+    }
+
+    try {
+      // Dynamically import to avoid issues during startup
+      const { findWeaves } = await import('./weave/finder.js')
+      const { db } = await import('@symploke/db')
+
+      // Also check database for any RUNNING status (in case of restart)
+      const existingRun = await db.weaveDiscoveryRun.findFirst({
+        where: {
+          plexusId,
+          status: 'RUNNING',
+        },
+      })
+
+      if (existingRun) {
+        res.writeHead(409, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            error: 'Weave discovery already in progress',
+            runId: existingRun.id,
+            startedAt: existingRun.startedAt.toISOString(),
+          }),
+        )
+        return
+      }
+
+      // Start the job in the background
+      const startedAt = new Date()
+
+      // Create a placeholder to track the job (will be updated with actual runId)
+      runningWeaveJobs.set(plexusId, { startedAt, runId: 'pending' })
+
+      // Run weave discovery in background
+      findWeaves(plexusId, { verbose: true })
+        .then((result) => {
+          console.log(`Weave discovery completed for plexus ${plexusId}:`, {
+            runId: result.runId,
+            saved: result.saved,
+            duration: `${(result.duration / 1000).toFixed(1)}s`,
+          })
+        })
+        .catch((error) => {
+          console.error(`Weave discovery failed for plexus ${plexusId}:`, error)
+        })
+        .finally(() => {
+          runningWeaveJobs.delete(plexusId)
+        })
+
+      res.writeHead(202, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          status: 'started',
+          message: 'Weave discovery started',
+          plexusId,
+        }),
+      )
+    } catch (error) {
+      console.error('Error triggering weave discovery:', error)
+      runningWeaveJobs.delete(plexusId)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+    }
+    return
+  }
+
+  // Check weave status endpoint
+  if (req.method === 'GET' && req.url?.startsWith('/weave-status/')) {
+    const plexusId = req.url.replace('/weave-status/', '')
+
+    try {
+      const { db } = await import('@symploke/db')
+
+      // Check for running job
+      const runningRun = await db.weaveDiscoveryRun.findFirst({
+        where: {
+          plexusId,
+          status: 'RUNNING',
+        },
+        select: {
+          id: true,
+          startedAt: true,
+          repoPairsTotal: true,
+          repoPairsChecked: true,
+        },
+      })
+
+      if (runningRun) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'running',
+            runId: runningRun.id,
+            startedAt: runningRun.startedAt.toISOString(),
+            progress: {
+              total: runningRun.repoPairsTotal,
+              checked: runningRun.repoPairsChecked,
+            },
+          }),
+        )
+        return
+      }
+
+      // Get latest completed run
+      const latestRun = await db.weaveDiscoveryRun.findFirst({
+        where: { plexusId },
+        orderBy: { startedAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          weavesSaved: true,
+        },
+      })
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          status: 'idle',
+          latestRun: latestRun
+            ? {
+                id: latestRun.id,
+                status: latestRun.status,
+                startedAt: latestRun.startedAt.toISOString(),
+                completedAt: latestRun.completedAt?.toISOString(),
+                weavesSaved: latestRun.weavesSaved,
+              }
+            : null,
+        }),
+      )
+    } catch (error) {
+      console.error('Error checking weave status:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+    }
+    return
+  }
+
+  res.writeHead(404)
+  res.end()
 })
 
 // Start listening immediately

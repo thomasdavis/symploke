@@ -1,0 +1,36 @@
+.run-weaves-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.run-weaves-button .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.run-weaves-button--running {
+  pointer-events: none;
+}
+
+.run-weaves-button__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: run-weaves-spin 0.8s linear infinite;
+}
+
+.run-weaves-button__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+}
+
+@keyframes run-weaves-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

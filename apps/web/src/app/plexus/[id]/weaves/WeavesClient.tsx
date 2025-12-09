@@ -8,6 +8,7 @@ import { Select } from '@symploke/ui/Select/Select'
 import { Table } from '@symploke/ui/Table/Table'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
+import { RunWeavesButton } from '@/components/RunWeavesButton'
 import './weaves.css'
 
 // Glossary data from database
@@ -598,6 +599,7 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
           subtitle={`${filteredWeaves.length} connection${filteredWeaves.length !== 1 ? 's' : ''} discovered`}
         />
         <div className="weaves-filters">
+          <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
           <div className="weaves-score-filter">
             <label htmlFor="min-score">Min Score: {Math.round(minScore * 100)}%</label>
             <input
