@@ -368,6 +368,232 @@ const healthServer = http.createServer(async (req, res) => {
     return
   }
 
+  // Comprehensive stats endpoint
+  if (req.method === 'GET' && req.url === '/stats') {
+    try {
+      const { db } = await import('@symploke/db')
+
+      // Get all plexuses
+      const plexuses = await db.plexus.findMany({
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              repos: true,
+              members: true,
+            },
+          },
+        },
+      })
+
+      // Get repo stats
+      const totalRepos = await db.repo.count()
+      const indexedRepos = await db.repo.count({
+        where: { lastIndexed: { not: null } },
+      })
+
+      // Get file stats
+      const totalFiles = await db.file.count()
+      const filesWithContent = await db.file.count({
+        where: { content: { not: null } },
+      })
+      const fileSizeStats = await db.file.aggregate({
+        _sum: { size: true },
+        _avg: { size: true },
+      })
+
+      // Get chunk stats
+      const chunkStats = await db.chunk.aggregate({
+        _count: true,
+        _sum: { tokenCount: true },
+        _avg: { tokenCount: true },
+      })
+      // Count embedded chunks by checking embeddedAt timestamp
+      const embeddedChunks = await db.chunk.count({
+        where: { embeddedAt: { not: null } },
+      })
+
+      // Get weave stats
+      const totalWeaves = await db.weave.count()
+      const weavesByType = await db.weave.groupBy({
+        by: ['type'],
+        _count: true,
+      })
+
+      // Get weave discovery runs
+      const runningWeaveRuns = await db.weaveDiscoveryRun.count({
+        where: { status: 'RUNNING' },
+      })
+      const completedWeaveRuns = await db.weaveDiscoveryRun.count({
+        where: { status: 'COMPLETED' },
+      })
+      const failedWeaveRuns = await db.weaveDiscoveryRun.count({
+        where: { status: 'FAILED' },
+      })
+      const latestWeaveRun = await db.weaveDiscoveryRun.findFirst({
+        orderBy: { startedAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          weavesSaved: true,
+          repoPairsTotal: true,
+          repoPairsChecked: true,
+          plexus: { select: { name: true } },
+        },
+      })
+
+      // Get sync job stats
+      const syncJobsByStatus = await db.repoSyncJob.groupBy({
+        by: ['status'],
+        _count: true,
+      })
+      const recentSyncJobs = await db.repoSyncJob.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          processedFiles: true,
+          totalFiles: true,
+          createdAt: true,
+          completedAt: true,
+          error: true,
+          repo: { select: { fullName: true } },
+        },
+      })
+
+      // Get Redis/BullMQ queue stats if available
+      let queueStats = null
+      if (USE_REDIS_QUEUE) {
+        try {
+          const { getSyncQueue, getEmbedQueue, getWeaveQueue } = await import('./queue/redis.js')
+          const syncQueue = getSyncQueue()
+          const embedQueue = getEmbedQueue()
+          const weaveQueue = getWeaveQueue()
+
+          const [syncCounts, embedCounts, weaveCounts] = await Promise.all([
+            syncQueue.getJobCounts(),
+            embedQueue.getJobCounts(),
+            weaveQueue.getJobCounts(),
+          ])
+
+          queueStats = {
+            sync: syncCounts,
+            embed: embedCounts,
+            weave: weaveCounts,
+          }
+        } catch {
+          queueStats = { error: 'Failed to get queue stats' }
+        }
+      }
+
+      // System info
+      const uptime = process.uptime()
+      const memUsage = process.memoryUsage()
+
+      const stats = {
+        system: {
+          uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+          uptimeSeconds: Math.floor(uptime),
+          memory: {
+            heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+            heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+            rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+          },
+          nodeVersion: process.version,
+          useRedisQueue: USE_REDIS_QUEUE,
+        },
+        plexuses: plexuses.map((p) => ({
+          id: p.id,
+          name: p.name,
+          repos: p._count.repos,
+          members: p._count.members,
+        })),
+        repos: {
+          total: totalRepos,
+          indexed: indexedRepos,
+          notIndexed: totalRepos - indexedRepos,
+        },
+        files: {
+          total: totalFiles,
+          withContent: filesWithContent,
+          totalSizeBytes: fileSizeStats._sum.size ?? 0,
+          totalSizeMB: Math.round((fileSizeStats._sum.size ?? 0) / 1024 / 1024),
+          avgSizeBytes: Math.round(fileSizeStats._avg.size ?? 0),
+        },
+        chunks: {
+          total: chunkStats._count,
+          embedded: embeddedChunks,
+          notEmbedded: chunkStats._count - embeddedChunks,
+          totalTokens: chunkStats._sum.tokenCount ?? 0,
+          avgTokensPerChunk: Math.round(chunkStats._avg.tokenCount ?? 0),
+        },
+        weaves: {
+          total: totalWeaves,
+          byType: Object.fromEntries(weavesByType.map((w) => [w.type, w._count])),
+        },
+        weaveDiscovery: {
+          running: runningWeaveRuns,
+          completed: completedWeaveRuns,
+          failed: failedWeaveRuns,
+          latestRun: latestWeaveRun
+            ? {
+                id: latestWeaveRun.id,
+                plexus: latestWeaveRun.plexus.name,
+                status: latestWeaveRun.status,
+                startedAt: latestWeaveRun.startedAt.toISOString(),
+                completedAt: latestWeaveRun.completedAt?.toISOString() ?? null,
+                weavesSaved: latestWeaveRun.weavesSaved,
+                progress:
+                  latestWeaveRun.repoPairsTotal && latestWeaveRun.repoPairsTotal > 0
+                    ? {
+                        checked: latestWeaveRun.repoPairsChecked,
+                        total: latestWeaveRun.repoPairsTotal,
+                        percent: Math.round(
+                          ((latestWeaveRun.repoPairsChecked ?? 0) / latestWeaveRun.repoPairsTotal) *
+                            100,
+                        ),
+                      }
+                    : null,
+              }
+            : null,
+        },
+        syncJobs: {
+          byStatus: Object.fromEntries(syncJobsByStatus.map((s) => [s.status, s._count])),
+          recent: recentSyncJobs.map((j) => ({
+            id: j.id,
+            repo: j.repo.fullName,
+            status: j.status,
+            progress:
+              j.totalFiles && j.totalFiles > 0
+                ? `${j.processedFiles ?? 0}/${j.totalFiles} (${Math.round(((j.processedFiles ?? 0) / j.totalFiles) * 100)}%)`
+                : null,
+            createdAt: j.createdAt.toISOString(),
+            completedAt: j.completedAt?.toISOString() ?? null,
+            error: j.error,
+          })),
+        },
+        queues: queueStats,
+        timestamp: new Date().toISOString(),
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(stats, null, 2))
+    } catch (error) {
+      console.error('Error getting stats:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+    }
+    return
+  }
+
   // Check weave status endpoint
   if (req.method === 'GET' && req.url?.startsWith('/weave-status/')) {
     const plexusId = req.url.replace('/weave-status/', '')
