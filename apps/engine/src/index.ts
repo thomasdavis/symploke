@@ -563,18 +563,32 @@ const healthServer = http.createServer(async (req, res) => {
         },
         syncJobs: {
           byStatus: Object.fromEntries(syncJobsByStatus.map((s) => [s.status, s._count])),
-          recent: recentSyncJobs.map((j) => ({
-            id: j.id,
-            repo: j.repo.fullName,
-            status: j.status,
-            progress:
-              j.totalFiles && j.totalFiles > 0
-                ? `${j.processedFiles ?? 0}/${j.totalFiles} (${Math.round(((j.processedFiles ?? 0) / j.totalFiles) * 100)}%)`
-                : null,
-            createdAt: j.createdAt.toISOString(),
-            completedAt: j.completedAt?.toISOString() ?? null,
-            error: j.error,
-          })),
+          recent: recentSyncJobs.map((j) => {
+            const durationMs =
+              j.completedAt && j.createdAt ? j.completedAt.getTime() - j.createdAt.getTime() : null
+            const durationStr = durationMs
+              ? durationMs < 60000
+                ? `${Math.round(durationMs / 1000)}s`
+                : `${Math.round(durationMs / 60000)}m ${Math.round((durationMs % 60000) / 1000)}s`
+              : null
+            return {
+              id: j.id,
+              repo: j.repo.fullName,
+              status: j.status,
+              progress:
+                j.totalFiles && j.totalFiles > 0
+                  ? {
+                      processed: j.processedFiles ?? 0,
+                      total: j.totalFiles,
+                      percent: Math.round(((j.processedFiles ?? 0) / j.totalFiles) * 100),
+                    }
+                  : null,
+              duration: durationStr,
+              createdAt: j.createdAt.toISOString(),
+              completedAt: j.completedAt?.toISOString() ?? null,
+              error: j.error,
+            }
+          }),
         },
         queues: queueStats,
         timestamp: new Date().toISOString(),
