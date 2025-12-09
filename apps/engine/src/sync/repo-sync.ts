@@ -8,7 +8,12 @@ import {
 } from '@symploke/db'
 import { logger } from '@symploke/logger'
 import { getInstallationOctokit } from '../github/client.js'
-import { fetchRepoTree, getDefaultBranch } from './tree-fetcher.js'
+import {
+  fetchRepoTree,
+  getDefaultBranch,
+  compareCommits,
+  type CompareResult,
+} from './tree-fetcher.js'
 import { syncFile, deleteRemovedFiles } from './file-sync.js'
 import { checkFile } from '../utils/file-utils.js'
 import type { PusherService } from '../pusher/service.js'
@@ -136,52 +141,156 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     emitLog('warn', `Could not detect default branch, using: ${branch}`)
   }
 
-  // Fetch repo tree
-  emitLog('info', 'Fetching repository file tree...')
-  let tree: Awaited<ReturnType<typeof fetchRepoTree>>
-  try {
-    tree = await fetchRepoTree(octokit, repo.fullName, branch, installationId)
-  } catch (error) {
-    // Check if this is an empty repo (no branches)
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    if (errorMessage.includes('Branch not found') || errorMessage.includes('Not Found')) {
-      emitLog('warn', 'Repository appears to be empty (no branches/commits)')
-      // Mark job as completed with 0 files
-      await db.repoSyncJob.update({
-        where: { id: job.id },
-        data: {
+  // Try incremental sync first if we have a previous commit SHA
+  let compareResult: CompareResult | null = null
+  let isIncrementalSync = false
+  let headCommitSha: string | null = null
+
+  if (repo.lastCommitSha) {
+    emitLog('info', `Checking for changes since last sync (${repo.lastCommitSha.slice(0, 7)})...`)
+    compareResult = await compareCommits(
+      octokit,
+      repo.fullName,
+      repo.lastCommitSha,
+      branch,
+      installationId,
+    )
+
+    if (compareResult) {
+      headCommitSha = compareResult.headCommitSha
+
+      // If no changes, complete immediately
+      if (compareResult.totalChanges === 0) {
+        emitLog('success', 'No changes detected since last sync')
+        await db.repoSyncJob.update({
+          where: { id: job.id },
+          data: {
+            status: SyncJobStatus.COMPLETED,
+            totalFiles: 0,
+            processedFiles: 0,
+            skippedFiles: 0,
+            completedAt: new Date(),
+          },
+        })
+        pusher?.emitSyncCompleted(repo.plexusId, {
+          jobId: job.id,
+          repoId: repo.id,
           status: SyncJobStatus.COMPLETED,
-          totalFiles: 0,
           processedFiles: 0,
-          completedAt: new Date(),
+          totalFiles: 0,
+          skippedFiles: 0,
+          failedFiles: 0,
+        })
+        return
+      }
+
+      isIncrementalSync = true
+      emitLog(
+        'info',
+        `Incremental sync: ${compareResult.added.length} added, ${compareResult.modified.length} modified, ${compareResult.removed.length} removed`,
+      )
+    }
+  }
+
+  // Fall back to full tree fetch if no previous commit or compare failed
+  let entries: { path: string; sha: string; size: number }[]
+
+  if (isIncrementalSync && compareResult) {
+    // Use only changed files from compare result
+    entries = [...compareResult.added, ...compareResult.modified]
+
+    // Handle removed files immediately
+    if (compareResult.removed.length > 0) {
+      emitLog('info', `Removing ${compareResult.removed.length} deleted files...`)
+      await db.file.deleteMany({
+        where: {
+          repoId: repo.id,
+          path: { in: compareResult.removed },
         },
       })
-      pusher?.emitSyncCompleted(repo.plexusId, {
-        jobId: job.id,
-        repoId: repo.id,
-        status: SyncJobStatus.COMPLETED,
-        processedFiles: 0,
-        totalFiles: 0,
-        skippedFiles: 0,
-        failedFiles: 0,
-      })
-      emitLog('success', 'Sync completed (empty repository)')
-      return
+      emitLog('success', `Removed ${compareResult.removed.length} deleted files`)
     }
-    throw error
+  } else {
+    // Full tree fetch
+    emitLog('info', 'Fetching full repository file tree...')
+    let tree: Awaited<ReturnType<typeof fetchRepoTree>>
+    try {
+      tree = await fetchRepoTree(octokit, repo.fullName, branch, installationId)
+      headCommitSha = tree.commitSha
+    } catch (error) {
+      // Check if this is an empty repo (no branches)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (errorMessage.includes('Branch not found') || errorMessage.includes('Not Found')) {
+        emitLog('warn', 'Repository appears to be empty (no branches/commits)')
+        await db.repoSyncJob.update({
+          where: { id: job.id },
+          data: {
+            status: SyncJobStatus.COMPLETED,
+            totalFiles: 0,
+            processedFiles: 0,
+            completedAt: new Date(),
+          },
+        })
+        pusher?.emitSyncCompleted(repo.plexusId, {
+          jobId: job.id,
+          repoId: repo.id,
+          status: SyncJobStatus.COMPLETED,
+          processedFiles: 0,
+          totalFiles: 0,
+          skippedFiles: 0,
+          failedFiles: 0,
+        })
+        emitLog('success', 'Sync completed (empty repository)')
+        return
+      }
+      throw error
+    }
+    emitLog('info', `Found ${tree.entries.length} files in repository`)
+    entries = tree.entries
   }
-  emitLog('info', `Found ${tree.entries.length} files in repository`)
 
   // Apply maxFiles limit if specified
-  let entries = tree.entries
   if (config.maxFiles && entries.length > config.maxFiles) {
     logger.info({ total: entries.length, limit: config.maxFiles }, 'Limiting files to process')
     emitLog('info', `Limiting to ${config.maxFiles} files (${entries.length} total)`)
     entries = entries.slice(0, config.maxFiles)
   }
 
+  // If no entries to process after incremental sync
+  if (entries.length === 0) {
+    emitLog('success', 'No files to process')
+    // Update lastCommitSha even if no files to process
+    if (headCommitSha) {
+      await db.repo.update({
+        where: { id: repo.id },
+        data: { lastCommitSha: headCommitSha, lastIndexed: new Date() },
+      })
+    }
+    await db.repoSyncJob.update({
+      where: { id: job.id },
+      data: {
+        status: SyncJobStatus.COMPLETED,
+        totalFiles: 0,
+        processedFiles: 0,
+        skippedFiles: 0,
+        completedAt: new Date(),
+      },
+    })
+    pusher?.emitSyncCompleted(repo.plexusId, {
+      jobId: job.id,
+      repoId: repo.id,
+      status: SyncJobStatus.COMPLETED,
+      processedFiles: 0,
+      totalFiles: 0,
+      skippedFiles: 0,
+      failedFiles: 0,
+    })
+    return
+  }
+
   // Create file sync jobs
-  emitLog('info', `Creating ${entries.length} file sync jobs...`)
+  const syncType = isIncrementalSync ? 'incremental' : 'full'
+  emitLog('info', `Creating ${entries.length} file sync jobs (${syncType} sync)...`)
   const fileJobs = entries.map((entry) => ({
     syncJobId: job.id,
     repoId: repo.id,
@@ -345,17 +454,20 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     }
   }
 
-  // Delete files that no longer exist in the repo (incremental sync)
-  emitLog('info', 'Cleaning up removed files...')
-  const currentPaths = new Set(entries.map((e) => e.path))
-  await deleteRemovedFiles(repo.id, currentPaths)
+  // For full sync, delete files that no longer exist in the repo
+  // (Incremental sync handles deletions via compareResult.removed above)
+  if (!isIncrementalSync) {
+    emitLog('info', 'Cleaning up removed files...')
+    const currentPaths = new Set(entries.map((e) => e.path))
+    await deleteRemovedFiles(repo.id, currentPaths)
+  }
 
-  // Update repo lastIndexed
+  // Update repo lastIndexed and lastCommitSha
   await db.repo.update({
     where: { id: repo.id },
     data: {
       lastIndexed: new Date(),
-      lastCommitSha: tree.treeSha,
+      lastCommitSha: headCommitSha,
     },
   })
 
