@@ -229,7 +229,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    return NextResponse.json({ repository }, { status: 201 })
+    // Auto-trigger sync job for the new repository
+    const syncJob = await db.repoSyncJob.create({
+      data: {
+        repoId: repository.id,
+      },
+    })
+
+    return NextResponse.json({ repository, syncJobId: syncJob.id }, { status: 201 })
   } catch (error) {
     console.error('Error adding repository:', error)
     return NextResponse.json(
