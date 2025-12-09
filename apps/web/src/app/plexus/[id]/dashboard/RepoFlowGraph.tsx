@@ -346,6 +346,8 @@ function RepoFlowGraphInner({
   newWeaves,
 }: RepoFlowGraphProps) {
   const { fitView } = useReactFlow()
+  const [showEdges, setShowEdges] = useState(false)
+  const [edgesReady, setEdgesReady] = useState(false)
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
@@ -415,14 +417,38 @@ function RepoFlowGraphInner({
     setEdges(newEdges)
   }, [forceNodes, displayWeaves, plexusId, setEdges])
 
-  // Fit view when simulation settles
+  // Fit view when simulation settles and then show edges
   useEffect(() => {
     if (!isSimulating && alpha < 0.01) {
       setTimeout(() => {
         fitView({ padding: 0.15, duration: 400 })
       }, 100)
+      // Mark edges ready after simulation settles
+      if (!edgesReady) {
+        setEdgesReady(true)
+        // Small delay before showing edges for a cleaner reveal
+        setTimeout(() => {
+          setShowEdges(true)
+        }, 300)
+      }
     }
-  }, [isSimulating, alpha, fitView])
+  }, [isSimulating, alpha, fitView, edgesReady])
+
+  // Reset edge visibility when discovery starts
+  useEffect(() => {
+    if (isDiscoveryRunning) {
+      setShowEdges(false)
+      setEdgesReady(false)
+    }
+  }, [isDiscoveryRunning])
+
+  // During discovery, show edges immediately as they're found
+  useEffect(() => {
+    if (isDiscoveryRunning && newWeaves && newWeaves.length > 0) {
+      setShowEdges(true)
+      setEdgesReady(true)
+    }
+  }, [isDiscoveryRunning, newWeaves])
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -459,7 +485,7 @@ function RepoFlowGraphInner({
     <>
       <ReactFlow
         nodes={forceNodes}
-        edges={edges}
+        edges={showEdges ? edges : []}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onNodeDragStart={onNodeDragStart}

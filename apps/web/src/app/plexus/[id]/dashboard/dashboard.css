@@ -681,3 +681,48 @@
   animation: weaveAppear 0.6s ease-out forwards;
   stroke-dasharray: 100;
 }
+
+/* Edge fade-in animation when graph loads */
+@keyframes edgeFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.react-flow__edge {
+  animation: edgeFadeIn 0.4s ease-out forwards;
+}
+
+/* Edge label also fades in */
+.weave-edge__label {
+  animation: edgeFadeIn 0.4s ease-out forwards;
+}
+
+/* Stagger edge animations for a nicer reveal */
+.react-flow__edge:nth-child(1),
+.react-flow__edgelabel-renderer > div:nth-child(1) .weave-edge__label { animation-delay: 0ms; }
+.react-flow__edge:nth-child(2),
+.react-flow__edgelabel-renderer > div:nth-child(2) .weave-edge__label { animation-delay: 40ms; }
+.react-flow__edge:nth-child(3),
+.react-flow__edgelabel-renderer > div:nth-child(3) .weave-edge__label { animation-delay: 80ms; }
+.react-flow__edge:nth-child(4),
+.react-flow__edgelabel-renderer > div:nth-child(4) .weave-edge__label { animation-delay: 120ms; }
+.react-flow__edge:nth-child(5),
+.react-flow__edgelabel-renderer > div:nth-child(5) .weave-edge__label { animation-delay: 160ms; }
+.react-flow__edge:nth-child(6),
+.react-flow__edgelabel-renderer > div:nth-child(6) .weave-edge__label { animation-delay: 200ms; }
+.react-flow__edge:nth-child(7),
+.react-flow__edgelabel-renderer > div:nth-child(7) .weave-edge__label { animation-delay: 240ms; }
+.react-flow__edge:nth-child(8),
+.react-flow__edgelabel-renderer > div:nth-child(8) .weave-edge__label { animation-delay: 280ms; }
+.react-flow__edge:nth-child(9),
+.react-flow__edgelabel-renderer > div:nth-child(9) .weave-edge__label { animation-delay: 320ms; }
+.react-flow__edge:nth-child(10),
+.react-flow__edgelabel-renderer > div:nth-child(10) .weave-edge__label { animation-delay: 360ms; }
+.react-flow__edge:nth-child(n+11),
+.react-flow__edgelabel-renderer > div:nth-child(n+11) .weave-edge__label { animation-delay: 400ms; }
