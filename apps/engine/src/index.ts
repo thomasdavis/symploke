@@ -490,6 +490,18 @@ const healthServer = http.createServer(async (req, res) => {
         }
       }
 
+      // Get Pusher configuration status
+      const { config } = await import('./config.js')
+      const { getPusherService } = await import('./pusher/service.js')
+      const pusherService = getPusherService()
+      const pusherStatus = {
+        configured: pusherService.isConfigured(),
+        hasAppId: Boolean(config.PUSHER_APP_ID),
+        hasKey: Boolean(config.PUSHER_KEY),
+        hasSecret: Boolean(config.PUSHER_SECRET),
+        cluster: config.PUSHER_CLUSTER,
+      }
+
       // System info
       const uptime = process.uptime()
       const memUsage = process.memoryUsage()
@@ -591,6 +603,7 @@ const healthServer = http.createServer(async (req, res) => {
           }),
         },
         queues: queueStats,
+        pusher: pusherStatus,
         timestamp: new Date().toISOString(),
       }
 
