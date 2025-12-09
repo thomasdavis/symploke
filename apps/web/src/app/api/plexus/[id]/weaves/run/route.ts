@@ -164,6 +164,25 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     })
 
     if (runningRun) {
+      // Get weaves discovered so far in this run
+      const discoveredWeaves = await db.weave.findMany({
+        where: {
+          discoveryRunId: runningRun.id,
+        },
+        select: {
+          id: true,
+          sourceRepoId: true,
+          targetRepoId: true,
+          type: true,
+          title: true,
+          description: true,
+          score: true,
+          sourceRepo: { select: { name: true } },
+          targetRepo: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      })
+
       return NextResponse.json({
         status: 'running',
         runId: runningRun.id,
@@ -172,6 +191,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
           total: runningRun.repoPairsTotal,
           checked: runningRun.repoPairsChecked,
         },
+        discoveredWeaves,
       })
     }
 

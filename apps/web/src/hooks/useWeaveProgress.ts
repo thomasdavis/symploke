@@ -50,24 +50,44 @@ export function useWeaveProgress(plexusId: string) {
       const response = await fetch(`/api/plexus/${plexusId}/weaves/run`)
       if (response.ok) {
         const data = await response.json()
+        console.log('[useWeaveProgress] Poll response:', data)
         if (data.status === 'running') {
+          // Map discovered weaves from API response
+          const discoveredWeaves: WeaveDiscoveredWeave[] = (data.discoveredWeaves || []).map(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (w: any) => ({
+              id: w.id,
+              sourceRepoId: w.sourceRepoId,
+              targetRepoId: w.targetRepoId,
+              type: w.type,
+              title: w.title,
+              description: w.description,
+              score: w.score,
+              sourceRepo: w.sourceRepo,
+              targetRepo: w.targetRepo,
+            }),
+          )
+          console.log('[useWeaveProgress] Discovered weaves from poll:', discoveredWeaves.length)
           setState((prev) => ({
             ...prev,
             status: 'running',
             runId: data.runId || prev.runId,
             repoPairsTotal: data.progress?.total || prev.repoPairsTotal,
             repoPairsChecked: data.progress?.checked || prev.repoPairsChecked,
+            weavesFound: discoveredWeaves.length,
+            newWeaves: discoveredWeaves,
           }))
         } else if (data.status === 'idle' && state.status === 'running') {
           // Discovery just completed
+          console.log('[useWeaveProgress] Discovery completed')
           setState((prev) => ({
             ...prev,
             status: 'completed',
           }))
         }
       }
-    } catch {
-      // Ignore fetch errors
+    } catch (err) {
+      console.error('[useWeaveProgress] Poll error:', err)
     }
   }, [plexusId, state.status])
 
@@ -104,6 +124,7 @@ export function useWeaveProgress(plexusId: string) {
       channel = pusher.subscribe(channelName)
 
       channel.bind('pusher:subscription_succeeded', () => {
+        console.log('[useWeaveProgress] Pusher connected to channel:', channelName)
         setIsConnected(true)
       })
 
@@ -116,6 +137,7 @@ export function useWeaveProgress(plexusId: string) {
       channel.bind(
         'weave:started',
         (data: { runId: string; plexusId: string; repoPairsTotal: number }) => {
+          console.log('[useWeaveProgress] Pusher weave:started', data)
           setState({
             status: 'running',
             runId: data.runId,
@@ -137,6 +159,7 @@ export function useWeaveProgress(plexusId: string) {
           repoPairsTotal: number
           weavesFound: number
         }) => {
+          console.log('[useWeaveProgress] Pusher weave:progress', data)
           setState((prev) => ({
             ...prev,
             repoPairsChecked: data.repoPairsChecked,
@@ -147,6 +170,7 @@ export function useWeaveProgress(plexusId: string) {
       )
 
       channel.bind('weave:discovered', (data: { runId: string; weave: WeaveDiscoveredWeave }) => {
+        console.log('[useWeaveProgress] Pusher weave:discovered', data)
         setState((prev) => ({
           ...prev,
           weavesFound: prev.weavesFound + 1,
@@ -157,6 +181,7 @@ export function useWeaveProgress(plexusId: string) {
       channel.bind(
         'weave:completed',
         (data: { runId: string; weavesSaved: number; duration: string }) => {
+          console.log('[useWeaveProgress] Pusher weave:completed', data)
           setState((prev) => ({
             ...prev,
             status: 'completed',
@@ -166,6 +191,7 @@ export function useWeaveProgress(plexusId: string) {
       )
 
       channel.bind('weave:error', (data: { runId: string; error: string }) => {
+        console.log('[useWeaveProgress] Pusher weave:error', data)
         setState((prev) => ({
           ...prev,
           status: 'error',

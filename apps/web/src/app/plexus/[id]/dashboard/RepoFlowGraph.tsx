@@ -352,10 +352,20 @@ function RepoFlowGraphInner({
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
 
+  // Debug logging
+  console.log('[RepoFlowGraph] Props:', {
+    isDiscoveryRunning,
+    newWeavesLength: newWeaves?.length ?? 0,
+    weavesLength: weaves.length,
+    showEdges,
+    edgesReady,
+  })
+
   // Convert newWeaves to Weave type for display
   const displayWeaves = useMemo((): Weave[] => {
     if (isDiscoveryRunning && newWeaves && newWeaves.length > 0) {
       // During discovery, only show newly discovered weaves
+      console.log('[RepoFlowGraph] Showing newWeaves:', newWeaves.length)
       return newWeaves.map((w) => ({
         id: w.id,
         sourceRepoId: w.sourceRepoId,
@@ -370,9 +380,11 @@ function RepoFlowGraphInner({
     }
     if (isDiscoveryRunning) {
       // Discovery running but no weaves found yet - show empty
+      console.log('[RepoFlowGraph] Discovery running, no weaves yet')
       return []
     }
     // Not running discovery - show existing weaves
+    console.log('[RepoFlowGraph] Showing existing weaves:', weaves.length)
     return weaves
   }, [isDiscoveryRunning, newWeaves, weaves])
 

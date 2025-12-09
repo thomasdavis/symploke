@@ -61,6 +61,16 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
   // Weave discovery real-time progress
   const weaveProgress = useWeaveProgress(plexusId)
 
+  // Debug logging
+  console.log('[DashboardClient] weaveProgress:', {
+    isRunning: weaveProgress.isRunning,
+    status: weaveProgress.status,
+    newWeaves: weaveProgress.newWeaves.length,
+    weavesFound: weaveProgress.weavesFound,
+    isConnected: weaveProgress.isConnected,
+    progress: weaveProgress.progress,
+  })
+
   // Filter weaves by selected run and score
   const filteredWeaves = useMemo(() => {
     let result = weaves
