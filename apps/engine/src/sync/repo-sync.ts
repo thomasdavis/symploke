@@ -1,4 +1,11 @@
-import { db, type RepoSyncJob, type Repo, SyncJobStatus, FileJobStatus } from '@symploke/db'
+import {
+  db,
+  type RepoSyncJob,
+  type Repo,
+  SyncJobStatus,
+  FileJobStatus,
+  ChunkJobStatus,
+} from '@symploke/db'
 import { logger } from '@symploke/logger'
 import { getInstallationOctokit } from '../github/client.js'
 import { fetchRepoTree, getDefaultBranch } from './tree-fetcher.js'
@@ -6,6 +13,7 @@ import { syncFile, deleteRemovedFiles } from './file-sync.js'
 import { checkFile } from '../utils/file-utils.js'
 import type { PusherService } from '../pusher/service.js'
 import { notifySyncCompleted } from '../discord/service.js'
+import { createChunkJob } from '../queue/processor.js'
 
 export interface SyncConfig {
   maxFiles?: number
@@ -406,6 +414,82 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     duration,
     jobId: job.id,
   })
+
+  // Auto-trigger embedding if there are files that need it
+  await triggerEmbeddingIfNeeded(repo.id, emitLog)
+}
+
+/**
+ * Check if repo has files needing embedding and create a chunk job if so
+ */
+async function triggerEmbeddingIfNeeded(
+  repoId: string,
+  emitLog: (
+    level: 'info' | 'warn' | 'error' | 'success',
+    message: string,
+    details?: string,
+  ) => void,
+): Promise<void> {
+  try {
+    // Check if there's already a pending/in-progress chunk job
+    const existingChunkJob = await db.chunkSyncJob.findFirst({
+      where: {
+        repoId,
+        status: {
+          in: [ChunkJobStatus.PENDING, ChunkJobStatus.CHUNKING, ChunkJobStatus.EMBEDDING],
+        },
+      },
+    })
+
+    if (existingChunkJob) {
+      emitLog('info', 'Embedding job already queued', `Job ID: ${existingChunkJob.id}`)
+      return
+    }
+
+    // Count files that have content but either:
+    // 1. Haven't been chunked yet (lastChunkedSha is null)
+    // 2. Have been modified since last chunking (sha != lastChunkedSha)
+    const filesNeedingChunkingResult = await db.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM files
+      WHERE "repoId" = ${repoId}
+        AND content IS NOT NULL
+        AND "skippedReason" IS NULL
+        AND ("lastChunkedSha" IS NULL OR "lastChunkedSha" != sha)
+    `
+    const filesNeedingChunking = Number(filesNeedingChunkingResult[0]?.count ?? 0)
+
+    // Also check for chunks without embeddings
+    const chunksNeedingEmbedding = await db.chunk.count({
+      where: {
+        file: { repoId },
+        embeddedAt: null,
+      },
+    })
+
+    if (filesNeedingChunking > 0 || chunksNeedingEmbedding > 0) {
+      emitLog(
+        'info',
+        'Auto-triggering embedding job',
+        `${filesNeedingChunking} files need chunking, ${chunksNeedingEmbedding} chunks need embedding`,
+      )
+
+      const chunkJobId = await createChunkJob(repoId)
+      logger.info(
+        { repoId, chunkJobId, filesNeedingChunking, chunksNeedingEmbedding },
+        'Auto-created chunk job after sync',
+      )
+      emitLog('success', 'Embedding job queued', `Job ID: ${chunkJobId}`)
+    } else {
+      emitLog('info', 'All files already have embeddings')
+    }
+  } catch (error) {
+    logger.error({ error, repoId }, 'Error checking/triggering embedding after sync')
+    emitLog(
+      'warn',
+      'Could not auto-trigger embedding',
+      error instanceof Error ? error.message : String(error),
+    )
+  }
 }
 
 /**
