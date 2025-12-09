@@ -21,6 +21,7 @@ import {
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForceLayout } from '@/hooks/useForceLayout'
+import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
 
@@ -333,18 +334,50 @@ export type RepoFlowGraphProps = {
   repos: Repo[]
   weaves: Weave[]
   plexusId: string
+  isDiscoveryRunning?: boolean
+  newWeaves?: WeaveDiscoveredWeave[]
 }
 
-function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
+function RepoFlowGraphInner({
+  repos,
+  weaves,
+  plexusId,
+  isDiscoveryRunning,
+  newWeaves,
+}: RepoFlowGraphProps) {
   const { fitView } = useReactFlow()
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
 
+  // Convert newWeaves to Weave type for display
+  const displayWeaves = useMemo((): Weave[] => {
+    if (isDiscoveryRunning && newWeaves && newWeaves.length > 0) {
+      // During discovery, only show newly discovered weaves
+      return newWeaves.map((w) => ({
+        id: w.id,
+        sourceRepoId: w.sourceRepoId,
+        targetRepoId: w.targetRepoId,
+        type: w.type,
+        title: w.title,
+        description: w.description,
+        score: w.score,
+        sourceRepo: w.sourceRepo,
+        targetRepo: w.targetRepo,
+      }))
+    }
+    if (isDiscoveryRunning) {
+      // Discovery running but no weaves found yet - show empty
+      return []
+    }
+    // Not running discovery - show existing weaves
+    return weaves
+  }, [isDiscoveryRunning, newWeaves, weaves])
+
   // Create edges for force layout (with weights based on weave scores)
   const forceEdges = useMemo(
     () =>
-      weaves.map((w) => ({
+      displayWeaves.map((w) => ({
         source: w.sourceRepoId,
         target: w.targetRepoId,
         data: {
@@ -354,7 +387,7 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
           distance: 500 - w.score * 150,
         },
       })),
-    [weaves],
+    [displayWeaves],
   )
 
   // Use force layout hook with much larger spacing
@@ -378,9 +411,9 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
 
   // Update edges when node positions change
   useEffect(() => {
-    const newEdges = createEdgesFromWeaves(weaves, forceNodes, plexusId)
+    const newEdges = createEdgesFromWeaves(displayWeaves, forceNodes, plexusId)
     setEdges(newEdges)
-  }, [forceNodes, weaves, plexusId, setEdges])
+  }, [forceNodes, displayWeaves, plexusId, setEdges])
 
   // Fit view when simulation settles
   useEffect(() => {
@@ -461,7 +494,13 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   )
 }
 
-export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
+export function RepoFlowGraph({
+  repos,
+  weaves,
+  plexusId,
+  isDiscoveryRunning,
+  newWeaves,
+}: RepoFlowGraphProps) {
   if (repos.length === 0) {
     return (
       <div className="repo-flow-empty">
@@ -482,7 +521,13 @@ export function RepoFlowGraph({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   return (
     <div className="repo-flow-container">
       <ReactFlowProvider>
-        <RepoFlowGraphInner repos={repos} weaves={weaves} plexusId={plexusId} />
+        <RepoFlowGraphInner
+          repos={repos}
+          weaves={weaves}
+          plexusId={plexusId}
+          isDiscoveryRunning={isDiscoveryRunning}
+          newWeaves={newWeaves}
+        />
       </ReactFlowProvider>
     </div>
   )

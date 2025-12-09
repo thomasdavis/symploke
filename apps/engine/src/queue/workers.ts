@@ -100,11 +100,12 @@ async function processEmbedJob(job: Job<EmbedJobData>): Promise<void> {
  */
 async function processWeaveJob(job: Job<WeaveJobData>): Promise<void> {
   const { plexusId, triggeredBy } = job.data
+  const pusher = getPusherService()
 
   logger.info({ jobId: job.id, plexusId, triggeredBy }, 'Processing weave job from Redis queue')
 
   try {
-    const result = await findWeaves(plexusId, { verbose: true })
+    const result = await findWeaves(plexusId, { verbose: true, pusher })
     logger.info(
       {
         plexusId,

@@ -5,7 +5,9 @@ import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Select } from '@symploke/ui/Select/Select'
 import { RepoFlowGraph } from './RepoFlowGraph'
+import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
 import { RunWeavesButton } from '@/components/RunWeavesButton'
+import { useWeaveProgress } from '@/hooks/useWeaveProgress'
 import './dashboard.css'
 
 type Repo = {
@@ -55,6 +57,9 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
   // Default to 'latest' which shows the most recent run's weaves (or all if none have runIds)
   const [selectedRunId, setSelectedRunId] = useState<string>('latest')
   const [minScore, setMinScore] = useState<number>(0.3)
+
+  // Weave discovery real-time progress
+  const weaveProgress = useWeaveProgress(plexusId)
 
   // Filter weaves by selected run and score
   const filteredWeaves = useMemo(() => {
@@ -218,7 +223,23 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
         </span>
       </div>
 
-      <RepoFlowGraph repos={repos} weaves={filteredWeaves} plexusId={plexusId} />
+      <div className="dashboard-graph-container">
+        <RepoFlowGraph
+          repos={repos}
+          weaves={filteredWeaves}
+          plexusId={plexusId}
+          isDiscoveryRunning={weaveProgress.isRunning}
+          newWeaves={weaveProgress.newWeaves}
+        />
+        {weaveProgress.isRunning && (
+          <WeaveDiscoveryOverlay
+            repoPairsChecked={weaveProgress.repoPairsChecked}
+            repoPairsTotal={weaveProgress.repoPairsTotal}
+            weavesFound={weaveProgress.weavesFound}
+            progress={weaveProgress.progress}
+          />
+        )}
+      </div>
     </div>
   )
 }

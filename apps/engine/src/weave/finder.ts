@@ -5,6 +5,7 @@ import type { WeaveCandidate, WeaveOptions, WeaveTypeHandler } from './types/bas
 // import { IntegrationOpportunityWeave } from './types/integration-opportunity.js'
 import { GlossaryAlignmentWeave } from './types/glossary-alignment.js'
 import { notifyWeavesDiscovered } from '../discord/service.js'
+import type { PusherService } from '../pusher/service.js'
 
 /**
  * Registry of all weave type handlers
@@ -15,6 +16,7 @@ export interface FinderOptions extends WeaveOptions {
   weaveTypes?: PrismaWeaveType[] // Which types to run (default: all)
   dryRun?: boolean // Don't save weaves to database
   verbose?: boolean // Enable verbose logging
+  pusher?: PusherService // Pusher service for real-time updates
 }
 
 export interface FinderResult {
@@ -45,6 +47,8 @@ export async function findWeaves(
   const startTime = Date.now()
   const logs: LogEntry[] = []
   const verbose = options.verbose ?? false
+  const pusher = options.pusher
+  let weavesFound = 0
 
   const log = (level: LogEntry['level'], message: string, data?: Record<string, unknown>) => {
     const entry: LogEntry = {
@@ -98,6 +102,15 @@ export async function findWeaves(
 
   log('info', 'Created discovery run', { runId: discoveryRun.id })
 
+  // Emit weave:started event
+  if (pusher) {
+    await pusher.emitWeaveStarted(plexusId, {
+      runId: discoveryRun.id,
+      plexusId,
+      repoPairsTotal: 0, // Will be updated after we calculate pairs
+    })
+  }
+
   try {
     // Get all repos in the plexus with embedded chunks
     const repos = await db.repo.findMany({
@@ -106,6 +119,9 @@ export async function findWeaves(
     })
 
     log('info', `Found ${repos.length} repos in plexus`)
+
+    // Create repo map for lookups (used for Pusher events and notifications)
+    const repoMap = new Map(repos.map((r) => [r.id, r]))
 
     if (repos.length < 2) {
       log('warn', 'Not enough repos for weave discovery', { repoCount: repos.length })
@@ -165,6 +181,15 @@ export async function findWeaves(
       where: { id: discoveryRun.id },
       data: { repoPairsTotal: repoPairs.length },
     })
+
+    // Emit updated weave:started with correct pair count
+    if (pusher) {
+      await pusher.emitWeaveStarted(plexusId, {
+        runId: discoveryRun.id,
+        plexusId,
+        repoPairsTotal: repoPairs.length,
+      })
+    }
 
     // Determine which weave types to run
     const typesToRun = options.weaveTypes
@@ -251,6 +276,16 @@ export async function findWeaves(
         where: { id: discoveryRun.id },
         data: { repoPairsChecked: pairsChecked },
       })
+
+      // Emit weave:progress event
+      if (pusher) {
+        await pusher.emitWeaveProgress(plexusId, {
+          runId: discoveryRun.id,
+          repoPairsChecked: pairsChecked,
+          repoPairsTotal: repoPairs.length,
+          weavesFound,
+        })
+      }
     }
 
     log('info', `Weave discovery complete: ${allCandidates.length} candidates found`)
@@ -319,6 +354,27 @@ export async function findWeaves(
             score: weave.score,
           })
           saved++
+          weavesFound++
+
+          // Emit weave:discovered event with repo names
+          if (pusher) {
+            const sourceRepo = repoMap.get(candidate.sourceRepoId)
+            const targetRepo = repoMap.get(candidate.targetRepoId)
+            await pusher.emitWeaveDiscovered(plexusId, {
+              runId: discoveryRun.id,
+              weave: {
+                id: weave.id,
+                sourceRepoId: weave.sourceRepoId,
+                targetRepoId: weave.targetRepoId,
+                type: weave.type,
+                title: weave.title,
+                description: weave.description,
+                score: weave.score,
+                sourceRepo: { name: sourceRepo?.name || 'Unknown' },
+                targetRepo: { name: targetRepo?.name || 'Unknown' },
+              },
+            })
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
           log('error', 'Error saving weave', { candidate: candidate.title, error: message })
@@ -339,7 +395,6 @@ export async function findWeaves(
     })
 
     // Build weave info for Discord notification
-    const repoMap = new Map(repos.map((r) => [r.id, r]))
     const weaveInfo = allCandidates.map((c) => {
       const sourceRepo = repoMap.get(c.sourceRepoId)
       const targetRepo = repoMap.get(c.targetRepoId)
@@ -366,6 +421,15 @@ export async function findWeaves(
       weaves: weaveInfo,
     })
 
+    // Emit weave:completed event
+    if (pusher) {
+      await pusher.emitWeaveCompleted(plexusId, {
+        runId: discoveryRun.id,
+        weavesSaved: saved,
+        duration: `${(duration / 1000).toFixed(1)}s`,
+      })
+    }
+
     return finishRun(
       discoveryRun.id,
       'COMPLETED',
@@ -390,6 +454,14 @@ export async function findWeaves(
         completedAt: new Date(),
       },
     })
+
+    // Emit weave:error event
+    if (pusher) {
+      await pusher.emitWeaveError(plexusId, {
+        runId: discoveryRun.id,
+        error: message,
+      })
+    }
 
     throw error
   }

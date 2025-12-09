@@ -578,3 +578,99 @@
     transform: scale(1.2);
   }
 }
+
+/* Graph Container */
+.dashboard-graph-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Weave Discovery Overlay */
+.weave-discovery-overlay {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.weave-discovery-overlay__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 0 0 1px oklch(from var(--color-primary) l c h / 0.2);
+  min-width: 200px;
+}
+
+.weave-discovery-overlay__spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  align-self: center;
+}
+
+.weave-discovery-overlay__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.weave-discovery-overlay__title {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+}
+
+.weave-discovery-overlay__progress {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.weave-discovery-overlay__found {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+.weave-discovery-overlay__bar {
+  height: 4px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.weave-discovery-overlay__bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Weave edge animation for newly discovered weaves */
+@keyframes weaveAppear {
+  from {
+    opacity: 0;
+    stroke-dashoffset: 100;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+.weave-edge--new .weave-edge__path {
+  animation: weaveAppear 0.6s ease-out forwards;
+  stroke-dasharray: 100;
+}
