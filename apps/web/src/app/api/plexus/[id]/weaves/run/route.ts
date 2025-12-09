@@ -61,7 +61,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     // Trigger the weave run via the engine service
-    const engineUrl = process.env.ENGINE_URL || 'http://localhost:3001'
+    const engineUrl = (process.env.ENGINE_URL || 'http://localhost:3001').replace(/\/$/, '')
 
     const response = await fetch(`${engineUrl}/trigger-weaves/${plexusId}`, {
       method: 'POST',

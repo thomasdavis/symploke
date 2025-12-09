@@ -39,7 +39,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     // Trigger sync via the engine service
-    const engineUrl = process.env.ENGINE_URL || 'http://localhost:3001'
+    const engineUrl = (process.env.ENGINE_URL || 'http://localhost:3001').replace(/\/$/, '')
 
     const response = await fetch(`${engineUrl}/sync-plexus/${plexusId}`, {
       method: 'POST',
@@ -105,7 +105,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     // Get sync status via the engine service
-    const engineUrl = process.env.ENGINE_URL || 'http://localhost:3001'
+    const engineUrl = (process.env.ENGINE_URL || 'http://localhost:3001').replace(/\/$/, '')
 
     const response = await fetch(`${engineUrl}/sync-status/${plexusId}`)
 
