@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 declare module 'd3-force-3d' {
   export interface SimulationNodeDatum {
     index?: number
