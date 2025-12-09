@@ -20,7 +20,6 @@ import {
 } from '@xyflow/react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useForceLayout } from '@/hooks/useForceLayout'
 import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
@@ -388,63 +387,41 @@ function RepoFlowGraphInner({
     return weaves
   }, [isDiscoveryRunning, newWeaves, weaves])
 
-  // Create edges for force layout (with weights based on weave scores)
-  const forceEdges = useMemo(
-    () =>
-      displayWeaves.map((w) => ({
-        source: w.sourceRepoId,
-        target: w.targetRepoId,
-        data: {
-          // Higher score = stronger connection = closer nodes (but still fairly weak)
-          weight: 0.05 + w.score * 0.15,
-          // Higher score = shorter distance, but keep minimum spacing large
-          distance: 500 - w.score * 150,
-        },
-      })),
-    [displayWeaves],
-  )
-
-  // Use force layout hook with much larger spacing
-  const {
-    nodes: forceNodes,
-    isSimulating,
-    alpha,
-    fixNode,
-    releaseNode,
-  } = useForceLayout(initialNodes, forceEdges, {
-    chargeStrength: -2000, // Much stronger repulsion
-    linkDistance: 450, // Larger base distance
-    linkStrength: 0.1, // Weaker links so nodes spread more
-    collideRadius: 220, // Larger collision radius
-    centerStrength: 0.01, // Very weak centering
-    alphaDecay: 0.04, // Faster settling
-  })
+  // Use circle layout - no force simulation, just static circle positioning
+  // This gives a cleaner, more predictable layout
+  const circleNodes = initialNodes
 
   // Create React Flow edges from weaves, updating handles based on current positions
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<WeaveEdgeData>>([])
 
-  // Update edges when node positions change
+  // Update edges when weaves change
   useEffect(() => {
-    const newEdges = createEdgesFromWeaves(displayWeaves, forceNodes, plexusId)
+    const newEdges = createEdgesFromWeaves(displayWeaves, circleNodes, plexusId)
     setEdges(newEdges)
-  }, [forceNodes, displayWeaves, plexusId, setEdges])
+  }, [circleNodes, displayWeaves, plexusId, setEdges])
 
-  // Fit view when simulation settles and then show edges
+  // Fit view on initial load and show edges after a delay
   useEffect(() => {
-    if (!isSimulating && alpha < 0.01) {
-      setTimeout(() => {
-        fitView({ padding: 0.15, duration: 400 })
-      }, 100)
-      // Mark edges ready after simulation settles
-      if (!edgesReady) {
-        setEdgesReady(true)
-        // Small delay before showing edges for a cleaner reveal
-        setTimeout(() => {
-          setShowEdges(true)
-        }, 300)
+    // Fit view after a short delay to let nodes render
+    const fitTimer = setTimeout(() => {
+      fitView({ padding: 0.15, duration: 400 })
+    }, 100)
+
+    // Show edges after nodes are positioned
+    if (!edgesReady) {
+      setEdgesReady(true)
+      const edgeTimer = setTimeout(() => {
+        setShowEdges(true)
+      }, 500) // Delay to let circle layout settle visually
+
+      return () => {
+        clearTimeout(fitTimer)
+        clearTimeout(edgeTimer)
       }
     }
-  }, [isSimulating, alpha, fitView, edgesReady])
+
+    return () => clearTimeout(fitTimer)
+  }, [fitView, edgesReady])
 
   // Reset edge visibility when discovery starts
   useEffect(() => {
@@ -469,66 +446,37 @@ function RepoFlowGraphInner({
     [plexusId],
   )
 
-  const onNodeDragStart = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      fixNode(node.id, node.position.x, node.position.y)
-    },
-    [fixNode],
-  )
-
-  const onNodeDrag = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      fixNode(node.id, node.position.x, node.position.y)
-    },
-    [fixNode],
-  )
-
-  const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      // Keep node fixed at dropped position for a moment, then release
-      setTimeout(() => {
-        releaseNode(node.id)
-      }, 500)
-    },
-    [releaseNode],
-  )
-
   return (
-    <>
-      <ReactFlow
-        nodes={forceNodes}
-        edges={showEdges ? edges : []}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        onNodeDragStart={onNodeDragStart}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-        proOptions={{ hideAttribution: true }}
-        nodesDraggable={true}
-        nodesConnectable={false}
-        elementsSelectable={true}
-      >
-        <Background color="var(--color-border-subtle)" gap={20} size={1} />
-        <Controls className="repo-flow-controls" showInteractive={false} />
-        <MiniMap
-          className="repo-flow-minimap"
-          nodeColor={(node) => {
-            const data = node.data as RepoNodeData
-            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-          }}
-          maskColor="rgba(0, 0, 0, 0.1)"
-          zoomable
-          pannable
-        />
-      </ReactFlow>
-    </>
+    <ReactFlow
+      nodes={circleNodes}
+      edges={showEdges ? edges : []}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={onNodeClick}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      fitView
+      fitViewOptions={{ padding: 0.2 }}
+      minZoom={0.1}
+      maxZoom={2}
+      defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+      proOptions={{ hideAttribution: true }}
+      nodesDraggable={true}
+      nodesConnectable={false}
+      elementsSelectable={true}
+    >
+      <Background color="var(--color-border-subtle)" gap={20} size={1} />
+      <Controls className="repo-flow-controls" showInteractive={false} />
+      <MiniMap
+        className="repo-flow-minimap"
+        nodeColor={(node) => {
+          const data = node.data as RepoNodeData
+          return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+        }}
+        maskColor="rgba(0, 0, 0, 0.1)"
+        zoomable
+        pannable
+      />
+    </ReactFlow>
   )
 }
 
