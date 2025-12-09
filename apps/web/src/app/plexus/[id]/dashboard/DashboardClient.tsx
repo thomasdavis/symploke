@@ -66,9 +66,7 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
     let result = weaves
 
     // Filter by run
-    if (selectedRunId === 'all') {
-      result = weaves
-    } else if (selectedRunId === 'latest') {
+    if (selectedRunId === 'latest') {
       const latestRunId = discoveryRuns[0]?.id
       if (latestRunId) {
         const runWeaves = weaves.filter((w) => w.discoveryRunId === latestRunId)
@@ -83,11 +81,9 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
   }, [weaves, selectedRunId, discoveryRuns, minScore])
 
   const selectedRun =
-    selectedRunId !== 'latest' && selectedRunId !== 'all'
+    selectedRunId !== 'latest'
       ? discoveryRuns.find((r) => r.id === selectedRunId)
-      : selectedRunId === 'latest'
-        ? discoveryRuns[0]
-        : null
+      : discoveryRuns[0]
 
   return (
     <div className="dashboard-page">
@@ -107,11 +103,9 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                 <Select.Value>
                   {selectedRunId === 'latest'
                     ? `Latest${selectedRun ? ` (${formatRunDate(selectedRun.startedAt)})` : ''}`
-                    : selectedRunId === 'all'
-                      ? 'All runs'
-                      : selectedRun
-                        ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
-                        : 'Select run'}
+                    : selectedRun
+                      ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
+                      : 'Select run'}
                 </Select.Value>
                 <Select.Icon>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -131,26 +125,6 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
                     <Select.List>
                       <Select.Item value="latest">
                         <Select.ItemText>Latest run</Select.ItemText>
-                        <Select.ItemIndicator>
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M2.5 6L5 8.5L9.5 3.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item value="all">
-                        <Select.ItemText>All runs</Select.ItemText>
                         <Select.ItemIndicator>
                           <svg
                             width="12"

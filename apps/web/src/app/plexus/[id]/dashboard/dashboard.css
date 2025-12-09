@@ -584,6 +584,13 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-graph-container .repo-flow-container {
+  flex: 1;
+  min-height: 0;
 }
 
 /* Weave Discovery Overlay */
