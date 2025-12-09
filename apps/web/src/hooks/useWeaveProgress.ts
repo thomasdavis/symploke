@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getPusherClient } from '@/lib/pusher/client'
 import type { Channel } from 'pusher-js'
 import type { WeaveType } from '@symploke/db'
@@ -42,7 +42,57 @@ const initialState: WeaveProgressState = {
 export function useWeaveProgress(plexusId: string) {
   const [state, setState] = useState<WeaveProgressState>(initialState)
   const [isConnected, setIsConnected] = useState(false)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Poll for status as a fallback (works even without Pusher)
+  const fetchStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/plexus/${plexusId}/weaves/run`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.status === 'running') {
+          setState((prev) => ({
+            ...prev,
+            status: 'running',
+            runId: data.runId || prev.runId,
+            repoPairsTotal: data.progress?.total || prev.repoPairsTotal,
+            repoPairsChecked: data.progress?.checked || prev.repoPairsChecked,
+          }))
+        } else if (data.status === 'idle' && state.status === 'running') {
+          // Discovery just completed
+          setState((prev) => ({
+            ...prev,
+            status: 'completed',
+          }))
+        }
+      }
+    } catch {
+      // Ignore fetch errors
+    }
+  }, [plexusId, state.status])
+
+  // Initial fetch and polling
+  useEffect(() => {
+    fetchStatus()
+
+    // Poll every 2 seconds when running or every 5 seconds when idle
+    const startPolling = () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+      pollIntervalRef.current = setInterval(fetchStatus, state.status === 'running' ? 2000 : 5000)
+    }
+
+    startPolling()
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [fetchStatus, state.status])
+
+  // Pusher real-time events (enhanced updates when available)
   useEffect(() => {
     const pusher = getPusherClient()
     if (!pusher) return
