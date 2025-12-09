@@ -47,12 +47,12 @@ interface SimLink {
 }
 
 const defaultOptions: Required<ForceLayoutOptions> = {
-  chargeStrength: -400,
-  linkDistance: 200,
-  linkStrength: 0.3,
-  collideRadius: 150,
-  centerStrength: 0.05,
-  alphaDecay: 0.02,
+  chargeStrength: -1500,
+  linkDistance: 400,
+  linkStrength: 0.15,
+  collideRadius: 200,
+  centerStrength: 0.02,
+  alphaDecay: 0.03,
   alphaMin: 0.001,
   continuous: false,
 }
@@ -93,10 +93,10 @@ export function useForceLayout<T extends Record<string, unknown>>(
     }
 
     // Create simulation nodes with initial positions
-    // Spread nodes in a circle initially for better convergence
+    // Spread nodes in a larger circle initially for better convergence
     const simNodes: SimNode[] = initialNodes.map((n, i) => {
       const angle = (2 * Math.PI * i) / initialNodes.length
-      const radius = Math.min(400, initialNodes.length * 50)
+      const radius = Math.max(500, initialNodes.length * 100)
       return {
         id: n.id,
         x: n.position.x || Math.cos(angle) * radius,
@@ -119,7 +119,7 @@ export function useForceLayout<T extends Record<string, unknown>>(
     // Create the simulation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const simulation = forceSimulation(simNodes as any, 2) // 2D simulation
-      .force('charge', forceManyBody().strength(opts.chargeStrength).distanceMax(500))
+      .force('charge', forceManyBody().strength(opts.chargeStrength).distanceMax(1500))
       .force(
         'link',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

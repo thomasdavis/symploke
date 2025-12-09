@@ -265,8 +265,8 @@ const edgeTypes = {
 }
 
 function createInitialNodes(repos: Repo[]): Node<RepoNodeData>[] {
-  // Spread nodes in a circle for better initial layout
-  const radius = Math.min(600, repos.length * 80)
+  // Spread nodes in a larger circle for better initial layout with more spacing
+  const radius = Math.max(800, repos.length * 120)
 
   return repos.map((repo, index) => {
     const angle = (2 * Math.PI * index) / repos.length
@@ -337,7 +337,6 @@ export type RepoFlowGraphProps = {
 
 function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   const { fitView } = useReactFlow()
-  const [isDragging, setIsDragging] = useState(false)
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
@@ -349,16 +348,16 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
         source: w.sourceRepoId,
         target: w.targetRepoId,
         data: {
-          // Higher score = stronger connection = closer nodes
-          weight: 0.2 + w.score * 0.5,
-          // Higher score = shorter distance
-          distance: 250 - w.score * 100,
+          // Higher score = stronger connection = closer nodes (but still fairly weak)
+          weight: 0.05 + w.score * 0.15,
+          // Higher score = shorter distance, but keep minimum spacing large
+          distance: 500 - w.score * 150,
         },
       })),
     [weaves],
   )
 
-  // Use force layout hook
+  // Use force layout hook with much larger spacing
   const {
     nodes: forceNodes,
     isSimulating,
@@ -366,12 +365,12 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
     fixNode,
     releaseNode,
   } = useForceLayout(initialNodes, forceEdges, {
-    chargeStrength: -500,
-    linkDistance: 220,
-    linkStrength: 0.4,
-    collideRadius: 160,
-    centerStrength: 0.03,
-    alphaDecay: 0.015,
+    chargeStrength: -2000, // Much stronger repulsion
+    linkDistance: 450, // Larger base distance
+    linkStrength: 0.1, // Weaker links so nodes spread more
+    collideRadius: 220, // Larger collision radius
+    centerStrength: 0.01, // Very weak centering
+    alphaDecay: 0.04, // Faster settling
   })
 
   // Create React Flow edges from weaves, updating handles based on current positions
@@ -401,7 +400,6 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
 
   const onNodeDragStart = useCallback(
     (_event: React.MouseEvent, node: Node) => {
-      setIsDragging(true)
       fixNode(node.id, node.position.x, node.position.y)
     },
     [fixNode],
@@ -416,7 +414,6 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
 
   const onNodeDragStop = useCallback(
     (_event: React.MouseEvent, node: Node) => {
-      setIsDragging(false)
       // Keep node fixed at dropped position for a moment, then release
       setTimeout(() => {
         releaseNode(node.id)
@@ -427,15 +424,6 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
 
   return (
     <>
-      {/* Simulation status indicator */}
-      <div className={`force-layout-status ${isSimulating ? 'force-layout-status--active' : ''}`}>
-        <div className="force-layout-status__indicator" />
-        <span>{isSimulating ? 'Settling layout...' : 'Layout stable'}</span>
-        {isSimulating && (
-          <span className="force-layout-status__alpha">{Math.round(alpha * 100)}%</span>
-        )}
-      </div>
-
       <ReactFlow
         nodes={forceNodes}
         edges={edges}
@@ -447,15 +435,11 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.15 }}
+        fitViewOptions={{ padding: 0.2 }}
         minZoom={0.1}
         maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
         proOptions={{ hideAttribution: true }}
-        style={{
-          opacity: isSimulating && alpha > 0.5 ? 0.7 : 1,
-          transition: 'opacity 0.3s',
-        }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
