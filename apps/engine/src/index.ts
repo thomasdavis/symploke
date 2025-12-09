@@ -767,7 +767,7 @@ async function main() {
   // Now import modules that depend on config
   const { logger } = await import('@symploke/logger')
   const { getPusherService } = await import('./pusher/service.js')
-  const { recoverStuckJobs } = await import('./queue/recovery.js')
+  const { recoverStuckJobs, requeueOrphanedJobs } = await import('./queue/recovery.js')
 
   logger.info('Starting Symploke File Sync Engine...')
   logger.info({ useRedisQueue: USE_REDIS_QUEUE }, 'Queue mode')
@@ -780,6 +780,18 @@ async function main() {
     }
   } catch (error) {
     logger.error({ error }, 'Failed to recover stuck jobs, continuing startup')
+  }
+
+  // Re-queue orphaned PENDING jobs that exist in DB but not in Redis
+  if (USE_REDIS_QUEUE) {
+    try {
+      const requeued = await requeueOrphanedJobs()
+      if (requeued.syncJobsRequeued > 0 || requeued.chunkJobsRequeued > 0) {
+        logger.info(requeued, 'Re-queued orphaned jobs')
+      }
+    } catch (error) {
+      logger.error({ error }, 'Failed to re-queue orphaned jobs, continuing startup')
+    }
   }
 
   // Initialize Pusher service
@@ -798,6 +810,21 @@ async function main() {
 
     // Schedule hourly sync as a repeatable BullMQ job
     await scheduleHourlySync()
+
+    // Periodic orphan job recovery (every 5 minutes)
+    // This catches jobs that may have been orphaned after startup
+    const ORPHAN_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
+    setInterval(async () => {
+      try {
+        const requeued = await requeueOrphanedJobs()
+        if (requeued.syncJobsRequeued > 0 || requeued.chunkJobsRequeued > 0) {
+          logger.info(requeued, 'Periodic check: re-queued orphaned jobs')
+        }
+      } catch (error) {
+        logger.error({ error }, 'Periodic orphan check failed')
+      }
+    }, ORPHAN_CHECK_INTERVAL)
+    logger.info('Orphan job recovery scheduled (every 5 minutes)')
 
     // Handle shutdown signals
     const shutdown = async () => {
