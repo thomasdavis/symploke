@@ -16,12 +16,11 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
-  useNodesState,
   useReactFlow,
 } from '@xyflow/react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getElkLayout } from '@/hooks/useElkLayout'
+import { useForceLayout } from '@/hooks/useForceLayout'
 import '@xyflow/react/dist/style.css'
 import './dashboard.css'
 
@@ -265,30 +264,18 @@ const edgeTypes = {
   weave: WeaveEdge,
 }
 
-function calculateNodePositions(repos: Repo[]): Node<RepoNodeData>[] {
-  const nodeWidth = 260
-  const nodeHeight = 180
-  const horizontalGap = 120
-  const verticalGap = 100
-
-  // Use a wider aspect ratio for better visualization
-  const aspectRatio = 1.5
-  const totalNodes = repos.length
-  const nodesPerRow = Math.max(2, Math.ceil(Math.sqrt(totalNodes * aspectRatio)))
+function createInitialNodes(repos: Repo[]): Node<RepoNodeData>[] {
+  // Spread nodes in a circle for better initial layout
+  const radius = Math.min(600, repos.length * 80)
 
   return repos.map((repo, index) => {
-    const row = Math.floor(index / nodesPerRow)
-    const col = index % nodesPerRow
-
-    // Offset alternating rows for a more organic feel
-    const rowOffset = row % 2 === 1 ? (nodeWidth + horizontalGap) / 2 : 0
-
+    const angle = (2 * Math.PI * index) / repos.length
     return {
       id: repo.id,
       type: 'repo',
       position: {
-        x: col * (nodeWidth + horizontalGap) + rowOffset,
-        y: row * (nodeHeight + verticalGap),
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
       },
       data: { repo },
     }
@@ -350,65 +337,60 @@ export type RepoFlowGraphProps = {
 
 function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
   const { fitView } = useReactFlow()
-  const [isLayouting, setIsLayouting] = useState(true)
+  const [isDragging, setIsDragging] = useState(false)
 
-  // Create initial nodes with temporary positions (ELK will reposition them)
-  const initialNodes = useMemo(() => calculateNodePositions(repos), [repos])
+  // Create initial nodes
+  const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  // Create edges for force layout (with weights based on weave scores)
+  const forceEdges = useMemo(
+    () =>
+      weaves.map((w) => ({
+        source: w.sourceRepoId,
+        target: w.targetRepoId,
+        data: {
+          // Higher score = stronger connection = closer nodes
+          weight: 0.2 + w.score * 0.5,
+          // Higher score = shorter distance
+          distance: 250 - w.score * 100,
+        },
+      })),
+    [weaves],
+  )
+
+  // Use force layout hook
+  const {
+    nodes: forceNodes,
+    isSimulating,
+    alpha,
+    fixNode,
+    releaseNode,
+  } = useForceLayout(initialNodes, forceEdges, {
+    chargeStrength: -500,
+    linkDistance: 220,
+    linkStrength: 0.4,
+    collideRadius: 160,
+    centerStrength: 0.03,
+    alphaDecay: 0.015,
+  })
+
+  // Create React Flow edges from weaves, updating handles based on current positions
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<WeaveEdgeData>>([])
 
-  // Run ELK layout when repos or weaves change
+  // Update edges when node positions change
   useEffect(() => {
-    async function runLayout() {
-      setIsLayouting(true)
+    const newEdges = createEdgesFromWeaves(weaves, forceNodes, plexusId)
+    setEdges(newEdges)
+  }, [forceNodes, weaves, plexusId, setEdges])
 
-      try {
-        // Start with initial grid positions
-        const nodesToLayout = calculateNodePositions(repos)
-
-        // Create edges for layout calculation
-        const initialEdges = weaves.map((weave) => ({
-          id: `weave-${weave.id}`,
-          source: weave.sourceRepoId,
-          target: weave.targetRepoId,
-          type: 'weave',
-          data: { weave },
-        }))
-
-        // Run ELK layout to get optimized positions
-        // Use 'layered' algorithm for clean separation of nodes
-        const layoutedNodes = await getElkLayout(nodesToLayout, initialEdges, {
-          direction: 'DOWN',
-          algorithm: 'layered',
-          nodeSpacing: 100,
-          layerSpacing: 150,
-        })
-
-        // Update edges with proper handles based on new positions
-        const layoutedEdges = createEdgesFromWeaves(weaves, layoutedNodes, plexusId)
-
-        setNodes(layoutedNodes)
-        setEdges(layoutedEdges)
-
-        // Fit view after layout
-        setTimeout(() => {
-          fitView({ padding: 0.2, duration: 300 })
-        }, 50)
-      } catch (error) {
-        console.error('Layout error:', error)
-        // Fallback to grid layout
-        const fallbackNodes = calculateNodePositions(repos)
-        const fallbackEdges = createEdgesFromWeaves(weaves, fallbackNodes, plexusId)
-        setNodes(fallbackNodes)
-        setEdges(fallbackEdges)
-      } finally {
-        setIsLayouting(false)
-      }
+  // Fit view when simulation settles
+  useEffect(() => {
+    if (!isSimulating && alpha < 0.01) {
+      setTimeout(() => {
+        fitView({ padding: 0.15, duration: 400 })
+      }, 100)
     }
-
-    runLayout()
-  }, [repos, weaves, plexusId, setNodes, setEdges, fitView])
+  }, [isSimulating, alpha, fitView])
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -417,29 +399,66 @@ function RepoFlowGraphInner({ repos, weaves, plexusId }: RepoFlowGraphProps) {
     [plexusId],
   )
 
+  const onNodeDragStart = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setIsDragging(true)
+      fixNode(node.id, node.position.x, node.position.y)
+    },
+    [fixNode],
+  )
+
+  const onNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      fixNode(node.id, node.position.x, node.position.y)
+    },
+    [fixNode],
+  )
+
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setIsDragging(false)
+      // Keep node fixed at dropped position for a moment, then release
+      setTimeout(() => {
+        releaseNode(node.id)
+      }, 500)
+    },
+    [releaseNode],
+  )
+
   return (
     <>
-      {isLayouting && (
-        <div className="repo-flow-loading">
-          <div className="repo-flow-loading__spinner" />
-          <span>Computing layout...</span>
-        </div>
-      )}
+      {/* Simulation status indicator */}
+      <div className={`force-layout-status ${isSimulating ? 'force-layout-status--active' : ''}`}>
+        <div className="force-layout-status__indicator" />
+        <span>{isSimulating ? 'Settling layout...' : 'Layout stable'}</span>
+        {isSimulating && (
+          <span className="force-layout-status__alpha">{Math.round(alpha * 100)}%</span>
+        )}
+      </div>
+
       <ReactFlow
-        nodes={nodes}
+        nodes={forceNodes}
         edges={edges}
-        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.15 }}
         minZoom={0.1}
         maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
         proOptions={{ hideAttribution: true }}
-        style={{ opacity: isLayouting ? 0.5 : 1, transition: 'opacity 0.2s' }}
+        style={{
+          opacity: isSimulating && alpha > 0.5 ? 0.7 : 1,
+          transition: 'opacity 0.3s',
+        }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
       >
         <Background color="var(--color-border-subtle)" gap={20} size={1} />
         <Controls className="repo-flow-controls" showInteractive={false} />
