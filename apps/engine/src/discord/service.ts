@@ -64,6 +64,7 @@ async function sendWebhook(message: DiscordMessage): Promise<boolean> {
 
 /**
  * Notify Discord about a completed file sync
+ * Only sends notification if files were actually synced (not all skipped) or if there were failures
  */
 export async function notifySyncCompleted(data: {
   repoName: string
@@ -76,22 +77,37 @@ export async function notifySyncCompleted(data: {
   duration: number
   jobId: string
 }): Promise<void> {
+  // Calculate how many files were actually synced (not skipped)
+  const actuallyProcessed = data.processedFiles - data.skippedFiles
+
+  // Only notify if something actually changed or there were errors
+  if (actuallyProcessed === 0 && data.failedFiles === 0) {
+    logger.debug(
+      { repo: data.repoName, skipped: data.skippedFiles },
+      'Skipping Discord notification - no changes detected',
+    )
+    return
+  }
+
   const durationStr = formatDuration(data.duration)
-  const successRate =
-    data.totalFiles > 0 ? ((data.processedFiles / data.totalFiles) * 100).toFixed(1) : '100'
+
+  // Determine message based on what happened
+  const hasFailures = data.failedFiles > 0
+  const description = hasFailures
+    ? `Repository **${data.repoFullName}** sync completed with errors in **${data.plexusName}**`
+    : `Repository **${data.repoFullName}** synced **${actuallyProcessed}** new/updated files in **${data.plexusName}**`
 
   await sendWebhook({
     embeds: [
       {
-        title: `Sync Completed: ${data.repoName}`,
-        description: `Repository **${data.repoFullName}** has been synced in **${data.plexusName}**`,
-        color: data.failedFiles > 0 ? COLORS.warning : COLORS.success,
+        title: hasFailures ? `Sync Warning: ${data.repoName}` : `Sync Completed: ${data.repoName}`,
+        description,
+        color: hasFailures ? COLORS.warning : COLORS.success,
         fields: [
-          { name: 'Total Files', value: data.totalFiles.toLocaleString(), inline: true },
-          { name: 'Processed', value: data.processedFiles.toLocaleString(), inline: true },
-          { name: 'Success Rate', value: `${successRate}%`, inline: true },
-          { name: 'Skipped', value: data.skippedFiles.toLocaleString(), inline: true },
+          { name: 'New/Updated', value: actuallyProcessed.toLocaleString(), inline: true },
+          { name: 'Unchanged', value: data.skippedFiles.toLocaleString(), inline: true },
           { name: 'Failed', value: data.failedFiles.toLocaleString(), inline: true },
+          { name: 'Total Files', value: data.totalFiles.toLocaleString(), inline: true },
           { name: 'Duration', value: durationStr, inline: true },
         ],
         footer: { text: `Job ID: ${data.jobId}` },
@@ -103,6 +119,7 @@ export async function notifySyncCompleted(data: {
 
 /**
  * Notify Discord about completed embeddings
+ * Only sends notification if new chunks or embeddings were actually created
  */
 export async function notifyEmbedCompleted(data: {
   repoName: string
@@ -114,6 +131,15 @@ export async function notifyEmbedCompleted(data: {
   duration: number
   jobId: string
 }): Promise<void> {
+  // Only notify if something was actually created
+  if (data.chunksCreated === 0 && data.embeddingsGenerated === 0) {
+    logger.debug(
+      { repo: data.repoName },
+      'Skipping Discord notification - no new chunks or embeddings',
+    )
+    return
+  }
+
   const durationStr = formatDuration(data.duration)
 
   await sendWebhook({
