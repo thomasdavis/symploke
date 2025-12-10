@@ -1,5 +1,6 @@
 import { logger } from '@symploke/logger'
 
+// Discord notification webhook URL
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK
 
 interface DiscordEmbed {
