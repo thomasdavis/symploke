@@ -29,9 +29,6 @@ COPY packages/tsconfig ./packages/tsconfig
 COPY packages/ai ./packages/ai
 COPY packages/logger ./packages/logger
 COPY packages/db ./packages/db
-
-# Cache bust: Force rebuild of engine when code changes
-ARG CACHEBUST=1
 COPY apps/engine ./apps/engine
 
 # Generate Prisma client
