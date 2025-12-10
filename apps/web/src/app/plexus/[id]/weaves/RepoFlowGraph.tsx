@@ -22,7 +22,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
-import './dashboard.css'
+import './weaves.css'
 
 type Repo = {
   id: string

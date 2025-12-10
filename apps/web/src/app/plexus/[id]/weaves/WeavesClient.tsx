@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Select } from '@symploke/ui/Select/Select'
@@ -9,6 +10,9 @@ import { Table } from '@symploke/ui/Table/Table'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
 import { RunWeavesButton } from '@/components/RunWeavesButton'
+import { RepoFlowGraph } from './RepoFlowGraph'
+import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
+import { useWeaveProgress } from '@/hooks/useWeaveProgress'
 import './weaves.css'
 
 // Glossary data from database
@@ -36,6 +40,18 @@ type ParsedGlossary = {
   confidence: number | null
 }
 
+type Repo = {
+  id: string
+  name: string
+  fullName: string
+  url: string
+  lastIndexed: Date | null
+  createdAt: Date
+  _count?: {
+    files: number
+  }
+}
+
 type Weave = {
   id: string
   sourceRepoId: string
@@ -51,9 +67,23 @@ type Weave = {
   metadata: unknown
 }
 
+// Simplified weave type for graph display (without glossary data)
+type GraphWeave = {
+  id: string
+  sourceRepoId: string
+  targetRepoId: string
+  type: WeaveType
+  title: string
+  description: string
+  score: number
+  sourceRepo: { name: string }
+  targetRepo: { name: string }
+}
+
 type DiscoveryRun = Pick<WeaveDiscoveryRun, 'id' | 'startedAt' | 'weavesSaved'>
 
 type WeavesClientProps = {
+  repos: Repo[]
   weaves: Weave[]
   discoveryRuns: DiscoveryRun[]
   plexusId: string
@@ -535,10 +565,49 @@ function WeaveDetail({
   )
 }
 
-export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientProps) {
+// Tab icons
+function GraphIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="4" cy="4" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="8" cy="12" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 5.5L7 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M10.5 5.5L9 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function TableIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6 6V14" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesClientProps) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Get view from URL param, default to 'graph'
+  const viewParam = searchParams.get('view')
+  const activeView = viewParam === 'table' ? 'table' : 'graph'
+
   const [selectedRunId, setSelectedRunId] = useState<string>('latest')
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
   const [minScore, setMinScore] = useState<number>(0.3)
+
+  // Weave discovery real-time progress (for graph view)
+  const weaveProgress = useWeaveProgress(plexusId)
+
+  const setActiveView = (view: 'graph' | 'table') => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('view', view)
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   const filteredWeaves = useMemo(() => {
     let result = weaves
@@ -559,6 +628,21 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
     // Filter by minimum score
     return result.filter((w) => w.score >= minScore)
   }, [weaves, selectedRunId, discoveryRuns, minScore])
+
+  // Convert to graph weave format (without glossary data)
+  const graphWeaves: GraphWeave[] = useMemo(() => {
+    return filteredWeaves.map((w) => ({
+      id: w.id,
+      sourceRepoId: w.sourceRepoId,
+      targetRepoId: w.targetRepoId,
+      type: w.type,
+      title: w.title,
+      description: w.description,
+      score: w.score,
+      sourceRepo: { name: w.sourceRepo.name },
+      targetRepo: { name: w.targetRepo.name },
+    }))
+  }, [filteredWeaves])
 
   const selectedRun =
     selectedRunId !== 'latest' && selectedRunId !== 'all'
@@ -592,26 +676,14 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
   ]
 
   return (
-    <div className="weaves-page">
+    <div className={`weaves-page ${activeView === 'table' ? 'weaves-page--table-view' : ''}`}>
       <div className="weaves-header">
         <PageHeader
           title="Weaves"
-          subtitle={`${filteredWeaves.length} connection${filteredWeaves.length !== 1 ? 's' : ''} discovered`}
+          subtitle={`${repos.length} repositories · ${filteredWeaves.length} weave${filteredWeaves.length !== 1 ? 's' : ''}`}
         />
         <div className="weaves-filters">
           <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
-          <div className="weaves-score-filter">
-            <label htmlFor="min-score">Min Score: {Math.round(minScore * 100)}%</label>
-            <input
-              id="min-score"
-              type="range"
-              min="0"
-              max="100"
-              value={minScore * 100}
-              onChange={(e) => setMinScore(Number(e.target.value) / 100)}
-              className="weaves-score-slider"
-            />
-          </div>
           <div className="weaves-run-selector">
             <Select.Root
               value={selectedRunId}
@@ -722,45 +794,110 @@ export function WeavesClient({ weaves, discoveryRuns, plexusId }: WeavesClientPr
         </div>
       </div>
 
-      <div className="weaves-content">
-        <div className="weaves-main">
-          {filteredWeaves.length === 0 ? (
-            <Card>
-              <CardContent>
-                <EmptyState
-                  title="No weaves found"
-                  description="Run weave discovery from the CLI to find integration opportunities between your repositories."
-                  actionLabel="View Documentation"
-                  actionHref="https://github.com/symploke/symploke"
+      {/* Tabs */}
+      <div className="weaves-tabs">
+        <button
+          type="button"
+          className={`weaves-tab ${activeView === 'graph' ? 'weaves-tab--active' : ''}`}
+          onClick={() => setActiveView('graph')}
+        >
+          <GraphIcon />
+          Graph
+        </button>
+        <button
+          type="button"
+          className={`weaves-tab ${activeView === 'table' ? 'weaves-tab--active' : ''}`}
+          onClick={() => setActiveView('table')}
+        >
+          <TableIcon />
+          Table
+        </button>
+      </div>
+
+      {/* Score filter bar (shown for both views) */}
+      <div className="weaves-score-filter-bar">
+        <div className="weaves-score-filter-bar__control">
+          <label htmlFor="weaves-min-score">
+            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
+          </label>
+          <input
+            id="weaves-min-score"
+            type="range"
+            min="0"
+            max="100"
+            value={minScore * 100}
+            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
+            className="weaves-score-slider-wide"
+          />
+        </div>
+        <span className="weaves-score-filter-bar__count">
+          {filteredWeaves.length} weave{filteredWeaves.length !== 1 ? 's' : ''} shown
+        </span>
+      </div>
+
+      {/* Graph View */}
+      {activeView === 'graph' && (
+        <div className="weaves-graph-container">
+          <RepoFlowGraph
+            repos={repos}
+            weaves={graphWeaves}
+            plexusId={plexusId}
+            isDiscoveryRunning={weaveProgress.isRunning}
+            newWeaves={weaveProgress.newWeaves}
+          />
+          {weaveProgress.isRunning && (
+            <WeaveDiscoveryOverlay
+              repoPairsChecked={weaveProgress.repoPairsChecked}
+              repoPairsTotal={weaveProgress.repoPairsTotal}
+              weavesFound={weaveProgress.weavesFound}
+              progress={weaveProgress.progress}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Table View */}
+      {activeView === 'table' && (
+        <div className="weaves-content">
+          <div className="weaves-main">
+            {filteredWeaves.length === 0 ? (
+              <Card>
+                <CardContent>
+                  <EmptyState
+                    title="No weaves found"
+                    description="Run weave discovery from the CLI to find integration opportunities between your repositories."
+                    actionLabel="View Documentation"
+                    actionHref="https://github.com/symploke/symploke"
+                  />
+                  <div className="weaves-empty-command">
+                    <code>pnpm engine find-weaves --plexus-id {plexusId}</code>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="weaves-table-wrapper">
+                <Table
+                  columns={columns}
+                  data={filteredWeaves}
+                  getRowKey={(weave) => weave.id}
+                  onRowClick={(weave) => setSelectedWeave(weave)}
+                  emptyMessage="No weaves found"
                 />
-                <div className="weaves-empty-command">
-                  <code>pnpm engine find-weaves --plexus-id {plexusId}</code>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="weaves-table-wrapper">
-              <Table
-                columns={columns}
-                data={filteredWeaves}
-                getRowKey={(weave) => weave.id}
-                onRowClick={(weave) => setSelectedWeave(weave)}
-                emptyMessage="No weaves found"
+              </div>
+            )}
+          </div>
+
+          {selectedWeave && (
+            <div className="weaves-sidebar">
+              <WeaveDetail
+                weave={selectedWeave}
+                onClose={() => setSelectedWeave(null)}
+                plexusId={plexusId}
               />
             </div>
           )}
         </div>
-
-        {selectedWeave && (
-          <div className="weaves-sidebar">
-            <WeaveDetail
-              weave={selectedWeave}
-              onClose={() => setSelectedWeave(null)}
-              plexusId={plexusId}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

@@ -1,12 +1,28 @@
 import { db } from '@symploke/db'
 import { WeavesClient } from './WeavesClient'
 
+// Force dynamic rendering to always get fresh data
+export const dynamic = 'force-dynamic'
+
 type WeavesPageProps = {
   params: Promise<{ id: string }>
 }
 
 export default async function WeavesPage({ params }: WeavesPageProps) {
   const { id } = await params
+
+  // Get all repos for this plexus with file counts (for graph view)
+  const repos = await db.repo.findMany({
+    where: { plexusId: id },
+    include: {
+      _count: {
+        select: { files: true },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
 
   // Get discovery runs (completed only)
   const discoveryRuns = await db.weaveDiscoveryRun.findMany({
@@ -66,5 +82,5 @@ export default async function WeavesPage({ params }: WeavesPageProps) {
     },
   })
 
-  return <WeavesClient weaves={weaves} discoveryRuns={discoveryRuns} plexusId={id} />
+  return <WeavesClient repos={repos} weaves={weaves} discoveryRuns={discoveryRuns} plexusId={id} />
 }
