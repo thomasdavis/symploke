@@ -1,6 +1,6 @@
 import { Queue, Worker, type Job, type ConnectionOptions } from 'bullmq'
 import { logger } from '@symploke/logger'
-import { config } from '../config'
+import { config } from '../config.js'
 
 // Redis connection config from environment
 function getRedisConnection(): ConnectionOptions {
