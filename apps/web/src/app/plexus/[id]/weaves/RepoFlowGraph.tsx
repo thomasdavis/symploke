@@ -24,8 +24,16 @@ import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './weaves.css'
 
-// Context to track which edges are currently animating (randomly selected)
-const AnimatingEdgesContext = createContext<Set<string>>(new Set())
+// Animation variants for playful variety
+type BeamAnimation = {
+  variant: 'pulse' | 'dash' | 'glow' | 'spark'
+  reverse: boolean
+  speed: 'slow' | 'normal' | 'fast'
+  delay: number
+}
+
+// Context to track which edges are currently animating with their animation config
+const AnimatingEdgesContext = createContext<Map<string, BeamAnimation>>(new Map())
 
 type Repo = {
   id: string
@@ -203,10 +211,66 @@ function WeaveEdge({
   const strokeColor = `oklch(${lightness}% 0.15 280)`
 
   // Check if this edge should be animating (either hovered or randomly selected)
-  const isAnimating = isHovered || animatingEdges.has(id)
+  const animation = animatingEdges.get(id)
+  const isAnimating = isHovered || !!animation
 
   // Unique gradient ID for this edge
   const gradientId = `beam-gradient-${id}`
+
+  // Build animation class based on config
+  const getAnimationClass = () => {
+    if (isHovered) return 'weave-edge__beam--hover'
+    if (!animation) return ''
+    const classes = ['weave-edge__beam--random']
+    classes.push(`weave-edge__beam--${animation.variant}`)
+    classes.push(`weave-edge__beam--${animation.speed}`)
+    if (animation.reverse) classes.push('weave-edge__beam--reverse')
+    return classes.join(' ')
+  }
+
+  // Get gradient colors based on variant
+  const getGradientStops = () => {
+    if (isHovered) {
+      // Consistent gradient for hover
+      return [
+        { offset: '0%', color: '#a855f7', opacity: 0 },
+        { offset: '15%', color: '#a855f7', opacity: 1 },
+        { offset: '50%', color: '#ec4899', opacity: 1 },
+        { offset: '85%', color: '#f97316', opacity: 1 },
+        { offset: '100%', color: '#f97316', opacity: 0 },
+      ]
+    }
+    // Different color schemes for variety
+    const schemes = {
+      pulse: [
+        { offset: '0%', color: '#06b6d4', opacity: 0 },
+        { offset: '30%', color: '#06b6d4', opacity: 1 },
+        { offset: '70%', color: '#8b5cf6', opacity: 1 },
+        { offset: '100%', color: '#8b5cf6', opacity: 0 },
+      ],
+      dash: [
+        { offset: '0%', color: '#10b981', opacity: 0 },
+        { offset: '20%', color: '#10b981', opacity: 1 },
+        { offset: '80%', color: '#34d399', opacity: 1 },
+        { offset: '100%', color: '#34d399', opacity: 0 },
+      ],
+      glow: [
+        { offset: '0%', color: '#f59e0b', opacity: 0 },
+        { offset: '25%', color: '#f59e0b', opacity: 0.8 },
+        { offset: '50%', color: '#fbbf24', opacity: 1 },
+        { offset: '75%', color: '#f59e0b', opacity: 0.8 },
+        { offset: '100%', color: '#f59e0b', opacity: 0 },
+      ],
+      spark: [
+        { offset: '0%', color: '#ec4899', opacity: 0 },
+        { offset: '10%', color: '#ec4899', opacity: 1 },
+        { offset: '50%', color: '#f472b6', opacity: 1 },
+        { offset: '90%', color: '#a855f7', opacity: 1 },
+        { offset: '100%', color: '#a855f7', opacity: 0 },
+      ],
+    }
+    return schemes[animation?.variant || 'pulse']
+  }
 
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
@@ -271,6 +335,9 @@ function WeaveEdge({
         )
       : null
 
+  const gradientStops = getGradientStops()
+  const animationDelay = animation?.delay || 0
+
   return (
     <>
       {/* Animated gradient definition */}
@@ -279,23 +346,19 @@ function WeaveEdge({
           <linearGradient
             id={gradientId}
             gradientUnits="userSpaceOnUse"
-            x1={sourceX}
-            y1={sourceY}
-            x2={targetX}
-            y2={targetY}
-            className="weave-edge__beam-gradient"
+            x1={animation?.reverse ? targetX : sourceX}
+            y1={animation?.reverse ? targetY : sourceY}
+            x2={animation?.reverse ? sourceX : targetX}
+            y2={animation?.reverse ? sourceY : targetY}
           >
-            <stop offset="0%" stopColor="transparent" stopOpacity="0" />
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="0" className="weave-beam-start" />
-            <stop offset="25%" stopColor="#a855f7" stopOpacity="1" className="weave-beam-mid" />
-            <stop offset="50%" stopColor="#ec4899" stopOpacity="1" className="weave-beam-mid" />
-            <stop offset="75%" stopColor="#f97316" stopOpacity="1" className="weave-beam-mid" />
-            <stop
-              offset="100%"
-              stopColor="transparent"
-              stopOpacity="0"
-              className="weave-beam-end"
-            />
+            {gradientStops.map((stop, i) => (
+              <stop
+                key={i}
+                offset={stop.offset}
+                stopColor={stop.color}
+                stopOpacity={stop.opacity}
+              />
+            ))}
           </linearGradient>
         </defs>
       )}
@@ -335,7 +398,8 @@ function WeaveEdge({
             stroke={`url(#${gradientId})`}
             strokeWidth={isHovered ? hoverStrokeWidth + 2 : baseStrokeWidth + 2}
             strokeLinecap="round"
-            className={`weave-edge__beam ${isHovered ? 'weave-edge__beam--hover' : 'weave-edge__beam--random'}`}
+            className={`weave-edge__beam ${getAnimationClass()}`}
+            style={{ animationDelay: `${animationDelay}ms` }}
           />
         )}
       </g>
@@ -435,7 +499,7 @@ function RepoFlowGraphInner({
   const { fitView } = useReactFlow()
   const [showEdges, setShowEdges] = useState(false)
   const [edgesReady, setEdgesReady] = useState(false)
-  const [animatingEdges, setAnimatingEdges] = useState<Set<string>>(new Set())
+  const [animatingEdges, setAnimatingEdges] = useState<Map<string, BeamAnimation>>(new Map())
   const edgeIdsRef = useRef<string[]>([])
 
   // Create initial nodes
@@ -539,42 +603,53 @@ function RepoFlowGraphInner({
     edgeIdsRef.current = edges.map((e) => e.id)
   }, [edges])
 
-  // Randomly animate edges at intervals
+  // Randomly animate edges at intervals - more playful with multiple simultaneous animations
   useEffect(() => {
     if (!showEdges || edges.length === 0) return
 
-    const animateRandomEdge = () => {
+    const variants: BeamAnimation['variant'][] = ['pulse', 'dash', 'glow', 'spark']
+    const speeds: BeamAnimation['speed'][] = ['slow', 'normal', 'fast']
+
+    const animateRandomEdges = () => {
       const edgeIds = edgeIdsRef.current
       if (edgeIds.length === 0) return
 
-      // Pick 1-2 random edges to animate
-      const count = Math.min(edgeIds.length, Math.random() > 0.5 ? 2 : 1)
-      const selectedIds = new Set<string>()
+      // Pick 3-6 random edges to animate simultaneously
+      const count = Math.min(edgeIds.length, 3 + Math.floor(Math.random() * 4))
+      const selectedEdges = new Map<string, BeamAnimation>()
+
+      // Shuffle and pick unique edges
+      const shuffled = [...edgeIds].sort(() => Math.random() - 0.5)
+
       for (let i = 0; i < count; i++) {
-        const randomIndex = Math.floor(Math.random() * edgeIds.length)
-        const edgeId = edgeIds[randomIndex]
+        const edgeId = shuffled[i]
         if (edgeId) {
-          selectedIds.add(edgeId)
+          selectedEdges.set(edgeId, {
+            variant: variants[Math.floor(Math.random() * variants.length)] || 'pulse',
+            reverse: Math.random() > 0.5,
+            speed: speeds[Math.floor(Math.random() * speeds.length)] || 'normal',
+            delay: i * 150, // Stagger the animations
+          })
         }
       }
 
-      setAnimatingEdges(selectedIds)
+      setAnimatingEdges(selectedEdges)
 
-      // Clear animation after it completes (animation duration is 2s)
+      // Clear animation after longest one completes (slow = 3s + max delay)
       setTimeout(() => {
-        setAnimatingEdges(new Set())
-      }, 2000)
+        setAnimatingEdges(new Map())
+      }, 3500)
     }
 
     // Start first animation after a short delay
-    const initialTimer = setTimeout(animateRandomEdge, 1000)
+    const initialTimer = setTimeout(animateRandomEdges, 800)
 
-    // Then animate at random intervals (2-5 seconds between animations)
+    // Then animate at random intervals (1.5-3 seconds between bursts)
     const interval = setInterval(
       () => {
-        animateRandomEdge()
+        animateRandomEdges()
       },
-      3000 + Math.random() * 2000,
+      1500 + Math.random() * 1500,
     )
 
     return () => {

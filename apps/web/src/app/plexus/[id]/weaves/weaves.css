@@ -1441,33 +1441,138 @@
 .react-flow__edge:nth-child(n+11) { animation-delay: 300ms; }
 
 /* Animated beam effect for edges */
-@keyframes beamTravel {
-  0% {
-    stroke-dashoffset: 100%;
-  }
-  100% {
-    stroke-dashoffset: -100%;
-  }
-}
 
-@keyframes beamTravelContinuous {
-  0% {
-    stroke-dashoffset: 100%;
-  }
-  100% {
-    stroke-dashoffset: -100%;
-  }
-}
-
+/* Base beam styles */
 .weave-edge__beam {
-  stroke-dasharray: 30% 70%;
   pointer-events: none;
 }
 
-.weave-edge__beam--random {
-  animation: beamTravel 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Hover animation - consistent and smooth */
+@keyframes beamHover {
+  0% {
+    stroke-dashoffset: 100%;
+  }
+  100% {
+    stroke-dashoffset: -100%;
+  }
 }
 
 .weave-edge__beam--hover {
-  animation: beamTravelContinuous 1.5s linear infinite;
+  stroke-dasharray: 25% 75%;
+  animation: beamHover 1.2s linear infinite;
+}
+
+/* Pulse variant - smooth traveling pulse */
+@keyframes beamPulse {
+  0% {
+    stroke-dashoffset: 120%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -120%;
+    opacity: 0;
+  }
+}
+
+.weave-edge__beam--pulse {
+  stroke-dasharray: 20% 80%;
+}
+
+/* Dash variant - quick dashes */
+@keyframes beamDash {
+  0% {
+    stroke-dashoffset: 100%;
+  }
+  100% {
+    stroke-dashoffset: -100%;
+  }
+}
+
+.weave-edge__beam--dash {
+  stroke-dasharray: 8% 12% 8% 72%;
+}
+
+/* Glow variant - wider, softer beam */
+@keyframes beamGlow {
+  0% {
+    stroke-dashoffset: 150%;
+    filter: blur(0px);
+  }
+  50% {
+    filter: blur(2px);
+  }
+  100% {
+    stroke-dashoffset: -150%;
+    filter: blur(0px);
+  }
+}
+
+.weave-edge__beam--glow {
+  stroke-dasharray: 40% 60%;
+}
+
+/* Spark variant - fast, short bursts */
+@keyframes beamSpark {
+  0% {
+    stroke-dashoffset: 100%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -100%;
+    opacity: 0;
+  }
+}
+
+.weave-edge__beam--spark {
+  stroke-dasharray: 10% 90%;
+}
+
+/* Speed modifiers */
+.weave-edge__beam--slow {
+  animation-duration: 3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weave-edge__beam--normal {
+  animation-duration: 2s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.weave-edge__beam--fast {
+  animation-duration: 1.2s;
+  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Apply the correct animation based on variant */
+.weave-edge__beam--random.weave-edge__beam--pulse {
+  animation-name: beamPulse;
+}
+
+.weave-edge__beam--random.weave-edge__beam--dash {
+  animation-name: beamDash;
+}
+
+.weave-edge__beam--random.weave-edge__beam--glow {
+  animation-name: beamGlow;
+}
+
+.weave-edge__beam--random.weave-edge__beam--spark {
+  animation-name: beamSpark;
+}
+
+/* Reverse direction */
+.weave-edge__beam--reverse {
+  animation-direction: reverse;
 }
