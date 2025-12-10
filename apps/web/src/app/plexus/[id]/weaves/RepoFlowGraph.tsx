@@ -18,7 +18,6 @@ import {
   useEdgesState,
   useReactFlow,
 } from '@xyflow/react'
-import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
@@ -180,10 +179,12 @@ function WeaveEdge({
 
   const scorePercent = Math.round(weave.score * 100)
 
-  // Calculate stroke width based on score (1-5px range)
-  // Score 0.2 (20%) = 1px, Score 1.0 (100%) = 5px
-  const baseStrokeWidth = 1 + weave.score * 4
-  const hoverStrokeWidth = baseStrokeWidth + 2
+  // Calculate stroke width using exponential scaling (1-20px range)
+  // Using exponential curve: width = 1 + 19 * (score ^ 2)
+  // This makes higher scores much more prominent
+  // Score 0.2 (20%) ≈ 1.8px, Score 0.5 (50%) ≈ 5.75px, Score 1.0 (100%) = 20px
+  const baseStrokeWidth = 1 + 19 * Math.pow(weave.score, 2)
+  const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
 
   // Handle mouse move to track position along the edge
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
@@ -213,17 +214,32 @@ function WeaveEdge({
     setHoverPosition(null)
   }
 
+  // Handle click to navigate to weave details
+  const handleClick = () => {
+    if (data?.plexusId && weave?.id) {
+      window.location.href = `/plexus/${data.plexusId}/weaves/${weave.id}`
+    }
+  }
+
   return (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover events for edge highlighting */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover/click events for edge interaction */}
       <g
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        style={{ cursor: 'pointer' }}
       >
-        {/* Invisible wider path for easier hover */}
-        <path id={`${id}-hitarea`} d={edgePath} fill="none" stroke="transparent" strokeWidth={24} />
-        {/* Visible edge - stroke width based on score */}
+        {/* Invisible wider path for easier hover/click */}
+        <path
+          id={`${id}-hitarea`}
+          d={edgePath}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={Math.max(24, baseStrokeWidth + 8)}
+        />
+        {/* Visible edge - stroke width based on score (exponential) */}
         <path
           id={id}
           d={edgePath}
@@ -265,24 +281,10 @@ function WeaveEdge({
                 </svg>
                 <span>{weave.targetRepo.name}</span>
               </div>
-              <div className="weave-edge__hover-card-hint">Click edge to view details</div>
+              <div className="weave-edge__hover-card-hint">Click to view details</div>
             </div>
           </div>
         </EdgeLabelRenderer>
-      )}
-      {/* Clickable area for navigation - only visible on hover */}
-      {isHovered && (
-        <Link
-          href={`/plexus/${data?.plexusId}/weaves/${weave.id}`}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '100%',
-            height: '100%',
-            opacity: 0,
-          }}
-        />
       )}
     </>
   )
