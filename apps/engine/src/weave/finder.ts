@@ -71,7 +71,7 @@ export async function findWeaves(
     }
   }
 
-  log('info', 'Starting weave discovery', { plexusId, options })
+  log('info', 'Starting weave discovery', { plexusId, verbose, hasPusher: !!pusher })
 
   // Fetch plexus info for notifications
   const plexus = await db.plexus.findUnique({
