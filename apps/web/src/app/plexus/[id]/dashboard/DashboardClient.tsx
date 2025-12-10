@@ -100,7 +100,7 @@ export function DashboardClient({ repos, weaves, discoveryRuns, plexusId }: Dash
       <div className="dashboard-header">
         <PageHeader
           title="Dashboard"
-          subtitle={`${repos.length} repositories · ${filteredWeaves.length} weaves`}
+          subtitle={`${repos.length} repositories · ${filteredWeaves.length} weaves${selectedRun ? ` · Run: ${selectedRun.id.slice(-8)}` : ''}`}
         />
         <div className="dashboard-header__actions">
           <RunWeavesButton plexusId={plexusId} variant="secondary" size="sm" />
