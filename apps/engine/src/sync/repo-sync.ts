@@ -291,6 +291,14 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
   // Create file sync jobs
   const syncType = isIncrementalSync ? 'incremental' : 'full'
   emitLog('info', `Creating ${entries.length} file sync jobs (${syncType} sync)...`)
+
+  // Clean up any existing file jobs from a previous partial run (e.g., after job recovery)
+  const existingFileJobs = await db.fileSyncJob.count({ where: { syncJobId: job.id } })
+  if (existingFileJobs > 0) {
+    emitLog('info', `Cleaning up ${existingFileJobs} file jobs from previous run...`)
+    await db.fileSyncJob.deleteMany({ where: { syncJobId: job.id } })
+  }
+
   const fileJobs = entries.map((entry) => ({
     syncJobId: job.id,
     repoId: repo.id,
