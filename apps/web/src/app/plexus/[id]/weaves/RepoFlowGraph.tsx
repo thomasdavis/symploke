@@ -18,11 +18,14 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './weaves.css'
+
+// Context to track which edges are currently animating (randomly selected)
+const AnimatingEdgesContext = createContext<Set<string>>(new Set())
 
 type Repo = {
   id: string
@@ -166,6 +169,7 @@ function WeaveEdge({
   // Store screen coordinates for the tooltip (not SVG coordinates)
   const [screenPosition, setScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
+  const animatingEdges = useContext(AnimatingEdgesContext)
 
   const [edgePath] = getBezierPath({
     sourceX,
@@ -197,6 +201,12 @@ function WeaveEdge({
   // Using oklch: lightness from 75% (low score) to 45% (high score)
   const lightness = 75 - weave.score * 30
   const strokeColor = `oklch(${lightness}% 0.15 280)`
+
+  // Check if this edge should be animating (either hovered or randomly selected)
+  const isAnimating = isHovered || animatingEdges.has(id)
+
+  // Unique gradient ID for this edge
+  const gradientId = `beam-gradient-${id}`
 
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
@@ -263,6 +273,32 @@ function WeaveEdge({
 
   return (
     <>
+      {/* Animated gradient definition */}
+      {isAnimating && (
+        <defs>
+          <linearGradient
+            id={gradientId}
+            gradientUnits="userSpaceOnUse"
+            x1={sourceX}
+            y1={sourceY}
+            x2={targetX}
+            y2={targetY}
+            className="weave-edge__beam-gradient"
+          >
+            <stop offset="0%" stopColor="transparent" stopOpacity="0" />
+            <stop offset="0%" stopColor="#a855f7" stopOpacity="0" className="weave-beam-start" />
+            <stop offset="25%" stopColor="#a855f7" stopOpacity="1" className="weave-beam-mid" />
+            <stop offset="50%" stopColor="#ec4899" stopOpacity="1" className="weave-beam-mid" />
+            <stop offset="75%" stopColor="#f97316" stopOpacity="1" className="weave-beam-mid" />
+            <stop
+              offset="100%"
+              stopColor="transparent"
+              stopOpacity="0"
+              className="weave-beam-end"
+            />
+          </linearGradient>
+        </defs>
+      )}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover/click events for edge interaction */}
       <g
         onMouseEnter={handleMouseEnter}
@@ -279,7 +315,7 @@ function WeaveEdge({
           stroke="transparent"
           strokeWidth={Math.max(24, baseStrokeWidth + 8)}
         />
-        {/* Visible edge - stroke width, color, and opacity based on score */}
+        {/* Base edge - stroke width, color, and opacity based on score */}
         <path
           id={id}
           d={edgePath}
@@ -291,6 +327,17 @@ function WeaveEdge({
           className="weave-edge__path"
           style={{ transition: 'stroke 0.15s, stroke-width 0.15s, stroke-opacity 0.15s' }}
         />
+        {/* Animated beam overlay - only shown when animating */}
+        {isAnimating && (
+          <path
+            d={edgePath}
+            fill="none"
+            stroke={`url(#${gradientId})`}
+            strokeWidth={isHovered ? hoverStrokeWidth + 2 : baseStrokeWidth + 2}
+            strokeLinecap="round"
+            className={`weave-edge__beam ${isHovered ? 'weave-edge__beam--hover' : 'weave-edge__beam--random'}`}
+          />
+        )}
       </g>
       {tooltip}
     </>
@@ -388,6 +435,8 @@ function RepoFlowGraphInner({
   const { fitView } = useReactFlow()
   const [showEdges, setShowEdges] = useState(false)
   const [edgesReady, setEdgesReady] = useState(false)
+  const [animatingEdges, setAnimatingEdges] = useState<Set<string>>(new Set())
+  const edgeIdsRef = useRef<string[]>([])
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
@@ -485,6 +534,55 @@ function RepoFlowGraphInner({
     }
   }, [isDiscoveryRunning, newWeaves])
 
+  // Keep track of edge IDs for random animation selection
+  useEffect(() => {
+    edgeIdsRef.current = edges.map((e) => e.id)
+  }, [edges])
+
+  // Randomly animate edges at intervals
+  useEffect(() => {
+    if (!showEdges || edges.length === 0) return
+
+    const animateRandomEdge = () => {
+      const edgeIds = edgeIdsRef.current
+      if (edgeIds.length === 0) return
+
+      // Pick 1-2 random edges to animate
+      const count = Math.min(edgeIds.length, Math.random() > 0.5 ? 2 : 1)
+      const selectedIds = new Set<string>()
+      for (let i = 0; i < count; i++) {
+        const randomIndex = Math.floor(Math.random() * edgeIds.length)
+        const edgeId = edgeIds[randomIndex]
+        if (edgeId) {
+          selectedIds.add(edgeId)
+        }
+      }
+
+      setAnimatingEdges(selectedIds)
+
+      // Clear animation after it completes (animation duration is 2s)
+      setTimeout(() => {
+        setAnimatingEdges(new Set())
+      }, 2000)
+    }
+
+    // Start first animation after a short delay
+    const initialTimer = setTimeout(animateRandomEdge, 1000)
+
+    // Then animate at random intervals (2-5 seconds between animations)
+    const interval = setInterval(
+      () => {
+        animateRandomEdge()
+      },
+      3000 + Math.random() * 2000,
+    )
+
+    return () => {
+      clearTimeout(initialTimer)
+      clearInterval(interval)
+    }
+  }, [showEdges, edges.length])
+
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
       window.location.href = `/plexus/${plexusId}/repos/${node.id}`
@@ -493,37 +591,39 @@ function RepoFlowGraphInner({
   )
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={showEdges ? edges : []}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeClick={onNodeClick}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      minZoom={0.1}
-      maxZoom={2}
-      defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-      proOptions={{ hideAttribution: true }}
-      nodesDraggable={true}
-      nodesConnectable={false}
-      elementsSelectable={true}
-    >
-      <Background color="var(--color-border-subtle)" gap={20} size={1} />
-      <Controls className="repo-flow-controls" showInteractive={false} />
-      <MiniMap
-        className="repo-flow-minimap"
-        nodeColor={(node) => {
-          const data = node.data as RepoNodeData
-          return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-        }}
-        maskColor="rgba(0, 0, 0, 0.1)"
-        zoomable
-        pannable
-      />
-    </ReactFlow>
+    <AnimatingEdgesContext.Provider value={animatingEdges}>
+      <ReactFlow
+        nodes={nodes}
+        edges={showEdges ? edges : []}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.1}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+        proOptions={{ hideAttribution: true }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+      >
+        <Background color="var(--color-border-subtle)" gap={20} size={1} />
+        <Controls className="repo-flow-controls" showInteractive={false} />
+        <MiniMap
+          className="repo-flow-minimap"
+          nodeColor={(node) => {
+            const data = node.data as RepoNodeData
+            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+          }}
+          maskColor="rgba(0, 0, 0, 0.1)"
+          zoomable
+          pannable
+        />
+      </ReactFlow>
+    </AnimatingEdgesContext.Provider>
   )
 }
 

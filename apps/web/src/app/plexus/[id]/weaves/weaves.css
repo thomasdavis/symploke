@@ -1439,3 +1439,35 @@
 .react-flow__edge:nth-child(9) { animation-delay: 240ms; }
 .react-flow__edge:nth-child(10) { animation-delay: 270ms; }
 .react-flow__edge:nth-child(n+11) { animation-delay: 300ms; }
+
+/* Animated beam effect for edges */
+@keyframes beamTravel {
+  0% {
+    stroke-dashoffset: 100%;
+  }
+  100% {
+    stroke-dashoffset: -100%;
+  }
+}
+
+@keyframes beamTravelContinuous {
+  0% {
+    stroke-dashoffset: 100%;
+  }
+  100% {
+    stroke-dashoffset: -100%;
+  }
+}
+
+.weave-edge__beam {
+  stroke-dasharray: 30% 70%;
+  pointer-events: none;
+}
+
+.weave-edge__beam--random {
+  animation: beamTravel 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.weave-edge__beam--hover {
+  animation: beamTravelContinuous 1.5s linear infinite;
+}
