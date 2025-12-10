@@ -1,5 +1,6 @@
 import { db, type ChunkSyncJob, ChunkJobStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
+import pLimit from 'p-limit'
 import { generateEmbeddings } from '@symploke/ai/embeddings'
 import {
   chunkContent,
@@ -9,6 +10,7 @@ import {
 } from './chunker.js'
 import type { PusherService } from '../pusher/service.js'
 import { notifyEmbedCompleted } from '../discord/service.js'
+import { config as appConfig } from '../config.js'
 
 export interface EmbedProgressEvent {
   jobId: string
@@ -96,76 +98,107 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
   let failedFiles = 0
   let skippedFiles = 0
 
-  // Phase 1: Create chunks for all files
-  for (const file of files) {
-    try {
-      // Skip empty files
-      if (!file.content) {
-        processedFiles++
-        continue
-      }
+  // Phase 1: Create chunks for all files with parallel processing
+  const fileLimit = pLimit(appConfig.FILE_SYNC_CONCURRENCY)
+  let lastChunkProgressUpdate = 0
 
-      // Skip files that haven't changed since last chunking
-      if (file.lastChunkedSha && file.lastChunkedSha === file.sha) {
-        logger.debug({ path: file.path, sha: file.sha }, 'File unchanged, skipping re-chunking')
-        skippedFiles++
-        processedFiles++
-        continue
-      }
+  await Promise.all(
+    files.map((file) =>
+      fileLimit(async () => {
+        try {
+          // Skip empty files
+          if (!file.content) {
+            processedFiles++
+            return
+          }
 
-      // Delete existing chunks for this file (only if we're re-chunking)
-      await db.chunk.deleteMany({ where: { fileId: file.id } })
+          // Skip files that haven't changed since last chunking
+          if (file.lastChunkedSha && file.lastChunkedSha === file.sha) {
+            logger.debug({ path: file.path, sha: file.sha }, 'File unchanged, skipping re-chunking')
+            skippedFiles++
+            processedFiles++
+            return
+          }
 
-      // Create new chunks
-      const chunks = chunkContent(file.content, config)
+          // Delete existing chunks for this file (only if we're re-chunking)
+          await db.chunk.deleteMany({ where: { fileId: file.id } })
 
-      // Insert chunks one by one (createMany not available due to Unsupported vector type)
-      for (const chunk of chunks) {
-        await db.$executeRaw`
-          INSERT INTO chunks (id, "fileId", content, "startChar", "endChar", "chunkIndex", "tokenCount", "createdAt")
-          VALUES (
-            gen_random_uuid()::text,
-            ${file.id},
-            ${chunk.content},
-            ${chunk.startChar},
-            ${chunk.endChar},
-            ${chunk.chunkIndex},
-            ${estimateTokenCount(chunk.content)},
-            NOW()
-          )
-        `
-        chunksCreated++
-      }
+          // Create new chunks
+          const chunks = chunkContent(file.content, config)
 
-      // Update lastChunkedSha to mark this file as chunked with this SHA
-      await db.file.update({
-        where: { id: file.id },
-        data: { lastChunkedSha: file.sha },
-      })
+          // Batch insert all chunks for this file in a single transaction
+          if (chunks.length > 0) {
+            // Build batch insert values
+            const values = chunks.map((chunk) => ({
+              fileId: file.id,
+              content: chunk.content,
+              startChar: chunk.startChar,
+              endChar: chunk.endChar,
+              chunkIndex: chunk.chunkIndex,
+              tokenCount: estimateTokenCount(chunk.content),
+            }))
 
-      processedFiles++
+            // Use a transaction for batch insert with raw SQL
+            await db.$transaction(
+              values.map(
+                (v) => db.$executeRaw`
+                INSERT INTO chunks (id, "fileId", content, "startChar", "endChar", "chunkIndex", "tokenCount", "createdAt")
+                VALUES (
+                  gen_random_uuid()::text,
+                  ${v.fileId},
+                  ${v.content},
+                  ${v.startChar},
+                  ${v.endChar},
+                  ${v.chunkIndex},
+                  ${v.tokenCount},
+                  NOW()
+                )
+              `,
+              ),
+            )
+            chunksCreated += chunks.length
+          }
 
-      // Update progress periodically
-      if (processedFiles % 10 === 0 || processedFiles === files.length) {
-        await db.chunkSyncJob.update({
-          where: { id: job.id },
-          data: { processedFiles, chunksCreated },
-        })
+          // Update lastChunkedSha to mark this file as chunked with this SHA
+          await db.file.update({
+            where: { id: file.id },
+            data: { lastChunkedSha: file.sha },
+          })
 
-        emitProgress({
-          status: ChunkJobStatus.CHUNKING,
-          processedFiles,
-          totalFiles: files.length,
-          chunksCreated,
-          currentFile: file.path,
-        })
-      }
-    } catch (error) {
-      logger.error({ error, fileId: file.id, path: file.path }, 'Error chunking file')
-      failedFiles++
-      processedFiles++
-    }
-  }
+          processedFiles++
+
+          // Update progress periodically (throttled)
+          const now = Date.now()
+          if (now - lastChunkProgressUpdate > 1000 || processedFiles === files.length) {
+            lastChunkProgressUpdate = now
+
+            await db.chunkSyncJob.update({
+              where: { id: job.id },
+              data: { processedFiles, chunksCreated },
+            })
+
+            emitProgress({
+              status: ChunkJobStatus.CHUNKING,
+              processedFiles,
+              totalFiles: files.length,
+              chunksCreated,
+              currentFile: file.path,
+            })
+          }
+        } catch (error) {
+          logger.error({ error, fileId: file.id, path: file.path }, 'Error chunking file')
+          failedFiles++
+          processedFiles++
+        }
+      }),
+    ),
+  )
+
+  // Final progress update for chunking phase
+  await db.chunkSyncJob.update({
+    where: { id: job.id },
+    data: { processedFiles, chunksCreated },
+  })
 
   logger.info(
     { jobId: job.id, chunksCreated, processedFiles, failedFiles, skippedFiles },
@@ -197,8 +230,8 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
   logger.info({ jobId: job.id, chunksToEmbed: chunksToEmbed.length }, 'Starting embedding phase')
 
   let embeddingsGenerated = 0
-  const BATCH_SIZE = 50
-  const DELAY_MS = 100
+  const BATCH_SIZE = appConfig.EMBED_BATCH_SIZE
+  const DELAY_MS = appConfig.EMBED_RATE_LIMIT_DELAY_MS
 
   for (let i = 0; i < chunksToEmbed.length; i += BATCH_SIZE) {
     const batch = chunksToEmbed.slice(i, i + BATCH_SIZE)
@@ -206,24 +239,27 @@ export async function embedRepo(job: ChunkSyncJob, pusher?: PusherService): Prom
     try {
       const embeddings = await generateEmbeddings(batch.map((c) => c.content))
 
-      // Update chunks with embeddings using raw SQL (vector type requires it)
-      for (let j = 0; j < batch.length; j++) {
-        const chunk = batch[j]
-        const embedding = embeddings[j]
+      // Update chunks with embeddings in parallel using a transaction
+      const updates = batch
+        .map((chunk, j) => {
+          const embedding = embeddings[j]
+          if (!chunk || !embedding) return null
 
-        if (!chunk || !embedding) continue
+          // Convert embedding array to PostgreSQL vector format
+          const vectorStr = `[${embedding.join(',')}]`
 
-        // Convert embedding array to PostgreSQL vector format
-        const vectorStr = `[${embedding.join(',')}]`
+          return db.$executeRaw`
+            UPDATE chunks
+            SET embedding = ${vectorStr}::vector,
+                "embeddedAt" = NOW()
+            WHERE id = ${chunk.id}
+          `
+        })
+        .filter((update): update is ReturnType<typeof db.$executeRaw> => update !== null)
 
-        await db.$executeRaw`
-          UPDATE chunks
-          SET embedding = ${vectorStr}::vector,
-              "embeddedAt" = NOW()
-          WHERE id = ${chunk.id}
-        `
-        embeddingsGenerated++
-      }
+      // Execute all updates in parallel within a transaction
+      await db.$transaction(updates)
+      embeddingsGenerated += updates.length
 
       // Update progress
       await db.chunkSyncJob.update({

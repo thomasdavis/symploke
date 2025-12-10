@@ -13,6 +13,12 @@ const envSchema = z.object({
   // Queue settings
   QUEUE_POLL_INTERVAL_MS: z.coerce.number().default(5000),
   QUEUE_BATCH_SIZE: z.coerce.number().default(10),
+  // Worker concurrency settings
+  SYNC_WORKER_CONCURRENCY: z.coerce.number().default(3),
+  EMBED_WORKER_CONCURRENCY: z.coerce.number().default(2),
+  WEAVE_WORKER_CONCURRENCY: z.coerce.number().default(1),
+  // File processing concurrency
+  FILE_SYNC_CONCURRENCY: z.coerce.number().default(8),
   // Rate limit settings
   RATE_LIMIT_BUFFER: z.coerce.number().default(100), // Stop when this many requests left
   MAX_FILE_SIZE_BYTES: z.coerce.number().default(50 * 1024), // 50KB

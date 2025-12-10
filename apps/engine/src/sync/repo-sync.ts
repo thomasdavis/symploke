@@ -7,6 +7,7 @@ import {
   ChunkJobStatus,
 } from '@symploke/db'
 import { logger } from '@symploke/logger'
+import pLimit from 'p-limit'
 import { getInstallationOctokit } from '../github/client.js'
 import {
   fetchRepoTree,
@@ -19,6 +20,7 @@ import { checkFile } from '../utils/file-utils.js'
 import type { PusherService } from '../pusher/service.js'
 import { notifySyncCompleted } from '../discord/service.js'
 import { createChunkJob } from '../queue/processor.js'
+import { config as appConfig } from '../config.js'
 
 export interface SyncConfig {
   maxFiles?: number
@@ -340,7 +342,7 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
   })
   emitLog('info', `Starting to process ${entries.length} files...`)
 
-  // Process file jobs
+  // Process file jobs with concurrency
   let processedFiles = 0
   let skippedFiles = 0
   let failedFiles = 0
@@ -352,121 +354,146 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     orderBy: { createdAt: 'asc' },
   })
 
-  for (const fileJob of allFileJobs) {
-    try {
-      // Check if we should skip content for this file
-      const shouldSkipContent =
-        config.skipContent ||
-        (config.maxContentFiles !== undefined && contentFileCount >= config.maxContentFiles)
+  // Create a concurrency limiter for parallel file processing
+  const limit = pLimit(appConfig.FILE_SYNC_CONCURRENCY)
+  emitLog('info', `Processing files with concurrency: ${appConfig.FILE_SYNC_CONCURRENCY}`)
 
-      // Check if we'd skip content anyway
-      const fileCheck = checkFile(fileJob.path, fileJob.size)
+  // Track last progress update to avoid too frequent updates
+  let lastProgressUpdate = 0
 
-      // Mark job as processing
-      await db.fileSyncJob.update({
-        where: { id: fileJob.id },
-        data: { status: FileJobStatus.PROCESSING },
-      })
+  // Process files in parallel with controlled concurrency
+  await Promise.all(
+    allFileJobs.map((fileJob) =>
+      limit(async () => {
+        try {
+          // Check if we should skip content for this file
+          const shouldSkipContent =
+            config.skipContent ||
+            (config.maxContentFiles !== undefined && contentFileCount >= config.maxContentFiles)
 
-      // Sync the file
-      const result = await syncFile(
-        octokit,
-        fileJob,
-        repo.fullName,
-        installationId,
-        shouldSkipContent,
-      )
+          // Check if we'd skip content anyway
+          const fileCheck = checkFile(fileJob.path, fileJob.size)
 
-      // Track content file count
-      if (!result.skipped && !fileCheck.shouldSkipContent) {
-        contentFileCount++
-      }
-
-      // Update file job status
-      if (result.success) {
-        if (result.skipped) {
-          skippedFiles++
+          // Mark job as processing
           await db.fileSyncJob.update({
             where: { id: fileJob.id },
-            data: {
-              status: FileJobStatus.SKIPPED,
-              skipReason: result.skipReason,
-              processedAt: new Date(),
-            },
+            data: { status: FileJobStatus.PROCESSING },
           })
-          // Log skipped files periodically to avoid noise
-          if (skippedFiles <= 5 || skippedFiles % 50 === 0) {
-            emitLog('info', `Skipped: ${fileJob.path}`, result.skipReason)
+
+          // Sync the file
+          const result = await syncFile(
+            octokit,
+            fileJob,
+            repo.fullName,
+            installationId,
+            shouldSkipContent,
+          )
+
+          // Track content file count (atomic increment approximation - not critical if slightly off)
+          if (!result.skipped && !fileCheck.shouldSkipContent) {
+            contentFileCount++
           }
-        } else {
+
+          // Update file job status
+          if (result.success) {
+            if (result.skipped) {
+              skippedFiles++
+              await db.fileSyncJob.update({
+                where: { id: fileJob.id },
+                data: {
+                  status: FileJobStatus.SKIPPED,
+                  skipReason: result.skipReason,
+                  processedAt: new Date(),
+                },
+              })
+              // Log skipped files periodically to avoid noise
+              if (skippedFiles <= 5 || skippedFiles % 50 === 0) {
+                emitLog('info', `Skipped: ${fileJob.path}`, result.skipReason)
+              }
+            } else {
+              await db.fileSyncJob.update({
+                where: { id: fileJob.id },
+                data: {
+                  status: FileJobStatus.COMPLETED,
+                  processedAt: new Date(),
+                },
+              })
+            }
+          } else {
+            failedFiles++
+            await db.fileSyncJob.update({
+              where: { id: fileJob.id },
+              data: {
+                status: FileJobStatus.FAILED,
+                error: result.error,
+                processedAt: new Date(),
+              },
+            })
+            emitLog('error', `Failed: ${fileJob.path}`, result.error)
+          }
+
+          processedFiles++
+
+          // Update sync job progress periodically (throttle to avoid DB contention)
+          const now = Date.now()
+          if (now - lastProgressUpdate > 1000 || processedFiles === entries.length) {
+            lastProgressUpdate = now
+
+            await db.repoSyncJob.update({
+              where: { id: job.id },
+              data: {
+                processedFiles,
+                skippedFiles,
+                failedFiles,
+              },
+            })
+
+            pusher?.emitSyncProgress(repo.plexusId, {
+              jobId: job.id,
+              repoId: repo.id,
+              status: SyncJobStatus.PROCESSING_FILES,
+              processedFiles,
+              totalFiles: entries.length,
+              skippedFiles,
+              failedFiles,
+              currentFile: fileJob.path,
+            })
+
+            // Log progress every 25 files or on milestones
+            if (processedFiles % 25 === 0 || processedFiles === entries.length) {
+              const pct = Math.round((processedFiles / entries.length) * 100)
+              emitLog('info', `Progress: ${processedFiles}/${entries.length} files (${pct}%)`)
+            }
+          }
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error)
+          logger.error({ error, fileId: fileJob.id, path: fileJob.path }, 'Error processing file')
+          failedFiles++
+          processedFiles++
+
           await db.fileSyncJob.update({
             where: { id: fileJob.id },
             data: {
-              status: FileJobStatus.COMPLETED,
+              status: FileJobStatus.FAILED,
+              error: message,
               processedAt: new Date(),
             },
           })
+          emitLog('error', `Exception processing: ${fileJob.path}`, message)
         }
-      } else {
-        failedFiles++
-        await db.fileSyncJob.update({
-          where: { id: fileJob.id },
-          data: {
-            status: FileJobStatus.FAILED,
-            error: result.error,
-            processedAt: new Date(),
-          },
-        })
-        emitLog('error', `Failed: ${fileJob.path}`, result.error)
-      }
+      }),
+    ),
+  )
 
-      processedFiles++
-
-      // Update sync job progress periodically
-      if (processedFiles % 10 === 0 || processedFiles === entries.length) {
-        await db.repoSyncJob.update({
-          where: { id: job.id },
-          data: {
-            processedFiles,
-            skippedFiles,
-            failedFiles,
-          },
-        })
-
-        pusher?.emitSyncProgress(repo.plexusId, {
-          jobId: job.id,
-          repoId: repo.id,
-          status: SyncJobStatus.PROCESSING_FILES,
-          processedFiles,
-          totalFiles: entries.length,
-          skippedFiles,
-          failedFiles,
-          currentFile: fileJob.path,
-        })
-
-        // Log progress every 25 files or on milestones
-        if (processedFiles % 25 === 0 || processedFiles === entries.length) {
-          const pct = Math.round((processedFiles / entries.length) * 100)
-          emitLog('info', `Progress: ${processedFiles}/${entries.length} files (${pct}%)`)
-        }
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error)
-      logger.error({ error, fileId: fileJob.id, path: fileJob.path }, 'Error processing file')
-      failedFiles++
-      processedFiles++
-
-      await db.fileSyncJob.update({
-        where: { id: fileJob.id },
-        data: {
-          status: FileJobStatus.FAILED,
-          error: message,
-          processedAt: new Date(),
-        },
-      })
-      emitLog('error', `Exception processing: ${fileJob.path}`, message)
-    }
-  }
+  // Final progress update to ensure accurate counts
+  await db.repoSyncJob.update({
+    where: { id: job.id },
+    data: {
+      processedFiles,
+      skippedFiles,
+      failedFiles,
+    },
+  })
 
   // For full sync, delete files that no longer exist in the repo
   // (Incremental sync handles deletions via compareResult.removed above)

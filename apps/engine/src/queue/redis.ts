@@ -1,5 +1,6 @@
 import { Queue, Worker, type Job, type ConnectionOptions } from 'bullmq'
 import { logger } from '@symploke/logger'
+import { config } from '../config'
 
 // Redis connection config from environment
 function getRedisConnection(): ConnectionOptions {
@@ -209,8 +210,10 @@ export function createSyncWorker(
 ): Worker<SyncJobData> {
   const worker = new Worker<SyncJobData>(QUEUE_NAMES.SYNC, processor, {
     connection,
-    concurrency: 1, // Process one sync at a time
+    concurrency: config.SYNC_WORKER_CONCURRENCY,
   })
+
+  logger.info({ concurrency: config.SYNC_WORKER_CONCURRENCY }, 'Sync worker started')
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id, repoId: job.data.repoId }, 'Sync job completed')
@@ -234,8 +237,10 @@ export function createEmbedWorker(
 ): Worker<EmbedJobData> {
   const worker = new Worker<EmbedJobData>(QUEUE_NAMES.EMBED, processor, {
     connection,
-    concurrency: 1, // Process one embed at a time (API rate limits)
+    concurrency: config.EMBED_WORKER_CONCURRENCY,
   })
+
+  logger.info({ concurrency: config.EMBED_WORKER_CONCURRENCY }, 'Embed worker started')
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id, repoId: job.data.repoId }, 'Embed job completed')
@@ -259,8 +264,10 @@ export function createWeaveWorker(
 ): Worker<WeaveJobData> {
   const worker = new Worker<WeaveJobData>(QUEUE_NAMES.WEAVE, processor, {
     connection,
-    concurrency: 1, // Process one weave discovery at a time
+    concurrency: config.WEAVE_WORKER_CONCURRENCY,
   })
+
+  logger.info({ concurrency: config.WEAVE_WORKER_CONCURRENCY }, 'Weave worker started')
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id, plexusId: job.data.plexusId }, 'Weave job completed')
