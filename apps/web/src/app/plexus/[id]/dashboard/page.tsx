@@ -1,6 +1,9 @@
 import { db } from '@symploke/db'
 import { DashboardClient } from './DashboardClient'
 
+// Force dynamic rendering to always get fresh data
+export const dynamic = 'force-dynamic'
+
 type DashboardPageProps = {
   params: Promise<{ id: string }>
 }
