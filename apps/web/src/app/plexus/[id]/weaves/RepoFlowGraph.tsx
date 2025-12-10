@@ -5,6 +5,7 @@ import {
   Background,
   Controls,
   type Edge,
+  EdgeLabelRenderer,
   type EdgeProps,
   getBezierPath,
   Handle,
@@ -161,8 +162,7 @@ function WeaveEdge({
   markerEnd,
 }: EdgeProps<Edge<WeaveEdgeData>>) {
   const [isHovered, setIsHovered] = useState(false)
-  // Store screen coordinates (clientX/clientY) for the tooltip
-  const [screenPosition, setScreenPosition] = useState<{ x: number; y: number } | null>(null)
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
 
   const [edgePath] = getBezierPath({
@@ -183,13 +183,25 @@ function WeaveEdge({
   // Using exponential curve: width = 1 + 19 * (score ^ 2)
   // This makes higher scores much more prominent
   // Score 0.2 (20%) ≈ 1.8px, Score 0.5 (50%) ≈ 5.75px, Score 1.0 (100%) = 20px
-  const baseStrokeWidth = 1 + 19 * weave.score ** 2
+  const baseStrokeWidth = 1 + 19 * Math.pow(weave.score, 2)
   const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
 
-  // Handle mouse move to track screen position (not SVG coordinates)
+  // Handle mouse move to track position along the edge
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
-    // Use screen coordinates directly so tooltip doesn't scale with zoom
-    setScreenPosition({ x: e.clientX, y: e.clientY })
+    // Get the SVG element's bounding rect to calculate relative position
+    const svg = (e.target as SVGElement).ownerSVGElement
+    if (!svg) return
+
+    const point = svg.createSVGPoint()
+    point.x = e.clientX
+    point.y = e.clientY
+
+    // Transform to SVG coordinates
+    const ctm = svg.getScreenCTM()
+    if (!ctm) return
+
+    const svgPoint = point.matrixTransform(ctm.inverse())
+    setHoverPosition({ x: svgPoint.x, y: svgPoint.y })
   }
 
   const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
@@ -199,7 +211,7 @@ function WeaveEdge({
 
   const handleMouseLeave = () => {
     setIsHovered(false)
-    setScreenPosition(null)
+    setHoverPosition(null)
   }
 
   // Handle click to navigate to weave details
@@ -239,16 +251,14 @@ function WeaveEdge({
           style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
         />
       </g>
-      {/* Tooltip rendered in screen space via portal - doesn't scale with zoom */}
-      {isHovered && screenPosition && (
-        <foreignObject x={0} y={0} width={1} height={1} style={{ overflow: 'visible' }}>
+      {/* Only show label/tooltip on hover */}
+      {isHovered && hoverPosition && (
+        <EdgeLabelRenderer>
           <div
             className="weave-edge__hover-card"
             style={{
-              position: 'fixed',
-              left: screenPosition.x,
-              top: screenPosition.y,
-              transform: 'translate(-50%, -100%) translateY(-12px)',
+              position: 'absolute',
+              transform: `translate(-50%, -100%) translate(${hoverPosition.x}px, ${hoverPosition.y - 12}px)`,
               pointerEvents: 'none',
             }}
           >
@@ -274,7 +284,7 @@ function WeaveEdge({
               <div className="weave-edge__hover-card-hint">Click to view details</div>
             </div>
           </div>
-        </foreignObject>
+        </EdgeLabelRenderer>
       )}
     </>
   )
