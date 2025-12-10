@@ -5,7 +5,6 @@ import {
   Background,
   Controls,
   type Edge,
-  EdgeLabelRenderer,
   type EdgeProps,
   getBezierPath,
   Handle,
@@ -19,6 +18,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './weaves.css'
@@ -162,7 +162,8 @@ function WeaveEdge({
   markerEnd,
 }: EdgeProps<Edge<WeaveEdgeData>>) {
   const [isHovered, setIsHovered] = useState(false)
-  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
+  // Store screen coordinates for the tooltip (not SVG coordinates)
+  const [screenPosition, setScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
 
   const [edgePath] = getBezierPath({
@@ -183,35 +184,22 @@ function WeaveEdge({
   // Using exponential curve: width = 1 + 19 * (score ^ 2)
   // This makes higher scores much more prominent
   // Score 0.2 (20%) ≈ 1.8px, Score 0.5 (50%) ≈ 5.75px, Score 1.0 (100%) = 20px
-  const baseStrokeWidth = 1 + 19 * Math.pow(weave.score, 2)
+  const baseStrokeWidth = 1 + 19 * weave.score ** 2
   const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
 
-  // Handle mouse move to track position along the edge
+  // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
-    // Get the SVG element's bounding rect to calculate relative position
-    const svg = (e.target as SVGElement).ownerSVGElement
-    if (!svg) return
-
-    const point = svg.createSVGPoint()
-    point.x = e.clientX
-    point.y = e.clientY
-
-    // Transform to SVG coordinates
-    const ctm = svg.getScreenCTM()
-    if (!ctm) return
-
-    const svgPoint = point.matrixTransform(ctm.inverse())
-    setHoverPosition({ x: svgPoint.x, y: svgPoint.y })
+    setScreenPosition({ x: e.clientX, y: e.clientY })
   }
 
   const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
     setIsHovered(true)
-    handleMouseMove(e)
+    setScreenPosition({ x: e.clientX, y: e.clientY })
   }
 
   const handleMouseLeave = () => {
     setIsHovered(false)
-    setHoverPosition(null)
+    setScreenPosition(null)
   }
 
   // Handle click to navigate to weave details
@@ -220,6 +208,47 @@ function WeaveEdge({
       window.location.href = `/plexus/${data.plexusId}/weaves/${weave.id}`
     }
   }
+
+  // Tooltip content rendered via portal to document.body (outside SVG/React Flow)
+  const tooltip =
+    isHovered && screenPosition
+      ? createPortal(
+          <div
+            className="weave-edge__hover-card"
+            style={{
+              position: 'fixed',
+              left: screenPosition.x,
+              top: screenPosition.y - 12,
+              transform: 'translate(-50%, -100%)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          >
+            <div className="weave-edge__hover-card-content">
+              <div className="weave-edge__hover-card-header">
+                <span className="weave-edge__hover-card-title">{weave.title}</span>
+                <span className="weave-edge__hover-card-score">{scorePercent}%</span>
+              </div>
+              <p className="weave-edge__hover-card-description">{weave.description}</p>
+              <div className="weave-edge__hover-card-repos">
+                <span>{weave.sourceRepo.name}</span>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M4 8H12M12 8L8 4M12 8L8 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{weave.targetRepo.name}</span>
+              </div>
+              <div className="weave-edge__hover-card-hint">Click to view details</div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null
 
   return (
     <>
@@ -251,41 +280,7 @@ function WeaveEdge({
           style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
         />
       </g>
-      {/* Only show label/tooltip on hover */}
-      {isHovered && hoverPosition && (
-        <EdgeLabelRenderer>
-          <div
-            className="weave-edge__hover-card"
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -100%) translate(${hoverPosition.x}px, ${hoverPosition.y - 12}px)`,
-              pointerEvents: 'none',
-            }}
-          >
-            <div className="weave-edge__hover-card-content">
-              <div className="weave-edge__hover-card-header">
-                <span className="weave-edge__hover-card-title">{weave.title}</span>
-                <span className="weave-edge__hover-card-score">{scorePercent}%</span>
-              </div>
-              <p className="weave-edge__hover-card-description">{weave.description}</p>
-              <div className="weave-edge__hover-card-repos">
-                <span>{weave.sourceRepo.name}</span>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path
-                    d="M4 8H12M12 8L8 4M12 8L8 12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>{weave.targetRepo.name}</span>
-              </div>
-              <div className="weave-edge__hover-card-hint">Click to view details</div>
-            </div>
-          </div>
-        </EdgeLabelRenderer>
-      )}
+      {tooltip}
     </>
   )
 }
