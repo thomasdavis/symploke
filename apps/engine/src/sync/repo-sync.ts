@@ -146,6 +146,12 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
   let isIncrementalSync = false
   let headCommitSha: string | null = null
 
+  emitLog(
+    'info',
+    `Sync mode: ${repo.lastCommitSha ? 'incremental available' : 'full (no previous SHA)'}`,
+    repo.lastCommitSha ? `lastCommitSha=${repo.lastCommitSha.slice(0, 7)}` : undefined,
+  )
+
   if (repo.lastCommitSha) {
     emitLog('info', `Checking for changes since last sync (${repo.lastCommitSha.slice(0, 7)})...`)
     compareResult = await compareCommits(
@@ -533,6 +539,7 @@ export async function syncRepo(job: RepoSyncJob, pusher?: PusherService): Promis
     failedFiles,
     duration,
     jobId: job.id,
+    isIncremental: isIncrementalSync,
   })
 
   // Auto-trigger embedding if there are files that need it

@@ -77,13 +77,28 @@ export async function notifySyncCompleted(data: {
   failedFiles: number
   duration: number
   jobId: string
+  isIncremental?: boolean
 }): Promise<void> {
   // Calculate how many files were actually synced (not skipped)
-  const actuallyProcessed = data.processedFiles - data.skippedFiles
+  const actuallyUpdated = data.processedFiles - data.skippedFiles - data.failedFiles
+
+  // Log for debugging
+  logger.info(
+    {
+      repo: data.repoName,
+      totalFiles: data.totalFiles,
+      processedFiles: data.processedFiles,
+      skippedFiles: data.skippedFiles,
+      failedFiles: data.failedFiles,
+      actuallyUpdated,
+      isIncremental: data.isIncremental,
+    },
+    'Sync completed stats',
+  )
 
   // Only notify if something actually changed or there were errors
-  if (actuallyProcessed === 0 && data.failedFiles === 0) {
-    logger.debug(
+  if (actuallyUpdated === 0 && data.failedFiles === 0) {
+    logger.info(
       { repo: data.repoName, skipped: data.skippedFiles },
       'Skipping Discord notification - no changes detected',
     )
@@ -91,27 +106,29 @@ export async function notifySyncCompleted(data: {
   }
 
   const durationStr = formatDuration(data.duration)
+  const syncType = data.isIncremental ? 'incremental' : 'full'
 
   // Determine message based on what happened
   const hasFailures = data.failedFiles > 0
   const description = hasFailures
     ? `Repository **${data.repoFullName}** sync completed with errors in **${data.plexusName}**`
-    : `Repository **${data.repoFullName}** synced **${actuallyProcessed}** new/updated files in **${data.plexusName}**`
+    : `Repository **${data.repoFullName}** synced **${actuallyUpdated}** file${actuallyUpdated === 1 ? '' : 's'} in **${data.plexusName}**`
 
   await sendWebhook({
     embeds: [
       {
-        title: hasFailures ? `Sync Warning: ${data.repoName}` : `Sync Completed: ${data.repoName}`,
+        title: hasFailures ? `⚠️ Sync Warning: ${data.repoName}` : `✅ ${data.repoName}`,
         description,
         color: hasFailures ? COLORS.warning : COLORS.success,
         fields: [
-          { name: 'New/Updated', value: actuallyProcessed.toLocaleString(), inline: true },
+          { name: 'Updated', value: actuallyUpdated.toLocaleString(), inline: true },
           { name: 'Unchanged', value: data.skippedFiles.toLocaleString(), inline: true },
           { name: 'Failed', value: data.failedFiles.toLocaleString(), inline: true },
-          { name: 'Total Files', value: data.totalFiles.toLocaleString(), inline: true },
+          { name: 'Total', value: data.totalFiles.toLocaleString(), inline: true },
           { name: 'Duration', value: durationStr, inline: true },
+          { name: 'Type', value: syncType, inline: true },
         ],
-        footer: { text: `Job ID: ${data.jobId}` },
+        footer: { text: `Job: ${data.jobId}` },
         timestamp: new Date().toISOString(),
       },
     ],
