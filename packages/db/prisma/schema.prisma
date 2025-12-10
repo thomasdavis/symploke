@@ -330,19 +330,21 @@ model Comment {
 // === Weave Discovery Runs ===
 
 model WeaveDiscoveryRun {
-  id               String                 @id @default(cuid())
-  plexusId         String
-  status           WeaveDiscoveryStatus   @default(RUNNING)
-  config           Json?                  // Threshold, options, etc.
-  repoPairsTotal   Int                    @default(0)
-  repoPairsChecked Int                    @default(0)
-  candidatesFound  Int                    @default(0)
-  weavesSaved      Int                    @default(0)
-  weavesSkipped    Int                    @default(0)
-  error            String?
-  logs             Json?                  // Detailed logs for debugging
-  startedAt        DateTime               @default(now())
-  completedAt      DateTime?
+  id                    String                 @id @default(cuid())
+  plexusId              String
+  status                WeaveDiscoveryStatus   @default(RUNNING)
+  config                Json?                  // Threshold, options, etc.
+  repoPairsTotal        Int                    @default(0)
+  repoPairsChecked      Int                    @default(0)
+  currentSourceRepoName String?                // Name of source repo being checked
+  currentTargetRepoName String?                // Name of target repo being checked
+  candidatesFound       Int                    @default(0)
+  weavesSaved           Int                    @default(0)
+  weavesSkipped         Int                    @default(0)
+  error                 String?
+  logs                  Json?                  // Detailed logs for debugging
+  startedAt             DateTime               @default(now())
+  completedAt           DateTime?
 
   plexus Plexus  @relation(fields: [plexusId], references: [id], onDelete: Cascade)
   weaves Weave[]

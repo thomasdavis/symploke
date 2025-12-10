@@ -160,6 +160,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         startedAt: true,
         repoPairsTotal: true,
         repoPairsChecked: true,
+        currentSourceRepoName: true,
+        currentTargetRepoName: true,
       },
     })
 
@@ -191,6 +193,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
           total: runningRun.repoPairsTotal,
           checked: runningRun.repoPairsChecked,
         },
+        currentPair:
+          runningRun.currentSourceRepoName && runningRun.currentTargetRepoName
+            ? {
+                sourceRepoName: runningRun.currentSourceRepoName,
+                targetRepoName: runningRun.currentTargetRepoName,
+              }
+            : null,
         discoveredWeaves,
       })
     }

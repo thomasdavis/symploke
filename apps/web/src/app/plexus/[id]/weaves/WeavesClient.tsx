@@ -686,20 +686,26 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
           <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
           <div className="weaves-run-selector">
             <Select.Root
-              value={selectedRunId}
-              onValueChange={(val) => setSelectedRunId(typeof val === 'string' ? val : 'latest')}
+              value={weaveProgress.isRunning ? 'running' : selectedRunId}
+              onValueChange={(val) => {
+                if (val !== 'running') {
+                  setSelectedRunId(typeof val === 'string' ? val : 'latest')
+                }
+              }}
             >
               <Select.Trigger className="run-selector-trigger">
                 <Select.Value>
-                  {selectedRunId === 'all'
-                    ? `All runs (${weaves.length} weaves)`
-                    : selectedRunId === 'latest'
-                      ? selectedRun
-                        ? `Latest: ${formatRunDate(selectedRun.startedAt)} (${filteredWeaves.length} weaves)`
-                        : 'Latest run'
-                      : selectedRun
-                        ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
-                        : 'Select run'}
+                  {weaveProgress.isRunning
+                    ? `Running... ${weaveProgress.weavesFound} weave${weaveProgress.weavesFound !== 1 ? 's' : ''} found`
+                    : selectedRunId === 'all'
+                      ? `All runs (${weaves.length} weaves)`
+                      : selectedRunId === 'latest'
+                        ? selectedRun
+                          ? `Latest: ${formatRunDate(selectedRun.startedAt)} (${filteredWeaves.length} weaves)`
+                          : 'Latest run'
+                        : selectedRun
+                          ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
+                          : 'Select run'}
                 </Select.Value>
                 <Select.Icon aria-hidden="true">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -717,6 +723,38 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                 <Select.Positioner>
                   <Select.Popup>
                     <Select.List>
+                      {weaveProgress.isRunning && (
+                        <>
+                          <Select.Item value="running">
+                            <Select.ItemText>
+                              Running... {weaveProgress.weavesFound} weave
+                              {weaveProgress.weavesFound !== 1 ? 's' : ''} found
+                              {weaveProgress.currentSourceRepoName &&
+                              weaveProgress.currentTargetRepoName
+                                ? ` (${weaveProgress.currentSourceRepoName} ↔ ${weaveProgress.currentTargetRepoName})`
+                                : ''}
+                            </Select.ItemText>
+                            <Select.ItemIndicator aria-hidden="true">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 12 12"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M2.5 6L5 8.5L9.5 3.5"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                          <Select.Separator />
+                        </>
+                      )}
                       <Select.Item value="all">
                         <Select.ItemText>All runs ({weaves.length} weaves)</Select.ItemText>
                         <Select.ItemIndicator aria-hidden="true">

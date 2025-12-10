@@ -48,6 +48,8 @@ export interface WeaveProgressEvent {
   repoPairsChecked: number
   repoPairsTotal: number
   weavesFound: number
+  currentSourceRepoName: string | null
+  currentTargetRepoName: string | null
 }
 
 export interface WeaveDiscoveredEvent {

@@ -26,6 +26,8 @@ export interface WeaveProgressState {
   newWeaves: WeaveDiscoveredWeave[]
   duration: string | null
   error: string | null
+  currentSourceRepoName: string | null
+  currentTargetRepoName: string | null
 }
 
 const initialState: WeaveProgressState = {
@@ -37,6 +39,8 @@ const initialState: WeaveProgressState = {
   newWeaves: [],
   duration: null,
   error: null,
+  currentSourceRepoName: null,
+  currentTargetRepoName: null,
 }
 
 export function useWeaveProgress(plexusId: string) {
@@ -76,6 +80,8 @@ export function useWeaveProgress(plexusId: string) {
             repoPairsChecked: data.progress?.checked || prev.repoPairsChecked,
             weavesFound: discoveredWeaves.length,
             newWeaves: discoveredWeaves,
+            currentSourceRepoName: data.currentPair?.sourceRepoName ?? null,
+            currentTargetRepoName: data.currentPair?.targetRepoName ?? null,
           }))
         } else if (data.status === 'idle' && state.status === 'running') {
           // Discovery just completed
@@ -147,6 +153,8 @@ export function useWeaveProgress(plexusId: string) {
             newWeaves: [],
             duration: null,
             error: null,
+            currentSourceRepoName: null,
+            currentTargetRepoName: null,
           })
         },
       )
@@ -158,6 +166,8 @@ export function useWeaveProgress(plexusId: string) {
           repoPairsChecked: number
           repoPairsTotal: number
           weavesFound: number
+          currentSourceRepoName: string | null
+          currentTargetRepoName: string | null
         }) => {
           console.log('[useWeaveProgress] Pusher weave:progress', data)
           setState((prev) => ({
@@ -165,6 +175,8 @@ export function useWeaveProgress(plexusId: string) {
             repoPairsChecked: data.repoPairsChecked,
             repoPairsTotal: data.repoPairsTotal,
             weavesFound: data.weavesFound,
+            currentSourceRepoName: data.currentSourceRepoName,
+            currentTargetRepoName: data.currentTargetRepoName,
           }))
         },
       )

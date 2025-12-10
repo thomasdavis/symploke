@@ -210,6 +210,15 @@ export async function findWeaves(
     let pairsChecked = 0
 
     for (const pair of repoPairs) {
+      // Update current pair being checked BEFORE processing starts
+      await db.weaveDiscoveryRun.update({
+        where: { id: discoveryRun.id },
+        data: {
+          currentSourceRepoName: pair.source.name,
+          currentTargetRepoName: pair.target.name,
+        },
+      })
+
       for (const weaveType of typesToRun) {
         log('debug', `Checking pair: ${pair.source.fullName} <-> ${pair.target.fullName}`, {
           type: weaveType.id,
@@ -272,9 +281,15 @@ export async function findWeaves(
       }
 
       pairsChecked++
+      // Get the next pair being checked (if any)
+      const nextPair = repoPairs[pairsChecked]
       await db.weaveDiscoveryRun.update({
         where: { id: discoveryRun.id },
-        data: { repoPairsChecked: pairsChecked },
+        data: {
+          repoPairsChecked: pairsChecked,
+          currentSourceRepoName: nextPair?.source.name ?? null,
+          currentTargetRepoName: nextPair?.target.name ?? null,
+        },
       })
 
       // Emit weave:progress event
@@ -284,6 +299,8 @@ export async function findWeaves(
           repoPairsChecked: pairsChecked,
           repoPairsTotal: repoPairs.length,
           weavesFound,
+          currentSourceRepoName: nextPair?.source.name ?? null,
+          currentTargetRepoName: nextPair?.target.name ?? null,
         })
       }
     }
