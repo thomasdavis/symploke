@@ -239,8 +239,9 @@ program
         const indexed = repo.lastIndexed
           ? `indexed ${repo.lastIndexed.toISOString()}`
           : 'not indexed'
+        const commit = repo.lastCommitSha ? `sha:${repo.lastCommitSha.slice(0, 7)}` : 'no sha'
         console.log(
-          `${repo.id} - ${repo.fullName} (${repo.plexus.name}) - ${repo._count.files} files, ${indexed}`,
+          `${repo.id} - ${repo.fullName} (${repo.plexus.name}) - ${repo._count.files} files, ${indexed}, ${commit}`,
         )
       }
     } catch (error: unknown) {
