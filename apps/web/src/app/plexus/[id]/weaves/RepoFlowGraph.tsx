@@ -15,6 +15,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
+  useNodesState,
   useReactFlow,
 } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -187,6 +188,16 @@ function WeaveEdge({
   const baseStrokeWidth = 1 + 19 * weave.score ** 2
   const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
 
+  // Calculate opacity based on score (0.5 to 1.0)
+  // Low score = 0.5 opacity, high score = 1.0 opacity
+  const strokeOpacity = 0.5 + weave.score * 0.5
+
+  // Calculate color lightness based on score
+  // High score = darker (more saturated), low score = lighter (less saturated)
+  // Using oklch: lightness from 75% (low score) to 45% (high score)
+  const lightness = 75 - weave.score * 30
+  const strokeColor = `oklch(${lightness}% 0.15 280)`
+
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
   const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
     setScreenPosition({ x: e.clientX, y: e.clientY })
@@ -268,16 +279,17 @@ function WeaveEdge({
           stroke="transparent"
           strokeWidth={Math.max(24, baseStrokeWidth + 8)}
         />
-        {/* Visible edge - stroke width based on score (exponential) */}
+        {/* Visible edge - stroke width, color, and opacity based on score */}
         <path
           id={id}
           d={edgePath}
           fill="none"
-          stroke={isHovered ? 'var(--color-primary)' : 'var(--color-weave-edge)'}
+          stroke={isHovered ? 'var(--color-primary)' : strokeColor}
           strokeWidth={isHovered ? hoverStrokeWidth : baseStrokeWidth}
+          strokeOpacity={isHovered ? 1 : strokeOpacity}
           markerEnd={markerEnd}
           className="weave-edge__path"
-          style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
+          style={{ transition: 'stroke 0.15s, stroke-width 0.15s, stroke-opacity 0.15s' }}
         />
       </g>
       {tooltip}
@@ -416,18 +428,22 @@ function RepoFlowGraphInner({
     return weaves
   }, [isDiscoveryRunning, newWeaves, weaves])
 
-  // Use circle layout - no force simulation, just static circle positioning
-  // This gives a cleaner, more predictable layout
-  const circleNodes = initialNodes
+  // Use state for nodes so they can be dragged
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<RepoNodeData>>(initialNodes)
 
   // Create React Flow edges from weaves, updating handles based on current positions
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<WeaveEdgeData>>([])
 
-  // Update edges when weaves change
+  // Update nodes when repos change
   useEffect(() => {
-    const newEdges = createEdgesFromWeaves(displayWeaves, circleNodes, plexusId)
+    setNodes(initialNodes)
+  }, [initialNodes, setNodes])
+
+  // Update edges when weaves or node positions change
+  useEffect(() => {
+    const newEdges = createEdgesFromWeaves(displayWeaves, nodes, plexusId)
     setEdges(newEdges)
-  }, [circleNodes, displayWeaves, plexusId, setEdges])
+  }, [nodes, displayWeaves, plexusId, setEdges])
 
   // Fit view on initial load and show edges after a delay
   useEffect(() => {
@@ -478,8 +494,9 @@ function RepoFlowGraphInner({
 
   return (
     <ReactFlow
-      nodes={circleNodes}
+      nodes={nodes}
       edges={showEdges ? edges : []}
+      onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onNodeClick={onNodeClick}
       nodeTypes={nodeTypes}
