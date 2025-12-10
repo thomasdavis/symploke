@@ -193,7 +193,7 @@ export async function addWeaveJob(
     'weave',
     { plexusId, triggeredBy },
     {
-      jobId: `weave-${plexusId}`,
+      jobId: `weave-${plexusId}-${Date.now()}`,
     },
   )
 
