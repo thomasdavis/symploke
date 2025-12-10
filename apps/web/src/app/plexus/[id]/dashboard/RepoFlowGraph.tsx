@@ -407,21 +407,22 @@ function RepoFlowGraphInner({
       fitView({ padding: 0.15, duration: 400 })
     }, 100)
 
-    // Show edges after nodes are positioned
+    return () => clearTimeout(fitTimer)
+  }, [fitView])
+
+  // Show edges after initial render settles
+  useEffect(() => {
     if (!edgesReady) {
       setEdgesReady(true)
+    }
+    // Always show edges after a delay when not running discovery
+    if (!isDiscoveryRunning && displayWeaves.length > 0) {
       const edgeTimer = setTimeout(() => {
         setShowEdges(true)
-      }, 500) // Delay to let circle layout settle visually
-
-      return () => {
-        clearTimeout(fitTimer)
-        clearTimeout(edgeTimer)
-      }
+      }, 300)
+      return () => clearTimeout(edgeTimer)
     }
-
-    return () => clearTimeout(fitTimer)
-  }, [fitView, edgesReady])
+  }, [edgesReady, isDiscoveryRunning, displayWeaves.length])
 
   // Reset edge visibility when discovery starts
   useEffect(() => {
