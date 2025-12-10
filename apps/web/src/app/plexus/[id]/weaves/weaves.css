@@ -1230,102 +1230,38 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
-.weave-edge__label {
-  /* Reset button styles */
-  font-family: inherit;
-  font-size: var(--text-xs);
-  text-align: left;
-  /* Custom styling */
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  z-index: 10;
+/* Weave Edge Hover Card - appears on hover at cursor position */
+.weave-edge__hover-card {
+  z-index: 1000;
+  pointer-events: none;
 }
 
-.weave-edge__label:hover,
-.weave-edge__label--hovered {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.weave-edge__title {
-  font-weight: 500;
-  color: var(--color-fg);
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.weave-edge__score {
-  font-weight: 600;
-  color: var(--color-weave-edge);
-  padding: 2px 6px;
-  background: oklch(from var(--color-weave-edge) l c h / 0.12);
-  border-radius: var(--radius-sm);
-}
-
-/* Weave Tooltip */
-.weave-edge__tooltip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 320px;
-  max-width: 90vw;
-  padding: var(--space-4);
+.weave-edge__hover-card-content {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  text-align: left;
-  white-space: normal;
+  padding: var(--space-3) var(--space-4);
+  min-width: 240px;
+  max-width: 320px;
 }
 
-.weave-edge__tooltip::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-bottom-color: var(--color-border);
-}
-
-.weave-edge__tooltip::after {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-bottom-color: var(--color-bg);
-}
-
-.weave-edge__tooltip-header {
+.weave-edge__hover-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
-.weave-edge__tooltip-title {
+.weave-edge__hover-card-title {
   font-weight: 600;
   font-size: var(--text-sm);
   color: var(--color-fg);
   line-height: 1.3;
 }
 
-.weave-edge__tooltip-score {
+.weave-edge__hover-card-score {
   flex-shrink: 0;
   font-weight: 600;
   font-size: var(--text-xs);
@@ -1335,57 +1271,39 @@
   border-radius: var(--radius-sm);
 }
 
-.weave-edge__tooltip-description {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-sm);
+.weave-edge__hover-card-description {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
   color: var(--color-fg-muted);
   line-height: 1.5;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.weave-edge__tooltip-repos {
+.weave-edge__hover-card-repos {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
   font-size: var(--text-xs);
   font-weight: 500;
   color: var(--color-fg-muted);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
-.weave-edge__tooltip-repos svg {
+.weave-edge__hover-card-repos svg {
   color: var(--color-weave-edge);
-}
-
-.weave-edge__tooltip-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  width: 100%;
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-primary);
-  color: white;
-  font-size: var(--text-xs);
-  font-weight: 500;
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  transition:
-    background var(--duration-fast),
-    transform var(--duration-fast);
-}
-
-.weave-edge__tooltip-link:hover {
-  background: oklch(from var(--color-primary) calc(l - 0.05) c h);
-  transform: translateY(-1px);
-}
-
-.weave-edge__tooltip-link svg {
   flex-shrink: 0;
+}
+
+.weave-edge__hover-card-hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-fg-subtle);
+  text-align: center;
+  font-style: italic;
 }
 
 /* Loading state */
@@ -1499,11 +1417,9 @@
 @keyframes edgeFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -1511,31 +1427,15 @@
   animation: edgeFadeIn 0.4s ease-out forwards;
 }
 
-/* Edge label also fades in */
-.weave-edge__label {
-  animation: edgeFadeIn 0.4s ease-out forwards;
-}
-
 /* Stagger edge animations for a nicer reveal */
-.react-flow__edge:nth-child(1),
-.react-flow__edgelabel-renderer > div:nth-child(1) .weave-edge__label { animation-delay: 0ms; }
-.react-flow__edge:nth-child(2),
-.react-flow__edgelabel-renderer > div:nth-child(2) .weave-edge__label { animation-delay: 40ms; }
-.react-flow__edge:nth-child(3),
-.react-flow__edgelabel-renderer > div:nth-child(3) .weave-edge__label { animation-delay: 80ms; }
-.react-flow__edge:nth-child(4),
-.react-flow__edgelabel-renderer > div:nth-child(4) .weave-edge__label { animation-delay: 120ms; }
-.react-flow__edge:nth-child(5),
-.react-flow__edgelabel-renderer > div:nth-child(5) .weave-edge__label { animation-delay: 160ms; }
-.react-flow__edge:nth-child(6),
-.react-flow__edgelabel-renderer > div:nth-child(6) .weave-edge__label { animation-delay: 200ms; }
-.react-flow__edge:nth-child(7),
-.react-flow__edgelabel-renderer > div:nth-child(7) .weave-edge__label { animation-delay: 240ms; }
-.react-flow__edge:nth-child(8),
-.react-flow__edgelabel-renderer > div:nth-child(8) .weave-edge__label { animation-delay: 280ms; }
-.react-flow__edge:nth-child(9),
-.react-flow__edgelabel-renderer > div:nth-child(9) .weave-edge__label { animation-delay: 320ms; }
-.react-flow__edge:nth-child(10),
-.react-flow__edgelabel-renderer > div:nth-child(10) .weave-edge__label { animation-delay: 360ms; }
-.react-flow__edge:nth-child(n+11),
-.react-flow__edgelabel-renderer > div:nth-child(n+11) .weave-edge__label { animation-delay: 400ms; }
+.react-flow__edge:nth-child(1) { animation-delay: 0ms; }
+.react-flow__edge:nth-child(2) { animation-delay: 30ms; }
+.react-flow__edge:nth-child(3) { animation-delay: 60ms; }
+.react-flow__edge:nth-child(4) { animation-delay: 90ms; }
+.react-flow__edge:nth-child(5) { animation-delay: 120ms; }
+.react-flow__edge:nth-child(6) { animation-delay: 150ms; }
+.react-flow__edge:nth-child(7) { animation-delay: 180ms; }
+.react-flow__edge:nth-child(8) { animation-delay: 210ms; }
+.react-flow__edge:nth-child(9) { animation-delay: 240ms; }
+.react-flow__edge:nth-child(10) { animation-delay: 270ms; }
+.react-flow__edge:nth-child(n+11) { animation-delay: 300ms; }

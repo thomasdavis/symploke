@@ -163,9 +163,10 @@ function WeaveEdge({
   markerEnd,
 }: EdgeProps<Edge<WeaveEdgeData>>) {
   const [isHovered, setIsHovered] = useState(false)
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -179,51 +180,83 @@ function WeaveEdge({
 
   const scorePercent = Math.round(weave.score * 100)
 
+  // Calculate stroke width based on score (1-5px range)
+  // Score 0.2 (20%) = 1px, Score 1.0 (100%) = 5px
+  const baseStrokeWidth = 1 + weave.score * 4
+  const hoverStrokeWidth = baseStrokeWidth + 2
+
+  // Handle mouse move to track position along the edge
+  const handleMouseMove = (e: React.MouseEvent<SVGGElement>) => {
+    // Get the SVG element's bounding rect to calculate relative position
+    const svg = (e.target as SVGElement).ownerSVGElement
+    if (!svg) return
+
+    const point = svg.createSVGPoint()
+    point.x = e.clientX
+    point.y = e.clientY
+
+    // Transform to SVG coordinates
+    const ctm = svg.getScreenCTM()
+    if (!ctm) return
+
+    const svgPoint = point.matrixTransform(ctm.inverse())
+    setHoverPosition({ x: svgPoint.x, y: svgPoint.y })
+  }
+
+  const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
+    setIsHovered(true)
+    handleMouseMove(e)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovered(false)
+    setHoverPosition(null)
+  }
+
   return (
     <>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover events for edge highlighting */}
-      <g onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <g
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         {/* Invisible wider path for easier hover */}
-        <path id={`${id}-hitarea`} d={edgePath} fill="none" stroke="transparent" strokeWidth={20} />
-        {/* Visible edge */}
+        <path id={`${id}-hitarea`} d={edgePath} fill="none" stroke="transparent" strokeWidth={24} />
+        {/* Visible edge - stroke width based on score */}
         <path
           id={id}
           d={edgePath}
           fill="none"
           stroke={isHovered ? 'var(--color-primary)' : 'var(--color-weave-edge)'}
-          strokeWidth={isHovered ? 3 : 2}
+          strokeWidth={isHovered ? hoverStrokeWidth : baseStrokeWidth}
           markerEnd={markerEnd}
           className="weave-edge__path"
           style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
         />
       </g>
-      <EdgeLabelRenderer>
-        <button
-          type="button"
-          className={`weave-edge__label ${isHovered ? 'weave-edge__label--hovered' : ''}`}
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            pointerEvents: 'all',
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <span className="weave-edge__title">{weave.title}</span>
-          <span className="weave-edge__score">{scorePercent}%</span>
-
-          {isHovered && (
-            <div className="weave-edge__tooltip">
-              <div className="weave-edge__tooltip-header">
-                <span className="weave-edge__tooltip-title">{weave.title}</span>
-                <span className="weave-edge__tooltip-score">{scorePercent}% match</span>
+      {/* Only show label/tooltip on hover */}
+      {isHovered && hoverPosition && (
+        <EdgeLabelRenderer>
+          <div
+            className="weave-edge__hover-card"
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -100%) translate(${hoverPosition.x}px, ${hoverPosition.y - 12}px)`,
+              pointerEvents: 'none',
+            }}
+          >
+            <div className="weave-edge__hover-card-content">
+              <div className="weave-edge__hover-card-header">
+                <span className="weave-edge__hover-card-title">{weave.title}</span>
+                <span className="weave-edge__hover-card-score">{scorePercent}%</span>
               </div>
-              <p className="weave-edge__tooltip-description">{weave.description}</p>
-              <div className="weave-edge__tooltip-repos">
+              <p className="weave-edge__hover-card-description">{weave.description}</p>
+              <div className="weave-edge__hover-card-repos">
                 <span>{weave.sourceRepo.name}</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path
-                    d="M6 4L10 8L6 12"
+                    d="M4 8H12M12 8L8 4M12 8L8 12"
                     stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
@@ -232,26 +265,25 @@ function WeaveEdge({
                 </svg>
                 <span>{weave.targetRepo.name}</span>
               </div>
-              <Link
-                href={`/plexus/${data?.plexusId}/weaves/${weave.id}`}
-                className="weave-edge__tooltip-link"
-                onClick={(e) => e.stopPropagation()}
-              >
-                View Full Details
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path
-                    d="M6 4L10 8L6 12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
+              <div className="weave-edge__hover-card-hint">Click edge to view details</div>
             </div>
-          )}
-        </button>
-      </EdgeLabelRenderer>
+          </div>
+        </EdgeLabelRenderer>
+      )}
+      {/* Clickable area for navigation - only visible on hover */}
+      {isHovered && (
+        <Link
+          href={`/plexus/${data?.plexusId}/weaves/${weave.id}`}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+          }}
+        />
+      )}
     </>
   )
 }
