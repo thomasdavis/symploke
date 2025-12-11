@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import '@symploke/design/components/table.css'
 
 export type TableColumn<T> = {
@@ -67,13 +68,13 @@ export function Table<T>({
                 return (
                   <tr key={rowKey} className="table__row--linkable">
                     <td colSpan={columns.length} className="table__row-link-cell">
-                      <a href={href} className="table__row-link">
+                      <Link href={href} className="table__row-link">
                         <table className="table__row-link-table">
                           <tbody>
                             <tr>{cells}</tr>
                           </tbody>
                         </table>
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 )
