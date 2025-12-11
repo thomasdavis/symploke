@@ -315,7 +315,7 @@ export function StatsClient({ plexusId, initialData }: StatsClientProps) {
                       <span
                         className={`stats-leaderboard__medal stats-leaderboard__medal--${index + 1}`}
                       >
-                        {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'}
+                        {index + 1}
                       </span>
                     ) : (
                       index + 1

@@ -246,25 +246,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
 }
 
 .stats-leaderboard__medal--1 {
-  background: linear-gradient(135deg, #ffd700 0%, #ffec8b 100%);
-  color: #6b5900;
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
 }
 
 .stats-leaderboard__medal--2 {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-  color: #4a4a4a;
+  background: rgba(148, 163, 184, 0.15);
+  color: #64748b;
 }
 
 .stats-leaderboard__medal--3 {
-  background: linear-gradient(135deg, #cd7f32 0%, #daa06d 100%);
-  color: #5c3a1d;
+  background: rgba(180, 83, 9, 0.15);
+  color: #b45309;
 }
 
 .stats-leaderboard__new {
