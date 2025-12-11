@@ -27,6 +27,7 @@
     "@symploke/utils": "workspace:*",
     "@tanstack/react-query": "latest",
     "@tanstack/react-query-devtools": "latest",
+    "@tanstack/react-virtual": "^3.13.13",
     "@xyflow/react": "^12.10.0",
     "d3-force-3d": "^3.0.6",
     "next": "latest",

@@ -53,7 +53,8 @@
     "./Toggle/Toggle": "./src/Toggle/Toggle.tsx",
     "./ToggleGroup/ToggleGroup": "./src/ToggleGroup/ToggleGroup.tsx",
     "./Toolbar/Toolbar": "./src/Toolbar/Toolbar.tsx",
-    "./Tooltip/Tooltip": "./src/Tooltip/Tooltip.tsx"
+    "./Tooltip/Tooltip": "./src/Tooltip/Tooltip.tsx",
+    "./VirtualTable/VirtualTable": "./src/VirtualTable/VirtualTable.tsx"
   },
   "scripts": {
     "build": "tsc",
@@ -68,7 +69,8 @@
     "@base-ui-components/react": "latest",
     "@symploke/api": "workspace:*",
     "@symploke/design": "workspace:*",
-    "@tanstack/react-query": "^5.90.12"
+    "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-virtual": "^3.13.13"
   },
   "devDependencies": {
     "@symploke/test": "workspace:*",

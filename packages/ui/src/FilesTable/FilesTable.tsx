@@ -1,5 +1,7 @@
 import type { TableColumn } from '../Table/Table'
 import { Table } from '../Table/Table'
+import type { VirtualTableColumn } from '../VirtualTable/VirtualTable'
+import { VirtualTable } from '../VirtualTable/VirtualTable'
 import '@symploke/design/components/files-table.css'
 
 export type File = {
@@ -170,6 +172,99 @@ export function FilesTable({ files, className, getFileHref }: FilesTableProps) {
       emptyMessage="No files synced yet"
       className={className}
       getRowKey={(file) => file.id}
+    />
+  )
+}
+
+// Virtual table columns (adapted for VirtualTable component)
+function createVirtualColumns(): VirtualTableColumn<File>[] {
+  return [
+    {
+      header: 'File',
+      accessor: (file) => {
+        const fileName = getFileName(file.path)
+        const extension = getFileExtension(file.path)
+        return (
+          <div className="files-table__file-cell">
+            <FileIcon extension={extension} />
+            <div className="files-table__file-info">
+              <div className="files-table__file-name">{fileName}</div>
+              <div className="files-table__file-path">{file.path}</div>
+            </div>
+          </div>
+        )
+      },
+      width: 'grow',
+    },
+    {
+      header: 'Repository',
+      accessor: (file) => <span className="files-table__repo">{file.repo.name}</span>,
+      width: '140px',
+    },
+    {
+      header: 'Language',
+      accessor: (file) => (
+        <span className="files-table__language">
+          {file.language || (file.skippedReason ? 'Skipped' : '—')}
+        </span>
+      ),
+      width: '100px',
+    },
+    {
+      header: 'Size',
+      accessor: (file) => <span className="files-table__size">{formatBytes(file.size)}</span>,
+      width: '80px',
+      align: 'right',
+    },
+    {
+      header: 'Lines',
+      accessor: (file) => (
+        <span className="files-table__loc">
+          {file.loc !== null ? file.loc.toLocaleString() : '—'}
+        </span>
+      ),
+      width: '80px',
+      align: 'right',
+    },
+    {
+      header: 'Updated',
+      accessor: (file) => formatTimeAgo(file.updatedAt),
+      width: '120px',
+    },
+  ]
+}
+
+export type VirtualFilesTableProps = {
+  files: File[]
+  totalCount: number
+  hasMore: boolean
+  onLoadMore: () => void
+  isLoadingMore: boolean
+  className?: string
+}
+
+export function VirtualFilesTable({
+  files,
+  totalCount,
+  hasMore,
+  onLoadMore,
+  isLoadingMore,
+  className,
+}: VirtualFilesTableProps) {
+  const columns = createVirtualColumns()
+
+  return (
+    <VirtualTable
+      columns={columns}
+      data={files}
+      getRowKey={(file) => file.id}
+      totalCount={totalCount}
+      hasMore={hasMore}
+      onLoadMore={onLoadMore}
+      isLoadingMore={isLoadingMore}
+      emptyMessage="No files synced yet"
+      className={className}
+      estimatedRowHeight={52}
     />
   )
 }

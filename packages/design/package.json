@@ -57,7 +57,8 @@
     "./components/toggle.css": "./src/components/toggle.css",
     "./components/toggle-group.css": "./src/components/toggle-group.css",
     "./components/toolbar.css": "./src/components/toolbar.css",
-    "./components/tooltip.css": "./src/components/tooltip.css"
+    "./components/tooltip.css": "./src/components/tooltip.css",
+    "./components/virtual-table.css": "./src/components/virtual-table.css"
   },
   "files": [
     "src"
