@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Menu } from '@symploke/ui/Menu/Menu'
 import './PlexusSelector.css'
 
@@ -18,10 +18,15 @@ type PlexusSelectorProps = {
 
 export function PlexusSelector({ currentPlexus, plexuses }: PlexusSelectorProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
   const handlePlexusChange = (plexusId: string) => {
-    router.push(`/plexus/${plexusId}/weaves`)
+    // Preserve the current page when switching plexuses
+    // e.g., /plexus/abc123/members -> /plexus/xyz789/members
+    const currentPath = pathname.replace(`/plexus/${currentPlexus.id}`, '')
+    const newPath = `/plexus/${plexusId}${currentPath || '/weaves'}`
+    router.push(newPath)
     setOpen(false)
   }
 
