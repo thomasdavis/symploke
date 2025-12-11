@@ -21,14 +21,31 @@ export default async function RepoDetailPage({ params }: RepoDetailPageProps) {
     },
   })
 
+  // Count chunks separately (chunks are on files, not directly on repo)
+  const chunkCount = repo
+    ? await db.chunk.count({
+        where: {
+          file: { repoId: repo.id },
+        },
+      })
+    : 0
+
   if (!repo) {
     notFound()
   }
 
-  // Get latest sync job if any
-  const latestJob = await db.repoSyncJob.findFirst({
+  // Get all sync jobs (most recent first)
+  const syncJobs = await db.repoSyncJob.findMany({
     where: { repoId },
     orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+
+  // Get all embed jobs (most recent first)
+  const embedJobs = await db.chunkSyncJob.findMany({
+    where: { repoId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
   })
 
   return (
@@ -42,23 +59,34 @@ export default async function RepoDetailPage({ params }: RepoDetailPageProps) {
         defaultBranch: repo.defaultBranch,
         lastIndexed: repo.lastIndexed,
         fileCount: repo._count.files,
+        chunkCount,
       }}
-      latestJob={
-        latestJob
-          ? {
-              id: latestJob.id,
-              status: latestJob.status,
-              totalFiles: latestJob.totalFiles,
-              processedFiles: latestJob.processedFiles,
-              skippedFiles: latestJob.skippedFiles,
-              failedFiles: latestJob.failedFiles,
-              error: latestJob.error,
-              startedAt: latestJob.startedAt,
-              completedAt: latestJob.completedAt,
-              createdAt: latestJob.createdAt,
-            }
-          : null
-      }
+      syncJobs={syncJobs.map((job) => ({
+        id: job.id,
+        status: job.status,
+        totalFiles: job.totalFiles,
+        processedFiles: job.processedFiles,
+        skippedFiles: job.skippedFiles,
+        failedFiles: job.failedFiles,
+        error: job.error,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+        createdAt: job.createdAt,
+      }))}
+      embedJobs={embedJobs.map((job) => ({
+        id: job.id,
+        status: job.status,
+        totalFiles: job.totalFiles,
+        processedFiles: job.processedFiles,
+        chunksCreated: job.chunksCreated,
+        embeddingsGenerated: job.embeddingsGenerated,
+        skippedFiles: job.skippedFiles,
+        failedFiles: job.failedFiles,
+        error: job.error,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+        createdAt: job.createdAt,
+      }))}
     />
   )
 }

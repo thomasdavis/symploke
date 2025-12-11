@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@symploke/ui/Button/Button'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { getPusherClient } from '@/lib/pusher/client'
@@ -17,11 +16,28 @@ type SyncJobStatus =
   | 'FAILED'
   | 'CANCELLED'
 
+type EmbedJobStatus = 'PENDING' | 'CHUNKING' | 'EMBEDDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+
 interface SyncJob {
   id: string
   status: SyncJobStatus
   totalFiles: number | null
   processedFiles: number
+  skippedFiles: number
+  failedFiles: number
+  error: string | null
+  startedAt: Date | null
+  completedAt: Date | null
+  createdAt: Date
+}
+
+interface EmbedJob {
+  id: string
+  status: EmbedJobStatus
+  totalFiles: number | null
+  processedFiles: number
+  chunksCreated: number
+  embeddingsGenerated: number
   skippedFiles: number
   failedFiles: number
   error: string | null
@@ -38,6 +54,7 @@ interface Repo {
   defaultBranch: string
   lastIndexed: Date | null
   fileCount: number
+  chunkCount: number
 }
 
 interface LogEntry {
@@ -48,23 +65,41 @@ interface LogEntry {
   details?: string
 }
 
+type TabType = 'sync' | 'embed' | 'logs'
+
 interface RepoDetailClientProps {
   plexusId: string
   repo: Repo
-  latestJob: SyncJob | null
+  syncJobs: SyncJob[]
+  embedJobs: EmbedJob[]
 }
 
-export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: RepoDetailClientProps) {
+export function RepoDetailClient({
+  plexusId,
+  repo,
+  syncJobs: initialSyncJobs,
+  embedJobs: initialEmbedJobs,
+}: RepoDetailClientProps) {
   const router = useRouter()
-  const [currentJob, setCurrentJob] = useState<SyncJob | null>(initialJob)
+  const searchParams = useSearchParams()
+  const [syncJobs, setSyncJobs] = useState<SyncJob[]>(initialSyncJobs)
+  const [embedJobs] = useState<EmbedJob[]>(initialEmbedJobs)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [isSyncing, setIsSyncing] = useState(
-    initialJob?.status === 'PENDING' ||
-      initialJob?.status === 'FETCHING_TREE' ||
-      initialJob?.status === 'PROCESSING_FILES',
+    initialSyncJobs[0]?.status === 'PENDING' ||
+      initialSyncJobs[0]?.status === 'FETCHING_TREE' ||
+      initialSyncJobs[0]?.status === 'PROCESSING_FILES',
   )
   const logsEndRef = useRef<HTMLDivElement>(null)
   const logsContainerRef = useRef<HTMLDivElement>(null)
+
+  const activeTab = (searchParams.get('tab') as TabType) || 'sync'
+
+  const setActiveTab = (tab: TabType) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`?${params.toString()}`)
+  }
 
   const addLog = useCallback((level: LogEntry['level'], message: string, details?: string) => {
     setLogs((prev) => [
@@ -81,10 +116,10 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
 
   // Auto-scroll logs
   useEffect(() => {
-    if (logsEndRef.current) {
+    if (logsEndRef.current && activeTab === 'logs') {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [logs])
+  }, [logs, activeTab])
 
   // Subscribe to Pusher events
   useEffect(() => {
@@ -119,17 +154,19 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
           currentFile?: string
         }) => {
           if (data.repoId === repo.id) {
-            setCurrentJob((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    status: data.status,
-                    processedFiles: data.processedFiles,
-                    totalFiles: data.totalFiles,
-                    skippedFiles: data.skippedFiles,
-                    failedFiles: data.failedFiles,
-                  }
-                : null,
+            setSyncJobs((prev) =>
+              prev.map((job) =>
+                job.id === data.jobId
+                  ? {
+                      ...job,
+                      status: data.status,
+                      processedFiles: data.processedFiles,
+                      totalFiles: data.totalFiles,
+                      skippedFiles: data.skippedFiles,
+                      failedFiles: data.failedFiles,
+                    }
+                  : job,
+              ),
             )
 
             if (data.currentFile) {
@@ -143,7 +180,6 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
         if (data.repoId === repo.id) {
           setIsSyncing(false)
           addLog('success', 'Sync completed successfully!')
-          // Refresh the page data
           router.refresh()
         }
       })
@@ -169,6 +205,7 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
   const handleStartSync = async () => {
     setIsSyncing(true)
     setLogs([])
+    setActiveTab('logs')
     addLog('info', 'Starting sync...')
 
     try {
@@ -182,7 +219,7 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
       }
 
       const data = await response.json()
-      setCurrentJob({
+      const newJob: SyncJob = {
         id: data.jobId,
         status: 'PENDING',
         totalFiles: null,
@@ -193,7 +230,8 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
         startedAt: null,
         completedAt: null,
         createdAt: new Date(),
-      })
+      }
+      setSyncJobs((prev) => [newJob, ...prev])
       addLog('info', `Sync job created: ${data.jobId}`)
     } catch (error: unknown) {
       setIsSyncing(false)
@@ -207,7 +245,18 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
     return d.toLocaleString()
   }
 
-  const getStatusBadge = (status: SyncJobStatus) => {
+  const formatDuration = (start: Date | string | null, end: Date | string | null) => {
+    if (!start || !end) return '-'
+    const startDate = typeof start === 'string' ? new Date(start) : start
+    const endDate = typeof end === 'string' ? new Date(end) : end
+    const seconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000)
+    if (seconds < 60) return `${seconds}s`
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}m ${remainingSeconds}s`
+  }
+
+  const getSyncStatusBadge = (status: SyncJobStatus) => {
     const statusConfig: Record<SyncJobStatus, { label: string; className: string }> = {
       PENDING: { label: 'Pending', className: 'status-badge--pending' },
       FETCHING_TREE: { label: 'Fetching Files', className: 'status-badge--progress' },
@@ -220,8 +269,22 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
     return <span className={`status-badge ${config.className}`}>{config.label}</span>
   }
 
-  const progress = currentJob?.totalFiles
-    ? Math.round((currentJob.processedFiles / currentJob.totalFiles) * 100)
+  const getEmbedStatusBadge = (status: EmbedJobStatus) => {
+    const statusConfig: Record<EmbedJobStatus, { label: string; className: string }> = {
+      PENDING: { label: 'Pending', className: 'status-badge--pending' },
+      CHUNKING: { label: 'Chunking', className: 'status-badge--progress' },
+      EMBEDDING: { label: 'Embedding', className: 'status-badge--progress' },
+      COMPLETED: { label: 'Completed', className: 'status-badge--success' },
+      FAILED: { label: 'Failed', className: 'status-badge--error' },
+      CANCELLED: { label: 'Cancelled', className: 'status-badge--cancelled' },
+    }
+    const config = statusConfig[status]
+    return <span className={`status-badge ${config.className}`}>{config.label}</span>
+  }
+
+  const latestSyncJob = syncJobs[0]
+  const progress = latestSyncJob?.totalFiles
+    ? Math.round((latestSyncJob.processedFiles / latestSyncJob.totalFiles) * 100)
     : 0
 
   return (
@@ -230,12 +293,6 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
         title={repo.fullName}
         actions={
           <div className="repo-detail__actions">
-            <Link
-              href={`/plexus/${plexusId}/repos/${repo.id}/glossary`}
-              className="repo-detail__secondary-link"
-            >
-              View Glossary
-            </Link>
             <a
               href={repo.url}
               target="_blank"
@@ -268,6 +325,10 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
               <span className="repo-detail__stat-value">{repo.fileCount.toLocaleString()}</span>
             </div>
             <div className="repo-detail__stat">
+              <span className="repo-detail__stat-label">Chunks</span>
+              <span className="repo-detail__stat-value">{repo.chunkCount.toLocaleString()}</span>
+            </div>
+            <div className="repo-detail__stat">
               <span className="repo-detail__stat-label">Default Branch</span>
               <span className="repo-detail__stat-value">{repo.defaultBranch}</span>
             </div>
@@ -277,61 +338,185 @@ export function RepoDetailClient({ plexusId, repo, latestJob: initialJob }: Repo
             </div>
           </div>
 
-          {currentJob && (
-            <div className="repo-detail__job">
+          {isSyncing && latestSyncJob && latestSyncJob.totalFiles && (
+            <div className="repo-detail__active-job">
               <div className="repo-detail__job-header">
-                <span>Latest Sync Job</span>
-                {getStatusBadge(currentJob.status)}
+                <span>Active Sync</span>
+                {getSyncStatusBadge(latestSyncJob.status)}
               </div>
-              {(isSyncing || currentJob.status === 'PROCESSING_FILES') && currentJob.totalFiles && (
-                <div className="repo-detail__progress">
-                  <div className="repo-detail__progress-bar">
-                    <div className="repo-detail__progress-fill" style={{ width: `${progress}%` }} />
-                  </div>
-                  <div className="repo-detail__progress-stats">
-                    <span>
-                      {currentJob.processedFiles} / {currentJob.totalFiles} files
-                    </span>
-                    <span>{progress}%</span>
-                  </div>
+              <div className="repo-detail__progress">
+                <div className="repo-detail__progress-bar">
+                  <div className="repo-detail__progress-fill" style={{ width: `${progress}%` }} />
                 </div>
-              )}
-              <div className="repo-detail__job-stats">
-                <span>Processed: {currentJob.processedFiles}</span>
-                <span>Skipped: {currentJob.skippedFiles}</span>
-                <span>Failed: {currentJob.failedFiles}</span>
+                <div className="repo-detail__progress-stats">
+                  <span>
+                    {latestSyncJob.processedFiles} / {latestSyncJob.totalFiles} files
+                  </span>
+                  <span>{progress}%</span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="repo-detail__logs-panel">
-          <div className="repo-detail__logs-header">
-            <span>Sync Logs</span>
-            {logs.length > 0 && (
-              <button type="button" className="repo-detail__logs-clear" onClick={() => setLogs([])}>
-                Clear
-              </button>
-            )}
+        <div className="repo-detail__tabs">
+          <div className="repo-detail__tab-list">
+            <button
+              type="button"
+              className={`repo-detail__tab ${activeTab === 'sync' ? 'repo-detail__tab--active' : ''}`}
+              onClick={() => setActiveTab('sync')}
+            >
+              Sync Runs ({syncJobs.length})
+            </button>
+            <button
+              type="button"
+              className={`repo-detail__tab ${activeTab === 'embed' ? 'repo-detail__tab--active' : ''}`}
+              onClick={() => setActiveTab('embed')}
+            >
+              Embed Runs ({embedJobs.length})
+            </button>
+            <button
+              type="button"
+              className={`repo-detail__tab ${activeTab === 'logs' ? 'repo-detail__tab--active' : ''}`}
+              onClick={() => setActiveTab('logs')}
+            >
+              Live Logs {logs.length > 0 && `(${logs.length})`}
+            </button>
           </div>
-          <div className="repo-detail__logs" ref={logsContainerRef}>
-            {logs.length === 0 ? (
-              <div className="repo-detail__logs-empty">
-                Click "Sync Files" to start syncing and see logs here.
+
+          <div className="repo-detail__tab-content">
+            {activeTab === 'sync' && (
+              <div className="repo-detail__runs-list">
+                {syncJobs.length === 0 ? (
+                  <div className="repo-detail__runs-empty">
+                    No sync runs yet. Click "Sync Files" to start.
+                  </div>
+                ) : (
+                  syncJobs.map((job) => (
+                    <div key={job.id} className="repo-detail__run-card">
+                      <div className="repo-detail__run-header">
+                        <span className="repo-detail__run-id">{job.id.slice(-8)}</span>
+                        {getSyncStatusBadge(job.status)}
+                      </div>
+                      <div className="repo-detail__run-meta">
+                        <span>Started: {formatDate(job.startedAt || job.createdAt)}</span>
+                        <span>Duration: {formatDuration(job.startedAt, job.completedAt)}</span>
+                      </div>
+                      <div className="repo-detail__run-stats">
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">
+                            {job.processedFiles}
+                            {job.totalFiles ? `/${job.totalFiles}` : ''}
+                          </span>
+                          <span className="repo-detail__run-stat-label">Processed</span>
+                        </div>
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">{job.skippedFiles}</span>
+                          <span className="repo-detail__run-stat-label">Skipped</span>
+                        </div>
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">{job.failedFiles}</span>
+                          <span className="repo-detail__run-stat-label">Failed</span>
+                        </div>
+                      </div>
+                      {job.error && (
+                        <div className="repo-detail__run-error">
+                          <span className="repo-detail__run-error-label">Error:</span> {job.error}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className={`repo-detail__log repo-detail__log--${log.level}`}>
-                  <span className="repo-detail__log-time">
-                    {log.timestamp.toLocaleTimeString()}
-                  </span>
-                  <span className="repo-detail__log-level">[{log.level.toUpperCase()}]</span>
-                  <span className="repo-detail__log-message">{log.message}</span>
-                  {log.details && <span className="repo-detail__log-details">{log.details}</span>}
-                </div>
-              ))
             )}
-            <div ref={logsEndRef} />
+
+            {activeTab === 'embed' && (
+              <div className="repo-detail__runs-list">
+                {embedJobs.length === 0 ? (
+                  <div className="repo-detail__runs-empty">
+                    No embedding runs yet. Embeddings are created after file syncs.
+                  </div>
+                ) : (
+                  embedJobs.map((job) => (
+                    <div key={job.id} className="repo-detail__run-card">
+                      <div className="repo-detail__run-header">
+                        <span className="repo-detail__run-id">{job.id.slice(-8)}</span>
+                        {getEmbedStatusBadge(job.status)}
+                      </div>
+                      <div className="repo-detail__run-meta">
+                        <span>Started: {formatDate(job.startedAt || job.createdAt)}</span>
+                        <span>Duration: {formatDuration(job.startedAt, job.completedAt)}</span>
+                      </div>
+                      <div className="repo-detail__run-stats">
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">
+                            {job.processedFiles}
+                            {job.totalFiles ? `/${job.totalFiles}` : ''}
+                          </span>
+                          <span className="repo-detail__run-stat-label">Files</span>
+                        </div>
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">{job.chunksCreated}</span>
+                          <span className="repo-detail__run-stat-label">Chunks</span>
+                        </div>
+                        <div className="repo-detail__run-stat">
+                          <span className="repo-detail__run-stat-value">
+                            {job.embeddingsGenerated}
+                          </span>
+                          <span className="repo-detail__run-stat-label">Embeddings</span>
+                        </div>
+                      </div>
+                      {job.error && (
+                        <div className="repo-detail__run-error">
+                          <span className="repo-detail__run-error-label">Error:</span> {job.error}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === 'logs' && (
+              <div className="repo-detail__logs-panel">
+                <div className="repo-detail__logs-header">
+                  <span>Live Sync Logs</span>
+                  {logs.length > 0 && (
+                    <button
+                      type="button"
+                      className="repo-detail__logs-clear"
+                      onClick={() => setLogs([])}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="repo-detail__logs" ref={logsContainerRef}>
+                  {logs.length === 0 ? (
+                    <div className="repo-detail__logs-empty">
+                      Click "Sync Files" to start syncing and see logs here.
+                    </div>
+                  ) : (
+                    logs.map((log) => (
+                      <div
+                        key={log.id}
+                        className={`repo-detail__log repo-detail__log--${log.level}`}
+                      >
+                        <span className="repo-detail__log-time">
+                          {log.timestamp.toLocaleTimeString()}
+                        </span>
+                        <span className="repo-detail__log-level">[{log.level.toUpperCase()}]</span>
+                        <span className="repo-detail__log-message">{log.message}</span>
+                        {log.details && (
+                          <span className="repo-detail__log-details">{log.details}</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                  <div ref={logsEndRef} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
