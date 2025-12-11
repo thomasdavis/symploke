@@ -9,7 +9,6 @@ import { Select } from '@symploke/ui/Select/Select'
 import { Table } from '@symploke/ui/Table/Table'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
-import { RunWeavesButton } from '@/components/RunWeavesButton'
 import { RepoFlowGraph } from './RepoFlowGraph'
 import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
 import { useWeaveDiscovery } from '@/contexts/WeaveDiscoveryContext'
@@ -688,127 +687,77 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
           title="Weaves"
           subtitle={`${repos.length} repositories · ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''}`}
         />
-        <div className="weaves-filters">
-          <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
-          <div className="weaves-run-selector">
-            <Select.Root
-              value={weaveProgress.isRunning ? 'running' : selectedRunId}
-              onValueChange={(val) => {
-                if (val !== 'running') {
-                  setSelectedRunId(typeof val === 'string' ? val : 'latest')
-                }
-              }}
-            >
-              <Select.Trigger className="run-selector-trigger">
-                <Select.Value>
-                  {weaveProgress.isRunning
-                    ? `Running... ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''} found`
-                    : selectedRunId === 'all'
-                      ? `All runs (${weaves.length} weaves)`
-                      : selectedRunId === 'latest'
-                        ? selectedRun
-                          ? `Latest: ${formatRunDate(selectedRun.startedAt)} (${filteredWeaves.length} weaves)`
-                          : 'Latest run'
-                        : selectedRun
-                          ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
-                          : 'Select run'}
-                </Select.Value>
-                <Select.Icon aria-hidden="true">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <path
-                      d="M3 4.5L6 7.5L9 4.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </Select.Icon>
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Positioner>
-                  <Select.Popup>
-                    <Select.List>
-                      {weaveProgress.isRunning && (
-                        <>
-                          <Select.Item value="running">
-                            <Select.ItemText>
-                              Running... {displayWeaveCount} weave
-                              {displayWeaveCount !== 1 ? 's' : ''} found
-                              {weaveProgress.currentSourceRepoName &&
-                              weaveProgress.currentTargetRepoName
-                                ? ` (${weaveProgress.currentSourceRepoName} ↔ ${weaveProgress.currentTargetRepoName})`
-                                : ''}
-                            </Select.ItemText>
-                            <Select.ItemIndicator aria-hidden="true">
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 12 12"
-                                fill="none"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M2.5 6L5 8.5L9.5 3.5"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                          <Select.Separator />
-                        </>
-                      )}
-                      <Select.Item value="all">
-                        <Select.ItemText>All runs ({weaves.length} weaves)</Select.ItemText>
-                        <Select.ItemIndicator aria-hidden="true">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M2.5 6L5 8.5L9.5 3.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item value="latest">
-                        <Select.ItemText>
-                          Latest run
-                          {discoveryRuns[0] ? ` (${discoveryRuns[0].weavesSaved} weaves)` : ''}
-                        </Select.ItemText>
-                        <Select.ItemIndicator aria-hidden="true">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M2.5 6L5 8.5L9.5 3.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      {discoveryRuns.length > 0 && <Select.Separator />}
-                      {discoveryRuns.map((run) => (
-                        <Select.Item key={run.id} value={run.id}>
+      </div>
+
+      {/* Tabs and Run Selector Row */}
+      <div className="weaves-tabs-row">
+        <div className="weaves-tabs">
+          <button
+            type="button"
+            className={`weaves-tab ${activeView === 'graph' ? 'weaves-tab--active' : ''}`}
+            onClick={() => setActiveView('graph')}
+          >
+            <GraphIcon />
+            Graph
+          </button>
+          <button
+            type="button"
+            className={`weaves-tab ${activeView === 'table' ? 'weaves-tab--active' : ''}`}
+            onClick={() => setActiveView('table')}
+          >
+            <TableIcon />
+            Table
+          </button>
+        </div>
+        <div className="weaves-run-selector">
+          <Select.Root
+            value={weaveProgress.isRunning ? 'running' : selectedRunId}
+            onValueChange={(val) => {
+              if (val !== 'running') {
+                setSelectedRunId(typeof val === 'string' ? val : 'latest')
+              }
+            }}
+          >
+            <Select.Trigger className="run-selector-trigger">
+              <Select.Value>
+                {weaveProgress.isRunning
+                  ? `Running... ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''} found`
+                  : selectedRunId === 'all'
+                    ? `All runs (${weaves.length} weaves)`
+                    : selectedRunId === 'latest'
+                      ? selectedRun
+                        ? `Latest: ${formatRunDate(selectedRun.startedAt)} (${filteredWeaves.length} weaves)`
+                        : 'Latest run'
+                      : selectedRun
+                        ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
+                        : 'Select run'}
+              </Select.Value>
+              <Select.Icon aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path
+                    d="M3 4.5L6 7.5L9 4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner>
+                <Select.Popup>
+                  <Select.List>
+                    {weaveProgress.isRunning && (
+                      <>
+                        <Select.Item value="running">
                           <Select.ItemText>
-                            {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
+                            Running... {displayWeaveCount} weave
+                            {displayWeaveCount !== 1 ? 's' : ''} found
+                            {weaveProgress.currentSourceRepoName &&
+                            weaveProgress.currentTargetRepoName
+                              ? ` (${weaveProgress.currentSourceRepoName} ↔ ${weaveProgress.currentTargetRepoName})`
+                              : ''}
                           </Select.ItemText>
                           <Select.ItemIndicator aria-hidden="true">
                             <svg
@@ -828,34 +777,83 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                             </svg>
                           </Select.ItemIndicator>
                         </Select.Item>
-                      ))}
-                    </Select.List>
-                  </Select.Popup>
-                </Select.Positioner>
-              </Select.Portal>
-            </Select.Root>
-          </div>
+                        <Select.Separator />
+                      </>
+                    )}
+                    <Select.Item value="all">
+                      <Select.ItemText>All runs ({weaves.length} weaves)</Select.ItemText>
+                      <Select.ItemIndicator aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M2.5 6L5 8.5L9.5 3.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item value="latest">
+                      <Select.ItemText>
+                        Latest run
+                        {discoveryRuns[0] ? ` (${discoveryRuns[0].weavesSaved} weaves)` : ''}
+                      </Select.ItemText>
+                      <Select.ItemIndicator aria-hidden="true">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M2.5 6L5 8.5L9.5 3.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    {discoveryRuns.length > 0 && <Select.Separator />}
+                    {discoveryRuns.map((run) => (
+                      <Select.Item key={run.id} value={run.id}>
+                        <Select.ItemText>
+                          {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
+                        </Select.ItemText>
+                        <Select.ItemIndicator aria-hidden="true">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M2.5 6L5 8.5L9.5 3.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                  </Select.List>
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="weaves-tabs">
-        <button
-          type="button"
-          className={`weaves-tab ${activeView === 'graph' ? 'weaves-tab--active' : ''}`}
-          onClick={() => setActiveView('graph')}
-        >
-          <GraphIcon />
-          Graph
-        </button>
-        <button
-          type="button"
-          className={`weaves-tab ${activeView === 'table' ? 'weaves-tab--active' : ''}`}
-          onClick={() => setActiveView('table')}
-        >
-          <TableIcon />
-          Table
-        </button>
       </div>
 
       {/* Score filter bar (shown for both views) */}

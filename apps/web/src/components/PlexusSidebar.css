@@ -8,7 +8,8 @@
 }
 
 .plexus-sidebar__action {
-  padding: 0 var(--space-4) var(--space-4);
+  padding: var(--space-4);
+  padding-top: 0;
 }
 
 .plexus-sidebar__action .run-weaves-button {
