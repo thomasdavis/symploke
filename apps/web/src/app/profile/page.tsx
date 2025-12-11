@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { db } from '@symploke/db'
-import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import './profile.css'
 

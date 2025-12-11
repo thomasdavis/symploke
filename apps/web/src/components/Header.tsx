@@ -16,35 +16,33 @@ export async function Header() {
         <div className="header-actions">
           <ThemeToggle />
           {session?.user ? (
-            <>
-              <nav className="header-nav">
-                <Link href="/profile" className="header-nav-link">
-                  <div className="header-user">
-                    {session.user.image && (
-                      <img
-                        src={session.user.image}
-                        alt={session.user.name || 'User'}
-                        className="header-avatar"
-                      />
-                    )}
-                    <span className="header-username">{session.user.name}</span>
-                  </div>
-                </Link>
-                <Link href="/settings" className="header-nav-link">
-                  Settings
-                </Link>
-                <form
-                  action={async () => {
-                    'use server'
-                    await signOut()
-                  }}
-                >
-                  <button type="submit" className="header-nav-link header-nav-button">
-                    Sign out
-                  </button>
-                </form>
-              </nav>
-            </>
+            <nav className="header-nav">
+              <Link href="/profile" className="header-nav-link">
+                <div className="header-user">
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'User'}
+                      className="header-avatar"
+                    />
+                  )}
+                  <span className="header-username">{session.user.name}</span>
+                </div>
+              </Link>
+              <Link href="/settings" className="header-nav-link">
+                Settings
+              </Link>
+              <form
+                action={async () => {
+                  'use server'
+                  await signOut()
+                }}
+              >
+                <button type="submit" className="header-nav-link header-nav-button">
+                  Sign out
+                </button>
+              </form>
+            </nav>
           ) : (
             <form
               action={async () => {
