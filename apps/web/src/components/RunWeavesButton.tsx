@@ -125,7 +125,7 @@ export function RunWeavesButton({
       }
       return 'Running...'
     }
-    return 'Run Weave Discovery'
+    return 'Run Weaves'
   }
 
   return (

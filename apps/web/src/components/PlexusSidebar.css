@@ -6,3 +6,15 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+.plexus-sidebar__action {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.plexus-sidebar__action .run-weaves-button {
+  width: 100%;
+}
+
+.plexus-sidebar__action .run-weaves-button button {
+  width: 100%;
+}
