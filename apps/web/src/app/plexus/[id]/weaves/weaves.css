@@ -940,7 +940,7 @@
   background: var(--color-bg-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  margin-bottom: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .weaves-score-filter-bar__control {

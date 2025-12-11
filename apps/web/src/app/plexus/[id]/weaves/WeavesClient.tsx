@@ -694,6 +694,27 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
         />
       </div>
 
+      {/* Score filter bar */}
+      <div className="weaves-score-filter-bar">
+        <div className="weaves-score-filter-bar__control">
+          <label htmlFor="weaves-min-score">
+            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
+          </label>
+          <input
+            id="weaves-min-score"
+            type="range"
+            min="0"
+            max="100"
+            value={minScore * 100}
+            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
+            className="weaves-score-slider-wide"
+          />
+        </div>
+        <span className="weaves-score-filter-bar__count">
+          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
+        </span>
+      </div>
+
       {/* Tabs and Run Selector Row */}
       <div className="weaves-tabs-row">
         <div className="weaves-tabs">
@@ -859,27 +880,6 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
             </Select.Portal>
           </Select.Root>
         </div>
-      </div>
-
-      {/* Score filter bar (shown for both views) */}
-      <div className="weaves-score-filter-bar">
-        <div className="weaves-score-filter-bar__control">
-          <label htmlFor="weaves-min-score">
-            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
-          </label>
-          <input
-            id="weaves-min-score"
-            type="range"
-            min="0"
-            max="100"
-            value={minScore * 100}
-            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
-            className="weaves-score-slider-wide"
-          />
-        </div>
-        <span className="weaves-score-filter-bar__count">
-          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
-        </span>
       </div>
 
       {/* Graph View */}
