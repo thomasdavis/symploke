@@ -97,7 +97,10 @@ export default async function SettingsPage() {
                       <span className="settings-price-period">/month</span>
                     </p>
                   </div>
-                  <Link href="/api/checkout" className="settings-upgrade-button">
+                  <Link
+                    href={`/api/checkout?products=${process.env.POLAR_PRODUCT_ID}`}
+                    className="settings-upgrade-button"
+                  >
                     Upgrade to Gold
                   </Link>
                 </div>
