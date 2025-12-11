@@ -43,6 +43,7 @@
     "./RadioGroup/RadioGroup": "./src/RadioGroup/RadioGroup.tsx",
     "./ScrollArea/ScrollArea": "./src/ScrollArea/ScrollArea.tsx",
     "./Select/Select": "./src/Select/Select.tsx",
+    "./Skeleton/Skeleton": "./src/Skeleton/Skeleton.tsx",
     "./Separator/Separator": "./src/Separator/Separator.tsx",
     "./Slider/Slider": "./src/Slider/Slider.tsx",
     "./Switch/Switch": "./src/Switch/Switch.tsx",
