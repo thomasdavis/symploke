@@ -50,6 +50,9 @@ export async function findWeaves(
   const pusher = options.pusher
   let weavesFound = 0
 
+  // Track runId for log emissions (set after creating discovery run)
+  let currentRunId: string | null = null
+
   const log = (level: LogEntry['level'], message: string, data?: Record<string, unknown>) => {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -68,6 +71,16 @@ export async function findWeaves(
       logger.debug(data || {}, message)
     } else if (level === 'info') {
       logger.info(data || {}, message)
+    }
+
+    // Emit real-time log event via Pusher (for debug and above when verbose, info and above always)
+    if (pusher && currentRunId && (level !== 'debug' || verbose)) {
+      pusher.emitWeaveLog(plexusId, {
+        runId: currentRunId,
+        level,
+        message,
+        data,
+      })
     }
   }
 
@@ -100,6 +113,7 @@ export async function findWeaves(
     },
   })
 
+  currentRunId = discoveryRun.id
   log('info', 'Created discovery run', { runId: discoveryRun.id })
 
   // Emit weave:started event

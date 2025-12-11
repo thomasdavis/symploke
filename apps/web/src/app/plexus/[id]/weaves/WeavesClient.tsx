@@ -12,7 +12,7 @@ import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
 import { RunWeavesButton } from '@/components/RunWeavesButton'
 import { RepoFlowGraph } from './RepoFlowGraph'
 import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
-import { useWeaveProgress } from '@/hooks/useWeaveProgress'
+import { useWeaveDiscovery } from '@/contexts/WeaveDiscoveryContext'
 import './weaves.css'
 
 // Glossary data from database
@@ -600,8 +600,8 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
   const [minScore, setMinScore] = useState<number>(0.3)
 
-  // Weave discovery real-time progress (for graph view)
-  const weaveProgress = useWeaveProgress(plexusId)
+  // Weave discovery real-time progress (from context)
+  const weaveProgress = useWeaveDiscovery()
 
   const setActiveView = (view: 'graph' | 'table') => {
     const params = new URLSearchParams(searchParams.toString())

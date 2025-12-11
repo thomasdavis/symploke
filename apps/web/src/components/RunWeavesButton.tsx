@@ -1,27 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { Button } from '@symploke/ui/Button/Button'
 import { useRouter } from 'next/navigation'
+import { useWeaveDiscovery } from '@/contexts/WeaveDiscoveryContext'
 import './RunWeavesButton.css'
-
-type WeaveStatus = {
-  status: 'idle' | 'running'
-  runId?: string
-  startedAt?: string
-  progress?: {
-    total: number
-    checked: number
-  }
-  latestRun?: {
-    id: string
-    status: string
-    startedAt: string
-    completedAt?: string
-    weavesSaved: number
-    error?: string
-  }
-}
 
 type RunWeavesButtonProps = {
   plexusId: string
@@ -35,95 +18,44 @@ export function RunWeavesButton({
   size = 'md',
 }: RunWeavesButtonProps) {
   const router = useRouter()
-  const [status, setStatus] = useState<WeaveStatus | null>(null)
+  const discovery = useWeaveDiscovery()
   const [isTriggering, setIsTriggering] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/plexus/${plexusId}/weaves/run`)
-      if (response.ok) {
-        const data = await response.json()
-        setStatus(data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch weave status:', err)
+  const handleClick = async () => {
+    // If already running, navigate to run page
+    if (discovery.isRunning) {
+      router.push(`/plexus/${plexusId}/weaves/run`)
+      return
     }
-  }, [plexusId])
 
-  useEffect(() => {
-    fetchStatus()
-
-    // Poll for status when running
-    const interval = setInterval(() => {
-      if (status?.status === 'running') {
-        fetchStatus()
-      }
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [fetchStatus, status?.status])
-
-  const handleTrigger = async () => {
+    // Otherwise, trigger discovery and navigate
     setIsTriggering(true)
     setError(null)
 
-    try {
-      const response = await fetch(`/api/plexus/${plexusId}/weaves/run`, {
-        method: 'POST',
-      })
+    const result = await discovery.triggerDiscovery()
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          // Already running, just refresh status
-          await fetchStatus()
-        } else {
-          setError(data.error?.message || 'Failed to start weave discovery')
-        }
-        return
-      }
-
-      // Started successfully, update status
-      setStatus({ status: 'running' })
-
-      // Start polling for updates
-      const pollInterval = setInterval(async () => {
-        const statusResponse = await fetch(`/api/plexus/${plexusId}/weaves/run`)
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json()
-          setStatus(statusData)
-
-          if (statusData.status === 'idle') {
-            clearInterval(pollInterval)
-            // Refresh the page to show new weaves
-            router.refresh()
-          }
-        }
-      }, 2000)
-
-      // Clean up after 10 minutes max
-      setTimeout(() => clearInterval(pollInterval), 10 * 60 * 1000)
-    } catch (err) {
-      setError('Failed to connect to server')
-      console.error('Failed to trigger weave run:', err)
-    } finally {
+    if (!result.success) {
+      setError(result.error || 'Failed to start discovery')
       setIsTriggering(false)
+      return
     }
+
+    setIsTriggering(false)
+    // Navigate to run page to see progress
+    router.push(`/plexus/${plexusId}/weaves/run`)
   }
 
-  const isRunning = status?.status === 'running'
-  const isLoading = isTriggering || (!status && !error)
+  const isLoading = isTriggering
 
   const getButtonText = () => {
-    if (isLoading) return 'Loading...'
-    if (isRunning) {
-      const progress = status?.progress
-      if (progress && progress.total > 0) {
-        return `Running... ${progress.checked}/${progress.total}`
+    if (isLoading) return 'Starting...'
+    if (discovery.isRunning) {
+      const { repoPairsChecked, repoPairsTotal } = discovery
+      if (repoPairsTotal > 0) {
+        return `Weaving (${repoPairsChecked}/${repoPairsTotal})`
       }
-      return 'Running...'
+      return 'Weaving...'
     }
     return 'Run Weaves'
   }
@@ -133,11 +65,11 @@ export function RunWeavesButton({
       <Button
         variant={variant}
         size={size}
-        onClick={handleTrigger}
-        disabled={isRunning || isLoading}
-        className={isRunning ? 'run-weaves-button--running' : ''}
+        onClick={handleClick}
+        disabled={isLoading}
+        className={discovery.isRunning ? 'run-weaves-button--running' : ''}
       >
-        {isRunning && <span className="run-weaves-button__spinner" aria-hidden="true" />}
+        {discovery.isRunning && <span className="run-weaves-button__spinner" aria-hidden="true" />}
         {getButtonText()}
       </Button>
       {error && <span className="run-weaves-button__error">{error}</span>}

@@ -1,0 +1,377 @@
+.weave-run-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.weave-run-content {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Card */
+.weave-run-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.weave-run-card__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-fg);
+  margin: 0 0 var(--space-3) 0;
+}
+
+/* Status */
+.weave-run-status-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.weave-run-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.weave-run-status--idle {
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
+}
+
+.weave-run-status--running {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.weave-run-status--completed {
+  background: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+}
+
+.weave-run-status--error {
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+}
+
+.weave-run-status__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.weave-run-duration {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+/* Progress */
+.weave-run-progress {
+  margin-bottom: var(--space-4);
+}
+
+.weave-run-progress__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  margin-bottom: var(--space-2);
+}
+
+.weave-run-progress__bar {
+  height: 8px;
+}
+
+/* Stats */
+.weave-run-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.weave-run-stat {
+  text-align: center;
+}
+
+.weave-run-stat__value {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.weave-run-stat__label {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+/* Current Pair */
+.weave-run-current {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.weave-run-current__label {
+  color: var(--color-fg-muted);
+  margin-right: var(--space-2);
+}
+
+.weave-run-current__value {
+  font-family: var(--font-mono);
+  color: var(--color-fg);
+}
+
+/* Error */
+.weave-run-error {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+/* Discovered Weaves */
+.weave-run-weaves {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.weave-run-weave {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.weave-run-weave__type {
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--color-primary);
+  color: white;
+}
+
+.weave-run-weave__type--GLOSSARY_ALIGNMENT {
+  background: #6366f1;
+}
+
+.weave-run-weave__repos {
+  flex: 1;
+  font-family: var(--font-mono);
+  color: var(--color-fg);
+}
+
+.weave-run-weave__score {
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+/* Logs */
+.weave-run-logs {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.weave-run-logs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.weave-run-logs__live {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-success);
+  text-transform: uppercase;
+}
+
+.weave-run-logs__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.weave-run-logs__tabs {
+  margin-bottom: var(--space-3);
+}
+
+.weave-run-logs__content {
+  flex: 1;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
+.weave-run-logs__empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-fg-muted);
+}
+
+/* Log Entry */
+.weave-run-log {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.weave-run-log:last-child {
+  border-bottom: none;
+}
+
+.weave-run-log:hover {
+  background: color-mix(in srgb, var(--color-fg) 3%, transparent);
+}
+
+.weave-run-log__time {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.weave-run-log__level {
+  flex-shrink: 0;
+  width: 48px;
+  text-align: center;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xxs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.weave-run-log__level--info {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.weave-run-log__level--debug {
+  background: var(--color-bg);
+  color: var(--color-fg-muted);
+}
+
+.weave-run-log__level--warn {
+  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+}
+
+.weave-run-log__level--error {
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+}
+
+.weave-run-log__message {
+  flex: 1;
+  color: var(--color-fg);
+  word-break: break-word;
+}
+
+.weave-run-log--error .weave-run-log__message {
+  color: var(--color-danger);
+}
+
+.weave-run-log--warn .weave-run-log__message {
+  color: var(--color-warning);
+}
+
+.weave-run-log__data {
+  margin-top: var(--space-1);
+  width: 100%;
+}
+
+.weave-run-log__data summary {
+  cursor: pointer;
+  color: var(--color-fg-muted);
+  font-size: var(--text-xxs);
+}
+
+.weave-run-log__data pre {
+  margin: var(--space-2) 0 0 0;
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  color: var(--color-fg-muted);
+  font-size: var(--text-xxs);
+}
+
+/* Actions */
+.weave-run-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+/* Custom scrollbar for logs */
+.weave-run-logs__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.weave-run-logs__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.weave-run-logs__content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.weave-run-logs__content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fg-muted);
+}

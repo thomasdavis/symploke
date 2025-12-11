@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@symploke/db'
 import { PlexusSidebar } from '@/components/PlexusSidebar'
+import { PlexusProviders } from '@/components/PlexusProviders'
 import './layout.css'
 
 export default async function PlexusLayout({
@@ -52,9 +53,11 @@ export default async function PlexusLayout({
   })
 
   return (
-    <div className="plexus-layout">
-      <PlexusSidebar currentPlexus={plexus} userPlexuses={userPlexuses} />
-      <main className="plexus-main">{children}</main>
-    </div>
+    <PlexusProviders plexusId={id}>
+      <div className="plexus-layout">
+        <PlexusSidebar currentPlexus={plexus} userPlexuses={userPlexuses} />
+        <main className="plexus-main">{children}</main>
+      </div>
+    </PlexusProviders>
   )
 }

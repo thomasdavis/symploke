@@ -78,6 +78,13 @@ export interface WeaveErrorEvent {
   error: string
 }
 
+export interface WeaveLogEvent {
+  runId: string
+  level: 'info' | 'debug' | 'warn' | 'error'
+  message: string
+  data?: Record<string, unknown>
+}
+
 /**
  * Pusher service for real-time sync progress updates
  */
@@ -282,6 +289,19 @@ export class PusherService {
       logger.debug({ plexusId, event }, 'Emitted weave error event')
     } catch (error) {
       logger.error({ error, plexusId }, 'Failed to emit weave error event')
+    }
+  }
+
+  /**
+   * Emit weave discovery log event for real-time debug output
+   */
+  async emitWeaveLog(plexusId: string, event: WeaveLogEvent): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`private-plexus-${plexusId}`, 'weave:log', event)
+    } catch {
+      // Don't log every log event failure, too noisy
     }
   }
 }
