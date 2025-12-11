@@ -208,13 +208,15 @@ function WeaveEdge({
   // Get pulses for this edge
   const edgePulses = activePulses.get(id) || []
 
-  // Calculate pulse positions along the path
+  // Calculate pulse positions along the path with easing (starts slow, accelerates)
   const getPulsePosition = (progress: number, reverse: boolean) => {
     if (!pathRef.current) return null
     const pathLength = pathRef.current.getTotalLength()
-    const actualProgress = reverse ? 1 - progress : progress
+    // Ease-in curve: starts slow, accelerates toward end (cubic)
+    const easedProgress = progress * progress * progress
+    const actualProgress = reverse ? 1 - easedProgress : easedProgress
     const point = pathRef.current.getPointAtLength(actualProgress * pathLength)
-    return { x: point.x, y: point.y }
+    return { x: point.x, y: point.y, easedProgress }
   }
 
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
@@ -285,12 +287,15 @@ function WeaveEdge({
 
   return (
     <>
-      {/* Glow filter for pulses */}
+      {/* Glow filter for pulses - purple glow visible on both light and dark */}
       <defs>
-        <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+        <filter id={glowFilterId} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feFlood floodColor="#a855f7" floodOpacity="0.6" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="coloredBlur" />
           <feMerge>
-            <feMergeNode in="blur" />
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="coloredBlur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
@@ -328,13 +333,19 @@ function WeaveEdge({
         {edgePulses.map((pulse) => {
           const pos = getPulsePosition(pulse.progress, pulse.reverse)
           if (!pos) return null
+          // Size relative to edge thickness, grows as pulse travels
+          // Start at 0.8x stroke width, grow to 1.5x stroke width
+          const sizeMultiplier = 0.8 + pulse.progress * 0.7
+          const pulseRadius = baseStrokeWidth * sizeMultiplier
           return (
             <circle
               key={pulse.id}
               cx={pos.x}
               cy={pos.y}
-              r={6 + weave.score * 4}
-              fill="#22d3ee"
+              r={Math.max(3, pulseRadius)}
+              fill="#a855f7"
+              stroke="#f0abfc"
+              strokeWidth={Math.max(1, baseStrokeWidth * 0.15)}
               filter={`url(#${glowFilterId})`}
               className="weave-edge__pulse"
             />
