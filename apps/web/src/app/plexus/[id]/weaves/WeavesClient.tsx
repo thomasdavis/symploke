@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
 import { PageHeader } from '@symploke/ui/PageHeader/PageHeader'
 import { Select } from '@symploke/ui/Select/Select'
@@ -84,11 +85,15 @@ type GraphWeave = {
 
 type DiscoveryRun = Pick<WeaveDiscoveryRun, 'id' | 'startedAt' | 'weavesSaved'>
 
-type WeavesClientProps = {
+type WeavesData = {
   repos: Repo[]
   weaves: Weave[]
   discoveryRuns: DiscoveryRun[]
+}
+
+type WeavesClientProps = {
   plexusId: string
+  initialData: WeavesData
 }
 
 function formatRunDate(date: Date): string {
@@ -658,10 +663,23 @@ function LogPanel({ logs, filter }: { logs: WeaveLogEntry[]; filter: string }) {
   )
 }
 
-export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesClientProps) {
+export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [, startTransition] = useTransition()
+
+  // React Query with SWR-style background revalidation
+  const { data } = useQuery({
+    queryKey: ['plexus-weaves', plexusId],
+    queryFn: async () => {
+      const response = await fetch(`/api/plexus/${plexusId}/weaves`)
+      if (!response.ok) throw new Error('Failed to fetch weaves')
+      return response.json() as Promise<WeavesData>
+    },
+    initialData,
+  })
+
+  const { repos, weaves, discoveryRuns } = data
 
   // Get initial values from URL params
   const viewParam = searchParams.get('view')

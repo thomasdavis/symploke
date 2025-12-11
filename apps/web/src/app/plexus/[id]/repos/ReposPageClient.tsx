@@ -34,7 +34,6 @@ export function ReposPageClient({ plexusId, repos: initialRepos }: ReposPageClie
       return response.json() as Promise<Repo[]>
     },
     initialData: initialRepos,
-    staleTime: 0, // Always refetch on invalidation
   })
 
   const getSyncStatusForRepo = (repoId: string): SyncStatus | undefined => {

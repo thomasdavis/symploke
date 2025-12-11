@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@symploke/ui/Card/Card'
 import { ScoreFilter } from '@/components/ScoreFilter'
 
@@ -35,11 +36,16 @@ type StatsData = {
   typeStats: TypeStats
 }
 
-type StatsClientProps = {
+type StatsAPIResponse = {
   weaves: Weave[]
   repos: Repo[]
   lastRunId: string | null
   lastRunDate: string | null
+}
+
+type StatsClientProps = {
+  plexusId: string
+  initialData: StatsAPIResponse
 }
 
 function formatType(type: string) {
@@ -205,7 +211,20 @@ function StatsContent({
   )
 }
 
-export function StatsClient({ weaves, repos, lastRunId, lastRunDate }: StatsClientProps) {
+export function StatsClient({ plexusId, initialData }: StatsClientProps) {
+  // React Query with SWR-style background revalidation
+  const { data } = useQuery({
+    queryKey: ['plexus-stats', plexusId],
+    queryFn: async () => {
+      const response = await fetch(`/api/plexus/${plexusId}/stats`)
+      if (!response.ok) throw new Error('Failed to fetch stats')
+      return response.json() as Promise<StatsAPIResponse>
+    },
+    initialData,
+  })
+
+  const { weaves, repos, lastRunId, lastRunDate } = data
+
   const [activeTab, setActiveTab] = useState<'lastRun' | 'allTime'>(
     lastRunId ? 'lastRun' : 'allTime',
   )
