@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useTransition } from 'react'
+import { useState, useMemo, useTransition, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
@@ -9,10 +9,12 @@ import { Select } from '@symploke/ui/Select/Select'
 import { Table } from '@symploke/ui/Table/Table'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
+import { Tabs } from '@symploke/ui/Tabs/Tabs'
 import { RepoFlowGraph } from './RepoFlowGraph'
 import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
-import { useWeaveDiscovery } from '@/contexts/WeaveDiscoveryContext'
+import { useWeaveDiscovery, type WeaveLogEntry } from '@/contexts/WeaveDiscoveryContext'
 import './weaves.css'
+import './run/weave-run.css'
 
 // Glossary data from database
 type GlossaryData = {
@@ -587,30 +589,115 @@ function TableIcon() {
   )
 }
 
+function LogsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3 8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function formatLogTime(isoString: string): string {
+  const date = new Date(isoString)
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
+function LogLevel({ level }: { level: WeaveLogEntry['level'] }) {
+  return <span className={`weave-run-log__level weave-run-log__level--${level}`}>{level}</span>
+}
+
+function LogPanel({ logs, filter }: { logs: WeaveLogEntry[]; filter: string }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [autoScroll, setAutoScroll] = useState(true)
+
+  const filteredLogs = useMemo(() => {
+    if (filter === 'all') return logs
+    return logs.filter((log) => log.level === filter)
+  }, [logs, filter])
+
+  useEffect(() => {
+    if (autoScroll && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [filteredLogs, autoScroll])
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+      setAutoScroll(scrollHeight - scrollTop - clientHeight < 50)
+    }
+  }
+
+  return (
+    <div className="weave-run-logs__content" ref={scrollRef} onScroll={handleScroll}>
+      {filteredLogs.length === 0 ? (
+        <div className="weave-run-logs__empty">No logs yet...</div>
+      ) : (
+        filteredLogs.map((log) => (
+          <div key={log.id} className={`weave-run-log weave-run-log--${log.level}`}>
+            <span className="weave-run-log__time">{formatLogTime(log.timestamp)}</span>
+            <LogLevel level={log.level} />
+            <span className="weave-run-log__message">{log.message}</span>
+            {log.data && Object.keys(log.data).length > 0 && (
+              <details className="weave-run-log__data">
+                <summary>data</summary>
+                <pre>{JSON.stringify(log.data, null, 2)}</pre>
+              </details>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  // Get initial view from URL param, default to 'graph'
+  // Get initial values from URL params
   const viewParam = searchParams.get('view')
-  const initialView = viewParam === 'table' ? 'table' : 'graph'
+  const runParam = searchParams.get('run')
+  const initialView = viewParam === 'table' ? 'table' : viewParam === 'logs' ? 'logs' : 'graph'
+  const initialRunId = runParam || 'latest'
 
   // Local state for immediate tab switching
-  const [activeView, setActiveViewState] = useState<'graph' | 'table'>(initialView)
-  const [selectedRunId, setSelectedRunId] = useState<string>('latest')
+  const [activeView, setActiveViewState] = useState<'graph' | 'table' | 'logs'>(initialView)
+  const [selectedRunId, setSelectedRunIdState] = useState<string>(initialRunId)
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
   const [minScore, setMinScore] = useState<number>(0.3)
+  const [logFilter, setLogFilter] = useState('all')
 
   // Weave discovery real-time progress (from context)
   const weaveProgress = useWeaveDiscovery()
 
   // Update view immediately in local state, then sync URL in background
-  const setActiveView = (view: 'graph' | 'table') => {
-    setActiveViewState(view) // Immediate update
+  const setActiveView = (view: 'graph' | 'table' | 'logs') => {
+    setActiveViewState(view)
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('view', view)
+      router.replace(`?${params.toString()}`, { scroll: false })
+    })
+  }
+
+  // Update run selection and sync to URL
+  const setSelectedRunId = (runId: string) => {
+    setSelectedRunIdState(runId)
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (runId === 'latest') {
+        params.delete('run')
+      } else {
+        params.set('run', runId)
+      }
       router.replace(`?${params.toString()}`, { scroll: false })
     })
   }
@@ -719,6 +806,14 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
           >
             <TableIcon />
             Table
+          </button>
+          <button
+            type="button"
+            className={`weaves-tab ${activeView === 'logs' ? 'weaves-tab--active' : ''}`}
+            onClick={() => setActiveView('logs')}
+          >
+            <LogsIcon />
+            Logs
           </button>
         </div>
         <div className="weaves-run-selector">
@@ -949,6 +1044,44 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Logs View */}
+      {activeView === 'logs' && (
+        <div className="weaves-logs-view">
+          <div className="weaves-logs-card">
+            <div className="weaves-logs-header">
+              <h3 className="weaves-logs-title">Discovery Logs</h3>
+              {weaveProgress.isRunning && (
+                <div className="weaves-logs-live">
+                  <span className="weaves-logs-live__dot" />
+                  Live
+                </div>
+              )}
+            </div>
+
+            <Tabs.Root defaultValue="all" onValueChange={setLogFilter}>
+              <Tabs.List className="weaves-logs-tabs">
+                <Tabs.Tab value="all">All ({weaveProgress.logs.length})</Tabs.Tab>
+                <Tabs.Tab value="info">
+                  Info ({weaveProgress.logs.filter((l) => l.level === 'info').length})
+                </Tabs.Tab>
+                <Tabs.Tab value="debug">
+                  Debug ({weaveProgress.logs.filter((l) => l.level === 'debug').length})
+                </Tabs.Tab>
+                <Tabs.Tab value="warn">
+                  Warn ({weaveProgress.logs.filter((l) => l.level === 'warn').length})
+                </Tabs.Tab>
+                <Tabs.Tab value="error">
+                  Error ({weaveProgress.logs.filter((l) => l.level === 'error').length})
+                </Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value={logFilter} keepMounted>
+                <LogPanel logs={weaveProgress.logs} filter={logFilter} />
+              </Tabs.Panel>
+            </Tabs.Root>
+          </div>
         </div>
       )}
     </div>
