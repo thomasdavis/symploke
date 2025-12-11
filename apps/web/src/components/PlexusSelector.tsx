@@ -21,7 +21,7 @@ export function PlexusSelector({ currentPlexus, plexuses }: PlexusSelectorProps)
   const [open, setOpen] = useState(false)
 
   const handlePlexusChange = (plexusId: string) => {
-    router.push(`/plexus/${plexusId}/dashboard`)
+    router.push(`/plexus/${plexusId}/weaves`)
     setOpen(false)
   }
 
