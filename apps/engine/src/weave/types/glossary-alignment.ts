@@ -3,7 +3,7 @@ import { db, GlossaryStatus, WeaveType as PrismaWeaveType } from '@symploke/db'
 import { logger } from '@symploke/logger'
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import { getGlossary, type RepoGlossaryData } from '../glossary.js'
+import { extractGlossary, getGlossary, type RepoGlossaryData } from '../glossary.js'
 import type {
   FilePairMatch,
   GlossaryAlignmentMetadata,
@@ -45,19 +45,35 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
       return []
     }
 
-    // Get glossaries
-    const [sourceGlossary, targetGlossary] = await Promise.all([
+    // Get glossaries, generating if needed
+    let [sourceGlossary, targetGlossary] = await Promise.all([
       getGlossary(sourceRepoId),
       getGlossary(targetRepoId),
     ])
 
-    // Get glossary records for IDs
+    // Generate missing glossaries
+    if (!sourceGlossary) {
+      logger.info(
+        { sourceRepoId, repoName: sourceRepo.fullName },
+        'Generating missing glossary for source repo',
+      )
+      sourceGlossary = await extractGlossary(sourceRepoId)
+    }
+    if (!targetGlossary) {
+      logger.info(
+        { targetRepoId, repoName: targetRepo.fullName },
+        'Generating missing glossary for target repo',
+      )
+      targetGlossary = await extractGlossary(targetRepoId)
+    }
+
+    // Get glossary records for IDs (after potential generation)
     const [sourceGlossaryRecord, targetGlossaryRecord] = await Promise.all([
       db.repoGlossary.findUnique({ where: { repoId: sourceRepoId } }),
       db.repoGlossary.findUnique({ where: { repoId: targetRepoId } }),
     ])
 
-    // Check if both have complete glossaries
+    // Check if both have complete glossaries (some repos may be unglossable)
     if (
       !sourceGlossary ||
       !targetGlossary ||
@@ -72,8 +88,10 @@ export const GlossaryAlignmentWeave: WeaveTypeHandler = {
           targetRepoId,
           hasSourceGlossary: !!sourceGlossary,
           hasTargetGlossary: !!targetGlossary,
+          sourceStatus: sourceGlossaryRecord?.status,
+          targetStatus: targetGlossaryRecord?.status,
         },
-        'One or both repos missing complete glossary',
+        'One or both repos could not be glossarized',
       )
       return []
     }
