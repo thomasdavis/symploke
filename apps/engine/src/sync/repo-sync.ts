@@ -19,7 +19,7 @@ import { syncFile, deleteRemovedFiles } from './file-sync.js'
 import { checkFile } from '../utils/file-utils.js'
 import type { PusherService } from '../pusher/service.js'
 import { notifySyncCompleted } from '../discord/service.js'
-import { createChunkJob } from '../queue/processor.js'
+import { addEmbedJob } from '../queue/redis.js'
 import { config as appConfig } from '../config.js'
 
 export interface SyncConfig {
@@ -627,12 +627,12 @@ async function triggerEmbeddingIfNeeded(
         `${filesNeedingChunking} files need chunking, ${chunksNeedingEmbedding} chunks need embedding`,
       )
 
-      const chunkJobId = await createChunkJob(repoId)
+      const embedJob = await addEmbedJob(repoId, 'post-sync')
       logger.info(
-        { repoId, chunkJobId, filesNeedingChunking, chunksNeedingEmbedding },
-        'Auto-created chunk job after sync',
+        { repoId, embedJobId: embedJob.id, filesNeedingChunking, chunksNeedingEmbedding },
+        'Auto-queued embed job to Redis after sync',
       )
-      emitLog('success', 'Embedding job queued', `Job ID: ${chunkJobId}`)
+      emitLog('success', 'Embedding job queued', `Job ID: ${embedJob.id}`)
     } else {
       emitLog('info', 'All files already have embeddings')
     }
