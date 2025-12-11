@@ -13,6 +13,7 @@ import { Tabs } from '@symploke/ui/Tabs/Tabs'
 import { RepoFlowGraph } from './RepoFlowGraph'
 import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
 import { useWeaveDiscovery, type WeaveLogEntry } from '@/contexts/WeaveDiscoveryContext'
+import { ScoreFilter } from '@/components/ScoreFilter'
 import './weaves.css'
 import './run/weave-run.css'
 
@@ -963,25 +964,12 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
       </div>
 
       {/* Score filter bar */}
-      <div className="weaves-score-filter-bar">
-        <div className="weaves-score-filter-bar__control">
-          <label htmlFor="weaves-min-score">
-            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
-          </label>
-          <input
-            id="weaves-min-score"
-            type="range"
-            min="0"
-            max="100"
-            value={minScore * 100}
-            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
-            className="weaves-score-slider-wide"
-          />
-        </div>
-        <span className="weaves-score-filter-bar__count">
-          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
-        </span>
-      </div>
+      <ScoreFilter
+        value={minScore}
+        onChange={setMinScore}
+        resultCount={displayWeaveCount}
+        resultLabel={`weave${displayWeaveCount !== 1 ? 's' : ''} shown`}
+      />
 
       {/* Graph View */}
       {activeView === 'graph' && (

@@ -164,6 +164,7 @@
 .stats-leaderboard {
   display: flex;
   flex-direction: column;
+  margin-top: var(--space-4);
 }
 
 .stats-leaderboard__header {

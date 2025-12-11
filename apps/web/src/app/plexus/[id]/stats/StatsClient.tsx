@@ -1,9 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@symploke/ui/Card/Card'
+import { ScoreFilter } from '@/components/ScoreFilter'
 
-export type RepoStats = {
+type Weave = {
+  id: string
+  sourceRepoId: string
+  targetRepoId: string
+  type: string
+  score: number
+  discoveryRunId: string | null
+}
+
+type Repo = {
+  id: string
+  name: string
+}
+
+type RepoStats = {
   id: string
   name: string
   weaveCount: number
@@ -11,20 +26,20 @@ export type RepoStats = {
   byType: Record<string, { count: number; avgScore: number }>
 }
 
-export type TypeStats = Record<string, { count: number; avgScore: number }>
+type TypeStats = Record<string, { count: number; avgScore: number }>
 
-export type StatsData = {
+type StatsData = {
   totalWeaves: number
   avgScore: number
   repoStats: RepoStats[]
   typeStats: TypeStats
-  runDate?: string
 }
 
 type StatsClientProps = {
-  lastRunStats: StatsData | null
-  allTimeStats: StatsData
-  repoCount: number
+  weaves: Weave[]
+  repos: Repo[]
+  lastRunId: string | null
+  lastRunDate: string | null
 }
 
 function formatType(type: string) {
@@ -32,6 +47,74 @@ function formatType(type: string) {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function computeStats(weaves: Weave[], repos: Repo[]): StatsData {
+  const repoStatsMap = new Map<string, RepoStats>()
+  for (const repo of repos) {
+    repoStatsMap.set(repo.id, {
+      id: repo.id,
+      name: repo.name,
+      weaveCount: 0,
+      avgScore: 0,
+      byType: {},
+    })
+  }
+
+  const repoScores: Record<string, number[]> = {}
+
+  for (const weave of weaves) {
+    const sourceStats = repoStatsMap.get(weave.sourceRepoId)
+    if (sourceStats) {
+      sourceStats.weaveCount++
+      const sourceTypeStats = sourceStats.byType[weave.type] ?? { count: 0, avgScore: 0 }
+      sourceTypeStats.count++
+      sourceStats.byType[weave.type] = sourceTypeStats
+      const sourceScores = repoScores[weave.sourceRepoId] ?? []
+      sourceScores.push(weave.score)
+      repoScores[weave.sourceRepoId] = sourceScores
+    }
+
+    const targetStats = repoStatsMap.get(weave.targetRepoId)
+    if (targetStats) {
+      targetStats.weaveCount++
+      const targetTypeStats = targetStats.byType[weave.type] ?? { count: 0, avgScore: 0 }
+      targetTypeStats.count++
+      targetStats.byType[weave.type] = targetTypeStats
+      const targetScores = repoScores[weave.targetRepoId] ?? []
+      targetScores.push(weave.score)
+      repoScores[weave.targetRepoId] = targetScores
+    }
+  }
+
+  for (const [repoId, scores] of Object.entries(repoScores)) {
+    const stats = repoStatsMap.get(repoId)
+    if (stats && scores.length > 0) {
+      stats.avgScore = scores.reduce((a, b) => a + b, 0) / scores.length
+    }
+  }
+
+  const typeStats: TypeStats = {}
+  for (const weave of weaves) {
+    const existing = typeStats[weave.type] ?? { count: 0, avgScore: 0 }
+    existing.count++
+    typeStats[weave.type] = existing
+  }
+
+  for (const type of Object.keys(typeStats)) {
+    const weavesOfType = weaves.filter((w) => w.type === type)
+    const stats = typeStats[type]
+    if (stats && weavesOfType.length > 0) {
+      stats.avgScore = weavesOfType.reduce((sum, w) => sum + w.score, 0) / weavesOfType.length
+    }
+  }
+
+  const repoStats = Array.from(repoStatsMap.values()).sort((a, b) => b.weaveCount - a.weaveCount)
+  const totalWeaves = weaves.length
+  const avgScore =
+    weaves.length > 0 ? weaves.reduce((sum, w) => sum + w.score, 0) / weaves.length : 0
+
+  return { totalWeaves, avgScore, repoStats, typeStats }
 }
 
 function StatsContent({
@@ -92,7 +175,7 @@ function StatsContent({
         </CardHeader>
         <CardContent>
           {Object.keys(stats.typeStats).length === 0 ? (
-            <div className="stats-empty">No weaves discovered yet.</div>
+            <div className="stats-empty">No weaves match the current filter.</div>
           ) : (
             <div className="stats-types">
               {Object.entries(stats.typeStats)
@@ -118,13 +201,80 @@ function StatsContent({
           )}
         </CardContent>
       </Card>
+    </>
+  )
+}
 
-      {/* Repo Leaderboard */}
+export function StatsClient({ weaves, repos, lastRunId, lastRunDate }: StatsClientProps) {
+  const [activeTab, setActiveTab] = useState<'lastRun' | 'allTime'>(
+    lastRunId ? 'lastRun' : 'allTime',
+  )
+  const [minScore, setMinScore] = useState(0.3)
+
+  const hasLastRun = lastRunId !== null
+
+  // Filter and compute stats
+  const { filteredWeaves, stats } = useMemo(() => {
+    // Filter by tab
+    let tabFiltered = weaves
+    if (activeTab === 'lastRun' && lastRunId) {
+      tabFiltered = weaves.filter((w) => w.discoveryRunId === lastRunId)
+    }
+
+    // Filter by score
+    const filtered = tabFiltered.filter((w) => w.score >= minScore)
+
+    return {
+      filteredWeaves: filtered,
+      stats: computeStats(filtered, repos),
+    }
+  }, [weaves, repos, activeTab, lastRunId, minScore])
+
+  // Count repos with weaves for display
+  const activeRepoCount = stats.repoStats.filter((r) => r.weaveCount > 0).length
+
+  return (
+    <>
+      {/* Tab Buttons */}
+      <div className="stats-tabs">
+        <button
+          type="button"
+          className={`stats-tab ${activeTab === 'lastRun' ? 'stats-tab--active' : ''} ${!hasLastRun ? 'stats-tab--disabled' : ''}`}
+          onClick={() => hasLastRun && setActiveTab('lastRun')}
+          disabled={!hasLastRun}
+        >
+          Last Run
+          {lastRunDate && <span className="stats-tab__date">{lastRunDate}</span>}
+        </button>
+        <button
+          type="button"
+          className={`stats-tab ${activeTab === 'allTime' ? 'stats-tab--active' : ''}`}
+          onClick={() => setActiveTab('allTime')}
+        >
+          All Time
+        </button>
+      </div>
+
+      {/* Stats Content */}
+      <StatsContent
+        stats={stats}
+        repoCount={repos.length}
+        label={activeTab === 'lastRun' ? 'Last Run' : 'All Time'}
+      />
+
+      {/* Score Filter + Leaderboard */}
       <Card>
         <CardHeader>
           <CardTitle>Repository Leaderboard</CardTitle>
         </CardHeader>
         <CardContent>
+          <ScoreFilter
+            value={minScore}
+            onChange={setMinScore}
+            resultCount={filteredWeaves.length}
+            resultLabel={`weave${filteredWeaves.length !== 1 ? 's' : ''} (${activeRepoCount} repos)`}
+          />
+
           <div className="stats-leaderboard">
             <div className="stats-leaderboard__header">
               <span className="stats-leaderboard__col stats-leaderboard__col--rank">#</span>
@@ -183,51 +333,12 @@ function StatsContent({
               ))}
             {stats.repoStats.filter((r) => r.weaveCount > 0).length === 0 && (
               <div className="stats-leaderboard__empty">
-                No weaves discovered yet. Run weave discovery to see stats.
+                No weaves match the current filter. Try lowering the minimum score.
               </div>
             )}
           </div>
         </CardContent>
       </Card>
-    </>
-  )
-}
-
-export function StatsClient({ lastRunStats, allTimeStats, repoCount }: StatsClientProps) {
-  const [activeTab, setActiveTab] = useState<'lastRun' | 'allTime'>(
-    lastRunStats ? 'lastRun' : 'allTime',
-  )
-
-  const hasLastRun = lastRunStats !== null
-
-  return (
-    <>
-      {/* Tab Buttons */}
-      <div className="stats-tabs">
-        <button
-          type="button"
-          className={`stats-tab ${activeTab === 'lastRun' ? 'stats-tab--active' : ''} ${!hasLastRun ? 'stats-tab--disabled' : ''}`}
-          onClick={() => hasLastRun && setActiveTab('lastRun')}
-          disabled={!hasLastRun}
-        >
-          Last Run
-          {lastRunStats?.runDate && <span className="stats-tab__date">{lastRunStats.runDate}</span>}
-        </button>
-        <button
-          type="button"
-          className={`stats-tab ${activeTab === 'allTime' ? 'stats-tab--active' : ''}`}
-          onClick={() => setActiveTab('allTime')}
-        >
-          All Time
-        </button>
-      </div>
-
-      {/* Stats Content */}
-      {activeTab === 'lastRun' && lastRunStats ? (
-        <StatsContent stats={lastRunStats} repoCount={repoCount} label="Last Run" />
-      ) : (
-        <StatsContent stats={allTimeStats} repoCount={repoCount} label="All Time" />
-      )}
     </>
   )
 }
