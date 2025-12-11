@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { auth, signOut, signIn } from '@/lib/auth'
-import { Button } from '@symploke/ui/Button/Button'
 import { ThemeToggle } from './ThemeToggle'
 import './Header.css'
 
@@ -18,32 +17,33 @@ export async function Header() {
           <ThemeToggle />
           {session?.user ? (
             <>
-              <div className="header-user">
-                {session.user.image && (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name || 'User'}
-                    className="header-avatar"
-                  />
-                )}
-                <span className="header-username">{session.user.name}</span>
-              </div>
-
-              <div className="header-buttons">
-                <Button variant="ghost" size="sm">
+              <nav className="header-nav">
+                <Link href="/profile" className="header-nav-link">
+                  <div className="header-user">
+                    {session.user.image && (
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || 'User'}
+                        className="header-avatar"
+                      />
+                    )}
+                    <span className="header-username">{session.user.name}</span>
+                  </div>
+                </Link>
+                <Link href="/settings" className="header-nav-link">
                   Settings
-                </Button>
+                </Link>
                 <form
                   action={async () => {
                     'use server'
                     await signOut()
                   }}
                 >
-                  <Button type="submit" variant="ghost" size="sm">
+                  <button type="submit" className="header-nav-link header-nav-button">
                     Sign out
-                  </Button>
+                  </button>
                 </form>
-              </div>
+              </nav>
             </>
           ) : (
             <form
@@ -52,9 +52,9 @@ export async function Header() {
                 await signIn('github')
               }}
             >
-              <Button type="submit" variant="ghost" size="sm">
-                Sign in
-              </Button>
+              <button type="submit" className="header-nav-link header-nav-button">
+                Sign in with GitHub
+              </button>
             </form>
           )}
         </div>
