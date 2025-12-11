@@ -5,6 +5,15 @@
   gap: var(--space-6);
 }
 
+/* Toolbar */
+.stats-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
 /* Tabs */
 .stats-tabs {
   display: flex;
@@ -164,7 +173,6 @@
 .stats-leaderboard {
   display: flex;
   flex-direction: column;
-  margin-top: var(--space-4);
 }
 
 .stats-leaderboard__header {

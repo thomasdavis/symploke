@@ -235,24 +235,32 @@ export function StatsClient({ weaves, repos, lastRunId, lastRunDate }: StatsClie
 
   return (
     <>
-      {/* Tab Buttons */}
-      <div className="stats-tabs">
-        <button
-          type="button"
-          className={`stats-tab ${activeTab === 'lastRun' ? 'stats-tab--active' : ''} ${!hasLastRun ? 'stats-tab--disabled' : ''}`}
-          onClick={() => hasLastRun && setActiveTab('lastRun')}
-          disabled={!hasLastRun}
-        >
-          Last Run
-          {lastRunDate && <span className="stats-tab__date">{lastRunDate}</span>}
-        </button>
-        <button
-          type="button"
-          className={`stats-tab ${activeTab === 'allTime' ? 'stats-tab--active' : ''}`}
-          onClick={() => setActiveTab('allTime')}
-        >
-          All Time
-        </button>
+      {/* Toolbar: Tabs + Score Filter */}
+      <div className="stats-toolbar">
+        <div className="stats-tabs">
+          <button
+            type="button"
+            className={`stats-tab ${activeTab === 'lastRun' ? 'stats-tab--active' : ''} ${!hasLastRun ? 'stats-tab--disabled' : ''}`}
+            onClick={() => hasLastRun && setActiveTab('lastRun')}
+            disabled={!hasLastRun}
+          >
+            Last Run
+            {lastRunDate && <span className="stats-tab__date">{lastRunDate}</span>}
+          </button>
+          <button
+            type="button"
+            className={`stats-tab ${activeTab === 'allTime' ? 'stats-tab--active' : ''}`}
+            onClick={() => setActiveTab('allTime')}
+          >
+            All Time
+          </button>
+        </div>
+        <ScoreFilter
+          value={minScore}
+          onChange={setMinScore}
+          resultCount={filteredWeaves.length}
+          resultLabel={`weave${filteredWeaves.length !== 1 ? 's' : ''}`}
+        />
       </div>
 
       {/* Stats Content */}
@@ -262,19 +270,12 @@ export function StatsClient({ weaves, repos, lastRunId, lastRunDate }: StatsClie
         label={activeTab === 'lastRun' ? 'Last Run' : 'All Time'}
       />
 
-      {/* Score Filter + Leaderboard */}
+      {/* Leaderboard */}
       <Card>
         <CardHeader>
           <CardTitle>Repository Leaderboard</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScoreFilter
-            value={minScore}
-            onChange={setMinScore}
-            resultCount={filteredWeaves.length}
-            resultLabel={`weave${filteredWeaves.length !== 1 ? 's' : ''} (${activeRepoCount} repos)`}
-          />
-
           <div className="stats-leaderboard">
             <div className="stats-leaderboard__header">
               <span className="stats-leaderboard__col stats-leaderboard__col--rank">#</span>
