@@ -680,7 +680,7 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
       <div className="weaves-header">
         <PageHeader
           title="Weaves"
-          subtitle={`${repos.length} repositories · ${filteredWeaves.length} weave${filteredWeaves.length !== 1 ? 's' : ''}`}
+          subtitle={`${repos.length} repositories · ${weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length} weave${(weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length) !== 1 ? 's' : ''}`}
         />
         <div className="weaves-filters">
           <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
@@ -869,7 +869,11 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
           />
         </div>
         <span className="weaves-score-filter-bar__count">
-          {filteredWeaves.length} weave{filteredWeaves.length !== 1 ? 's' : ''} shown
+          {weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length} weave
+          {(weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length) !== 1
+            ? 's'
+            : ''}{' '}
+          shown
         </span>
       </div>
 
