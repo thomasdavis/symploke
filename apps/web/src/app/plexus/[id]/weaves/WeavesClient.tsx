@@ -924,7 +924,7 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                   columns={columns}
                   data={filteredWeaves}
                   getRowKey={(weave) => weave.id}
-                  onRowClick={(weave) => setSelectedWeave(weave)}
+                  onRowClick={(weave) => router.push(`/plexus/${plexusId}/weaves/${weave.id}`)}
                   emptyMessage="No weaves found"
                 />
               </div>
