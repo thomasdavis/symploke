@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { WeaveType, WeaveDiscoveryRun } from '@symploke/db'
@@ -590,11 +590,14 @@ function TableIcon() {
 export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const [, startTransition] = useTransition()
 
-  // Get view from URL param, default to 'graph'
+  // Get initial view from URL param, default to 'graph'
   const viewParam = searchParams.get('view')
-  const activeView = viewParam === 'table' ? 'table' : 'graph'
+  const initialView = viewParam === 'table' ? 'table' : 'graph'
 
+  // Local state for immediate tab switching
+  const [activeView, setActiveViewState] = useState<'graph' | 'table'>(initialView)
   const [selectedRunId, setSelectedRunId] = useState<string>('latest')
   const [selectedWeave, setSelectedWeave] = useState<Weave | null>(null)
   const [minScore, setMinScore] = useState<number>(0.3)
@@ -602,10 +605,14 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
   // Weave discovery real-time progress (from context)
   const weaveProgress = useWeaveDiscovery()
 
+  // Update view immediately in local state, then sync URL in background
   const setActiveView = (view: 'graph' | 'table') => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('view', view)
-    router.push(`?${params.toString()}`, { scroll: false })
+    setActiveViewState(view) // Immediate update
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('view', view)
+      router.replace(`?${params.toString()}`, { scroll: false })
+    })
   }
 
   const filteredWeaves = useMemo(() => {
