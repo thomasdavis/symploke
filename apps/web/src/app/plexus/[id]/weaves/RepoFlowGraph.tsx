@@ -24,16 +24,20 @@ import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './weaves.css'
 
-// Animation variants for playful variety
-type BeamAnimation = {
-  variant: 'pulse' | 'dash' | 'glow' | 'spark'
+// Neural animation system - synaptic pulses traveling along connections
+type SynapseAnimation = {
+  intensity: 'subtle' | 'medium' | 'bright' // How bright the pulse is
+  speed: number // Duration in ms (800-2500)
+  delay: number // Stagger delay
   reverse: boolean
-  speed: 'slow' | 'normal' | 'fast'
-  delay: number
+  cascadeGroup: number // Edges in same group fire together like neural cascades
 }
 
 // Context to track which edges are currently animating with their animation config
-const AnimatingEdgesContext = createContext<Map<string, BeamAnimation>>(new Map())
+const AnimatingEdgesContext = createContext<Map<string, SynapseAnimation>>(new Map())
+
+// Breathing phase context - shared breathing rhythm for all edges
+const BreathingPhaseContext = createContext<number>(0)
 
 type Repo = {
   id: string
@@ -178,6 +182,7 @@ function WeaveEdge({
   const [screenPosition, setScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
   const animatingEdges = useContext(AnimatingEdgesContext)
+  const breathingPhase = useContext(BreathingPhaseContext)
 
   const [edgePath] = getBezierPath({
     sourceX,
@@ -194,82 +199,50 @@ function WeaveEdge({
   const scorePercent = Math.round(weave.score * 100)
 
   // Calculate stroke width using exponential scaling (1-20px range)
-  // Using exponential curve: width = 1 + 19 * (score ^ 2)
-  // This makes higher scores much more prominent
-  // Score 0.2 (20%) ≈ 1.8px, Score 0.5 (50%) ≈ 5.75px, Score 1.0 (100%) = 20px
   const baseStrokeWidth = 1 + 19 * weave.score ** 2
   const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
 
-  // Calculate opacity based on score (0.5 to 1.0)
-  // Low score = 0.5 opacity, high score = 1.0 opacity
-  const strokeOpacity = 0.5 + weave.score * 0.5
+  // Base opacity with subtle breathing effect (varies by ±0.08)
+  const breathingOffset = Math.sin(breathingPhase + weave.score * Math.PI) * 0.08
+  const baseOpacity = 0.4 + weave.score * 0.35 + breathingOffset
 
-  // Calculate color lightness based on score
-  // High score = darker (more saturated), low score = lighter (less saturated)
-  // Using oklch: lightness from 75% (low score) to 45% (high score)
-  const lightness = 75 - weave.score * 30
-  const strokeColor = `oklch(${lightness}% 0.15 280)`
+  // Color: purple-blue spectrum, higher scores are brighter
+  const lightness = 70 - weave.score * 25
+  const chroma = 0.12 + weave.score * 0.08
+  const strokeColor = `oklch(${lightness}% ${chroma} 280)`
 
   // Check if this edge should be animating (either hovered or randomly selected)
   const animation = animatingEdges.get(id)
   const isAnimating = isHovered || !!animation
 
   // Unique gradient ID for this edge
-  const gradientId = `beam-gradient-${id}`
+  const gradientId = `synapse-gradient-${id}`
 
-  // Build animation class based on config
-  const getAnimationClass = () => {
-    if (isHovered) return 'weave-edge__beam--hover'
-    if (!animation) return ''
-    const classes = ['weave-edge__beam--random']
-    classes.push(`weave-edge__beam--${animation.variant}`)
-    classes.push(`weave-edge__beam--${animation.speed}`)
-    if (animation.reverse) classes.push('weave-edge__beam--reverse')
-    return classes.join(' ')
-  }
-
-  // Get gradient colors based on variant
-  const getGradientStops = () => {
+  // Get gradient for synaptic pulse - electric blues/cyans with intensity variation
+  const getSynapseGradient = () => {
     if (isHovered) {
-      // Consistent gradient for hover
       return [
-        { offset: '0%', color: '#a855f7', opacity: 0 },
-        { offset: '15%', color: '#a855f7', opacity: 1 },
-        { offset: '50%', color: '#ec4899', opacity: 1 },
-        { offset: '85%', color: '#f97316', opacity: 1 },
-        { offset: '100%', color: '#f97316', opacity: 0 },
+        { offset: '0%', color: '#06b6d4', opacity: 0 },
+        { offset: '10%', color: '#06b6d4', opacity: 0.6 },
+        { offset: '35%', color: '#22d3ee', opacity: 1 },
+        { offset: '50%', color: '#67e8f9', opacity: 1 },
+        { offset: '65%', color: '#22d3ee', opacity: 1 },
+        { offset: '90%', color: '#06b6d4', opacity: 0.6 },
+        { offset: '100%', color: '#06b6d4', opacity: 0 },
       ]
     }
-    // Different color schemes for variety
-    const schemes = {
-      pulse: [
-        { offset: '0%', color: '#06b6d4', opacity: 0 },
-        { offset: '30%', color: '#06b6d4', opacity: 1 },
-        { offset: '70%', color: '#8b5cf6', opacity: 1 },
-        { offset: '100%', color: '#8b5cf6', opacity: 0 },
-      ],
-      dash: [
-        { offset: '0%', color: '#10b981', opacity: 0 },
-        { offset: '20%', color: '#10b981', opacity: 1 },
-        { offset: '80%', color: '#34d399', opacity: 1 },
-        { offset: '100%', color: '#34d399', opacity: 0 },
-      ],
-      glow: [
-        { offset: '0%', color: '#f59e0b', opacity: 0 },
-        { offset: '25%', color: '#f59e0b', opacity: 0.8 },
-        { offset: '50%', color: '#fbbf24', opacity: 1 },
-        { offset: '75%', color: '#f59e0b', opacity: 0.8 },
-        { offset: '100%', color: '#f59e0b', opacity: 0 },
-      ],
-      spark: [
-        { offset: '0%', color: '#ec4899', opacity: 0 },
-        { offset: '10%', color: '#ec4899', opacity: 1 },
-        { offset: '50%', color: '#f472b6', opacity: 1 },
-        { offset: '90%', color: '#a855f7', opacity: 1 },
-        { offset: '100%', color: '#a855f7', opacity: 0 },
-      ],
-    }
-    return schemes[animation?.variant || 'pulse']
+    // Intensity affects how bright the pulse is
+    const intensityMultiplier =
+      animation?.intensity === 'bright' ? 1 : animation?.intensity === 'medium' ? 0.7 : 0.4
+    return [
+      { offset: '0%', color: '#0891b2', opacity: 0 },
+      { offset: '15%', color: '#06b6d4', opacity: 0.3 * intensityMultiplier },
+      { offset: '40%', color: '#22d3ee', opacity: 0.8 * intensityMultiplier },
+      { offset: '50%', color: '#67e8f9', opacity: intensityMultiplier },
+      { offset: '60%', color: '#22d3ee', opacity: 0.8 * intensityMultiplier },
+      { offset: '85%', color: '#06b6d4', opacity: 0.3 * intensityMultiplier },
+      { offset: '100%', color: '#0891b2', opacity: 0 },
+    ]
   }
 
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
@@ -335,8 +308,9 @@ function WeaveEdge({
         )
       : null
 
-  const gradientStops = getGradientStops()
+  const gradientStops = getSynapseGradient()
   const animationDelay = animation?.delay || 0
+  const animationDuration = animation?.speed || 1500
 
   return (
     <>
@@ -378,28 +352,31 @@ function WeaveEdge({
           stroke="transparent"
           strokeWidth={Math.max(24, baseStrokeWidth + 8)}
         />
-        {/* Base edge - stroke width, color, and opacity based on score */}
+        {/* Base edge - breathing opacity effect */}
         <path
           id={id}
           d={edgePath}
           fill="none"
-          stroke={isHovered ? 'var(--color-primary)' : strokeColor}
+          stroke={isHovered ? '#22d3ee' : strokeColor}
           strokeWidth={isHovered ? hoverStrokeWidth : baseStrokeWidth}
-          strokeOpacity={isHovered ? 1 : strokeOpacity}
+          strokeOpacity={isHovered ? 1 : baseOpacity}
           markerEnd={markerEnd}
           className="weave-edge__path"
-          style={{ transition: 'stroke 0.15s, stroke-width 0.15s, stroke-opacity 0.15s' }}
+          style={{ transition: 'stroke 0.2s, stroke-width 0.2s' }}
         />
-        {/* Animated beam overlay - only shown when animating */}
+        {/* Synaptic pulse overlay - fires when animating */}
         {isAnimating && (
           <path
             d={edgePath}
             fill="none"
             stroke={`url(#${gradientId})`}
-            strokeWidth={isHovered ? hoverStrokeWidth + 2 : baseStrokeWidth + 2}
+            strokeWidth={isHovered ? hoverStrokeWidth + 4 : baseStrokeWidth + 3}
             strokeLinecap="round"
-            className={`weave-edge__beam ${getAnimationClass()}`}
-            style={{ animationDelay: `${animationDelay}ms` }}
+            className={`weave-edge__synapse ${isHovered ? 'weave-edge__synapse--hover' : ''}`}
+            style={{
+              animationDelay: `${animationDelay}ms`,
+              animationDuration: `${animationDuration}ms`,
+            }}
           />
         )}
       </g>
@@ -499,8 +476,10 @@ function RepoFlowGraphInner({
   const { fitView } = useReactFlow()
   const [showEdges, setShowEdges] = useState(false)
   const [edgesReady, setEdgesReady] = useState(false)
-  const [animatingEdges, setAnimatingEdges] = useState<Map<string, BeamAnimation>>(new Map())
+  const [animatingEdges, setAnimatingEdges] = useState<Map<string, SynapseAnimation>>(new Map())
+  const [breathingPhase, setBreathingPhase] = useState(0)
   const edgeIdsRef = useRef<string[]>([])
+  const edgeConnectionsRef = useRef<Map<string, { source: string; target: string }>>(new Map())
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
@@ -607,58 +586,146 @@ function RepoFlowGraphInner({
     }
   }, [isDiscoveryRunning, newWeaves])
 
-  // Keep track of edge IDs for random animation selection
+  // Keep track of edge IDs and their connections for cascade animation
   useEffect(() => {
     edgeIdsRef.current = edges.map((e) => e.id)
+    const connections = new Map<string, { source: string; target: string }>()
+    for (const edge of edges) {
+      connections.set(edge.id, { source: edge.source, target: edge.target })
+    }
+    edgeConnectionsRef.current = connections
   }, [edges])
 
-  // Randomly animate edges at intervals - more playful with multiple simultaneous animations
+  // Breathing animation - slow sine wave for all edges
+  useEffect(() => {
+    if (!showEdges) return
+
+    let animationFrame: number
+    let startTime = performance.now()
+
+    const animate = (time: number) => {
+      const elapsed = (time - startTime) / 1000 // seconds
+      // Very slow breathing: 8 second cycle
+      setBreathingPhase(elapsed * (Math.PI / 4))
+      animationFrame = requestAnimationFrame(animate)
+    }
+
+    animationFrame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animationFrame)
+  }, [showEdges])
+
+  // Neural cascade animation system
   useEffect(() => {
     if (!showEdges || edges.length === 0) return
 
-    const variants: BeamAnimation['variant'][] = ['pulse', 'dash', 'glow', 'spark']
-    const speeds: BeamAnimation['speed'][] = ['slow', 'normal', 'fast']
+    // Find edges connected to a node
+    const getConnectedEdges = (nodeId: string, excludeEdge: string): string[] => {
+      const connected: string[] = []
+      for (const [edgeId, conn] of edgeConnectionsRef.current) {
+        if (edgeId !== excludeEdge && (conn.source === nodeId || conn.target === nodeId)) {
+          connected.push(edgeId)
+        }
+      }
+      return connected
+    }
 
-    const animateRandomEdges = () => {
+    const triggerCascade = () => {
       const edgeIds = edgeIdsRef.current
       if (edgeIds.length === 0) return
 
-      // Pick 3-6 random edges to animate simultaneously
-      const count = Math.min(edgeIds.length, 3 + Math.floor(Math.random() * 4))
-      const selectedEdges = new Map<string, BeamAnimation>()
+      const selectedEdges = new Map<string, SynapseAnimation>()
+      let cascadeGroup = 0
 
-      // Shuffle and pick unique edges
+      // Pick 2-4 "origin" edges to start cascades from
+      const originCount = Math.min(edgeIds.length, 2 + Math.floor(Math.random() * 3))
       const shuffled = [...edgeIds].sort(() => Math.random() - 0.5)
+      const origins = shuffled.slice(0, originCount)
 
-      for (let i = 0; i < count; i++) {
-        const edgeId = shuffled[i]
-        if (edgeId) {
-          selectedEdges.set(edgeId, {
-            variant: variants[Math.floor(Math.random() * variants.length)] || 'pulse',
+      // For each origin, potentially cascade to connected edges
+      for (const originId of origins) {
+        const intensity: SynapseAnimation['intensity'] =
+          Math.random() > 0.6 ? 'bright' : Math.random() > 0.3 ? 'medium' : 'subtle'
+        const baseSpeed = 1200 + Math.random() * 1000 // 1200-2200ms
+
+        selectedEdges.set(originId, {
+          intensity,
+          speed: baseSpeed,
+          delay: cascadeGroup * 80,
+          reverse: Math.random() > 0.5,
+          cascadeGroup,
+        })
+
+        // 60% chance to cascade to connected edges
+        if (Math.random() > 0.4) {
+          const conn = edgeConnectionsRef.current.get(originId)
+          if (conn) {
+            // Get edges connected to either end of this edge
+            const cascadeTargets = [
+              ...getConnectedEdges(conn.source, originId),
+              ...getConnectedEdges(conn.target, originId),
+            ]
+            // Pick 1-3 connected edges to cascade to
+            const cascadeCount = Math.min(cascadeTargets.length, 1 + Math.floor(Math.random() * 3))
+            const cascadeEdges = cascadeTargets
+              .sort(() => Math.random() - 0.5)
+              .slice(0, cascadeCount)
+
+            for (let i = 0; i < cascadeEdges.length; i++) {
+              const cascadeId = cascadeEdges[i]
+              if (cascadeId && !selectedEdges.has(cascadeId)) {
+                selectedEdges.set(cascadeId, {
+                  intensity: intensity === 'bright' ? 'medium' : 'subtle', // Cascaded pulses are dimmer
+                  speed: baseSpeed + 200 + Math.random() * 400, // Slightly slower
+                  delay: cascadeGroup * 80 + 150 + i * 100, // Staggered after origin
+                  reverse: Math.random() > 0.5,
+                  cascadeGroup,
+                })
+              }
+            }
+          }
+        }
+        cascadeGroup++
+      }
+
+      // Also add some random "background" pulses (very subtle)
+      const backgroundCount = Math.min(
+        edgeIds.length - selectedEdges.size,
+        Math.floor(Math.random() * 4),
+      )
+      const remainingEdges = edgeIds.filter((id) => !selectedEdges.has(id))
+      for (let i = 0; i < backgroundCount; i++) {
+        const bgEdge = remainingEdges[Math.floor(Math.random() * remainingEdges.length)]
+        if (bgEdge && !selectedEdges.has(bgEdge)) {
+          selectedEdges.set(bgEdge, {
+            intensity: 'subtle',
+            speed: 2000 + Math.random() * 500,
+            delay: Math.random() * 800,
             reverse: Math.random() > 0.5,
-            speed: speeds[Math.floor(Math.random() * speeds.length)] || 'normal',
-            delay: i * 150, // Stagger the animations
+            cascadeGroup: -1,
           })
         }
       }
 
       setAnimatingEdges(selectedEdges)
 
-      // Clear animation after longest one completes (slow = 3s + max delay)
+      // Clear after longest animation completes
+      const maxDuration = Math.max(
+        ...Array.from(selectedEdges.values()).map((a) => a.speed + a.delay),
+      )
       setTimeout(() => {
         setAnimatingEdges(new Map())
-      }, 3500)
+      }, maxDuration + 200)
     }
 
-    // Start first animation after a short delay
-    const initialTimer = setTimeout(animateRandomEdges, 800)
+    // Start first cascade after a short delay
+    const initialTimer = setTimeout(triggerCascade, 600)
 
-    // Then animate at random intervals (1.5-3 seconds between bursts)
+    // Trigger cascades at semi-random intervals (more frequent for livelier feel)
     const interval = setInterval(
       () => {
-        animateRandomEdges()
+        triggerCascade()
       },
-      1500 + Math.random() * 1500,
+      800 + Math.random() * 1200, // Every 0.8-2 seconds
     )
 
     return () => {
@@ -676,37 +743,39 @@ function RepoFlowGraphInner({
 
   return (
     <AnimatingEdgesContext.Provider value={animatingEdges}>
-      <ReactFlow
-        nodes={nodes}
-        edges={showEdges ? edges : []}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-        proOptions={{ hideAttribution: true }}
-        nodesDraggable={true}
-        nodesConnectable={false}
-        elementsSelectable={true}
-      >
-        <Background color="var(--color-border-subtle)" gap={20} size={1} />
-        <Controls className="repo-flow-controls" showInteractive={false} />
-        <MiniMap
-          className="repo-flow-minimap"
-          nodeColor={(node) => {
-            const data = node.data as RepoNodeData
-            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-          }}
-          maskColor="rgba(0, 0, 0, 0.1)"
-          zoomable
-          pannable
-        />
-      </ReactFlow>
+      <BreathingPhaseContext.Provider value={breathingPhase}>
+        <ReactFlow
+          nodes={nodes}
+          edges={showEdges ? edges : []}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={onNodeClick}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+          minZoom={0.1}
+          maxZoom={2}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+          proOptions={{ hideAttribution: true }}
+          nodesDraggable={true}
+          nodesConnectable={false}
+          elementsSelectable={true}
+        >
+          <Background color="var(--color-border-subtle)" gap={20} size={1} />
+          <Controls className="repo-flow-controls" showInteractive={false} />
+          <MiniMap
+            className="repo-flow-minimap"
+            nodeColor={(node) => {
+              const data = node.data as RepoNodeData
+              return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+            }}
+            maskColor="rgba(0, 0, 0, 0.1)"
+            zoomable
+            pannable
+          />
+        </ReactFlow>
+      </BreathingPhaseContext.Provider>
     </AnimatingEdgesContext.Provider>
   )
 }

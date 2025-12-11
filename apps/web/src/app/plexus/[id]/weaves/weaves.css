@@ -1414,139 +1414,64 @@
 .react-flow__edge:nth-child(10) { animation-delay: 270ms; }
 .react-flow__edge:nth-child(n+11) { animation-delay: 300ms; }
 
-/* Animated beam effect for edges */
+/* ========================================
+   NEURAL SYNAPSE ANIMATION SYSTEM
+   Brain-like pulsing with cascading activity
+   ======================================== */
 
-/* Base beam styles */
-.weave-edge__beam {
-  pointer-events: none;
-}
-
-/* Hover animation - consistent and smooth */
-@keyframes beamHover {
-  0% {
-    stroke-dashoffset: 100%;
-  }
-  100% {
-    stroke-dashoffset: -100%;
-  }
-}
-
-.weave-edge__beam--hover {
-  stroke-dasharray: 25% 75%;
-  animation: beamHover 1.2s linear infinite;
-}
-
-/* Pulse variant - smooth traveling pulse */
-@keyframes beamPulse {
-  0% {
-    stroke-dashoffset: 120%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -120%;
-    opacity: 0;
-  }
-}
-
-.weave-edge__beam--pulse {
-  stroke-dasharray: 20% 80%;
-}
-
-/* Dash variant - quick dashes */
-@keyframes beamDash {
-  0% {
-    stroke-dashoffset: 100%;
-  }
-  100% {
-    stroke-dashoffset: -100%;
-  }
-}
-
-.weave-edge__beam--dash {
-  stroke-dasharray: 8% 12% 8% 72%;
-}
-
-/* Glow variant - wider, softer beam */
-@keyframes beamGlow {
-  0% {
-    stroke-dashoffset: 150%;
-    filter: blur(0px);
-  }
-  50% {
-    filter: blur(2px);
-  }
-  100% {
-    stroke-dashoffset: -150%;
-    filter: blur(0px);
-  }
-}
-
-.weave-edge__beam--glow {
-  stroke-dasharray: 40% 60%;
-}
-
-/* Spark variant - fast, short bursts */
-@keyframes beamSpark {
+/* Synaptic pulse - electric signal traveling along connection */
+@keyframes synapsePulse {
   0% {
     stroke-dashoffset: 100%;
     opacity: 0;
+    filter: blur(0px) drop-shadow(0 0 0px transparent);
+  }
+  8% {
+    opacity: 0.3;
   }
   20% {
     opacity: 1;
+    filter: blur(0px) drop-shadow(0 0 4px rgba(34, 211, 238, 0.6));
+  }
+  50% {
+    filter: blur(1px) drop-shadow(0 0 8px rgba(34, 211, 238, 0.8));
   }
   80% {
     opacity: 1;
+    filter: blur(0px) drop-shadow(0 0 4px rgba(34, 211, 238, 0.6));
+  }
+  92% {
+    opacity: 0.3;
   }
   100% {
     stroke-dashoffset: -100%;
     opacity: 0;
+    filter: blur(0px) drop-shadow(0 0 0px transparent);
   }
 }
 
-.weave-edge__beam--spark {
-  stroke-dasharray: 10% 90%;
+/* Hover animation - brighter, continuous flow */
+@keyframes synapseHover {
+  0% {
+    stroke-dashoffset: 80%;
+    filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(103, 232, 249, 1));
+  }
+  100% {
+    stroke-dashoffset: -80%;
+    filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
+  }
 }
 
-/* Speed modifiers */
-.weave-edge__beam--slow {
-  animation-duration: 3s;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+.weave-edge__synapse {
+  pointer-events: none;
+  stroke-dasharray: 30% 70%;
+  animation: synapsePulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.weave-edge__beam--normal {
-  animation-duration: 2s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.weave-edge__beam--fast {
-  animation-duration: 1.2s;
-  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Apply the correct animation based on variant */
-.weave-edge__beam--random.weave-edge__beam--pulse {
-  animation-name: beamPulse;
-}
-
-.weave-edge__beam--random.weave-edge__beam--dash {
-  animation-name: beamDash;
-}
-
-.weave-edge__beam--random.weave-edge__beam--glow {
-  animation-name: beamGlow;
-}
-
-.weave-edge__beam--random.weave-edge__beam--spark {
-  animation-name: beamSpark;
-}
-
-/* Reverse direction */
-.weave-edge__beam--reverse {
-  animation-direction: reverse;
+.weave-edge__synapse--hover {
+  stroke-dasharray: 40% 60%;
+  animation: synapseHover 0.8s linear infinite;
 }
