@@ -1,3 +1,13 @@
+/* ============================================
+   TABLE COMPONENT
+   A modern, well-aligned data table with:
+   - Proper column alignment
+   - Interactive row support with accessible links
+   - Striped, sticky header, and compact variants
+   - Responsive horizontal scrolling
+   ============================================ */
+
+/* Container */
 .table-container {
   background: var(--color-bg-raised);
   border: 1px solid var(--color-border);
@@ -6,43 +16,179 @@
   overflow-y: hidden;
 }
 
+/* Base table */
 .table {
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
 }
 
+/* Auto layout for flexible widths */
+.table:not(.table--fixed) {
+  table-layout: auto;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
 .table thead {
   background: var(--color-bg-subtle);
+}
+
+.table thead tr {
   border-bottom: 1px solid var(--color-border);
 }
 
 .table th {
   padding: var(--space-3) var(--space-4);
   text-align: left;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--color-fg-muted);
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
+/* Sticky header variant */
+.table--sticky-header thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg-subtle);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* ============================================
+   BODY & ROWS
+   ============================================ */
 .table tbody tr {
   border-bottom: 1px solid var(--color-border-subtle);
-  transition: background var(--duration-fast) var(--ease-in-out);
+  transition: background-color var(--duration-fast) var(--ease-in-out);
 }
 
 .table tbody tr:last-child {
   border-bottom: none;
 }
 
-.table tbody tr:hover {
-  background: var(--color-bg-subtle);
-}
-
+/* ============================================
+   CELLS
+   ============================================ */
 .table td {
   padding: var(--space-4);
   font-size: var(--text-sm);
   color: var(--color-fg);
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* Prevent overflow in cells */
+.table td > * {
+  max-width: 100%;
+}
+
+/* ============================================
+   INTERACTIVE ROWS (clickable/linkable)
+   ============================================ */
+.table--interactive tbody tr {
+  cursor: pointer;
+  position: relative;
+}
+
+.table--interactive tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.table--interactive tbody tr:active {
+  background: var(--color-bg);
+}
+
+/* Interactive row class */
+.table__row--interactive {
+  cursor: pointer;
+}
+
+/* ============================================
+   LINKABLE CELLS
+   For proper accessibility, each cell contains
+   a link that stretches to fill the cell.
+   The first cell's link has a pseudo-element
+   that covers the entire row for a larger
+   click target while maintaining accessibility.
+   ============================================ */
+.table__cell--linkable {
+  padding: 0;
+  position: relative;
+}
+
+.table__cell-link {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  color: inherit;
+  text-decoration: none;
+  height: 100%;
+  min-height: 52px;
+}
+
+/* Primary link (first cell) creates full-row click area */
+.table__cell-link--primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* All links need to be above the pseudo-element for focus states */
+.table__cell-link {
+  position: relative;
+  z-index: 2;
+}
+
+/* Focus visible state for accessibility */
+.table__cell-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   VARIANTS
+   ============================================ */
+
+/* Striped rows */
+.table--striped tbody tr:nth-child(even) {
+  background: var(--color-bg-subtle);
+}
+
+.table--striped.table--interactive tbody tr:hover {
+  background: var(--color-bg);
+}
+
+/* Compact mode */
+.table--compact th {
+  padding: var(--space-2) var(--space-3);
+}
+
+.table--compact td {
+  padding: var(--space-2) var(--space-3);
+}
+
+.table--compact .table__cell-link {
+  padding: var(--space-2) var(--space-3);
+  min-height: 40px;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.table__empty-row:hover {
+  background: transparent !important;
 }
 
 .table__empty {
@@ -52,53 +198,52 @@
   font-size: var(--text-base);
 }
 
-.table__row--clickable {
-  cursor: pointer;
+/* ============================================
+   ALIGNMENT UTILITIES
+   Applied via inline styles from component
+   ============================================ */
+
+/* Right-aligned cells (for numbers, scores, etc) */
+.table td[style*="text-align: right"],
+.table th[style*="text-align: right"] {
+  text-align: right;
 }
 
-.table__row--clickable:hover {
-  background: var(--color-bg-subtle);
+.table td[style*="text-align: right"] .table__cell-link {
+  justify-content: flex-end;
 }
 
-.table__row--clickable:active {
-  background: var(--color-bg);
+/* Center-aligned cells */
+.table td[style*="text-align: center"],
+.table th[style*="text-align: center"] {
+  text-align: center;
 }
 
-/* Linkable rows - proper <a> tags for right-click > open in new tab */
-.table__row--linkable {
-  padding: 0;
+.table td[style*="text-align: center"] .table__cell-link {
+  justify-content: center;
 }
 
-.table__row--linkable:hover {
-  background: transparent;
-}
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 640px) {
+  .table th,
+  .table td {
+    padding: var(--space-3);
+  }
 
-.table__row-link-cell {
-  padding: 0 !important;
-}
+  .table__cell-link {
+    padding: var(--space-3);
+    min-height: 48px;
+  }
 
-.table__row-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: background var(--duration-fast) var(--ease-in-out);
-}
+  .table--compact th,
+  .table--compact td {
+    padding: var(--space-2);
+  }
 
-.table__row-link:hover {
-  background: var(--color-bg-subtle);
-}
-
-.table__row-link:active {
-  background: var(--color-bg);
-}
-
-.table__row-link-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table__row-link-table td {
-  padding: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-fg);
+  .table--compact .table__cell-link {
+    padding: var(--space-2);
+    min-height: 36px;
+  }
 }

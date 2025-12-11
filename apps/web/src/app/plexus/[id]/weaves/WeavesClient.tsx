@@ -654,23 +654,28 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
     {
       header: 'Type',
       accessor: (weave: Weave) => <WeaveTypeBadge type={weave.type} />,
+      width: 'shrink' as const,
     },
     {
       header: 'Title',
       accessor: (weave: Weave) => weave.title,
-      className: 'weave-table__title',
+      width: 'grow' as const,
     },
     {
       header: 'Source',
       accessor: (weave: Weave) => weave.sourceRepo.name,
+      width: 'shrink' as const,
     },
     {
       header: 'Target',
       accessor: (weave: Weave) => weave.targetRepo.name,
+      width: 'shrink' as const,
     },
     {
       header: 'Score',
       accessor: (weave: Weave) => <ScoreBadge score={weave.score} />,
+      width: 'shrink' as const,
+      align: 'right' as const,
     },
   ]
 
