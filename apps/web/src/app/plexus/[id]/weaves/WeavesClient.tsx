@@ -694,27 +694,6 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
         />
       </div>
 
-      {/* Score filter bar */}
-      <div className="weaves-score-filter-bar">
-        <div className="weaves-score-filter-bar__control">
-          <label htmlFor="weaves-min-score">
-            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
-          </label>
-          <input
-            id="weaves-min-score"
-            type="range"
-            min="0"
-            max="100"
-            value={minScore * 100}
-            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
-            className="weaves-score-slider-wide"
-          />
-        </div>
-        <span className="weaves-score-filter-bar__count">
-          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
-        </span>
-      </div>
-
       {/* Tabs and Run Selector Row */}
       <div className="weaves-tabs-row">
         <div className="weaves-tabs">
@@ -771,21 +750,20 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
               </Select.Icon>
             </Select.Trigger>
             <Select.Portal>
-              <Select.Positioner>
-                <Select.Popup>
-                  <Select.List>
+              <Select.Positioner className="select-positioner">
+                <Select.Popup className="select-popup">
+                  <Select.List className="select-list">
                     {weaveProgress.isRunning && (
                       <>
-                        <Select.Item value="running">
+                        <Select.Item value="running" className="select-item">
                           <Select.ItemText>
                             Running... {displayWeaveCount} weave
                             {displayWeaveCount !== 1 ? 's' : ''} found
-                            {weaveProgress.currentSourceRepoName &&
-                            weaveProgress.currentTargetRepoName
-                              ? ` (${weaveProgress.currentSourceRepoName} ↔ ${weaveProgress.currentTargetRepoName})`
-                              : ''}
                           </Select.ItemText>
-                          <Select.ItemIndicator aria-hidden="true">
+                          <Select.ItemIndicator
+                            className="select-item-indicator"
+                            aria-hidden="true"
+                          >
                             <svg
                               width="12"
                               height="12"
@@ -803,12 +781,12 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                             </svg>
                           </Select.ItemIndicator>
                         </Select.Item>
-                        <Select.Separator />
+                        <Select.Separator className="select-separator" />
                       </>
                     )}
-                    <Select.Item value="all">
+                    <Select.Item value="all" className="select-item">
                       <Select.ItemText>All runs ({weaves.length} weaves)</Select.ItemText>
-                      <Select.ItemIndicator aria-hidden="true">
+                      <Select.ItemIndicator className="select-item-indicator" aria-hidden="true">
                         <svg
                           width="12"
                           height="12"
@@ -826,12 +804,12 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                         </svg>
                       </Select.ItemIndicator>
                     </Select.Item>
-                    <Select.Item value="latest">
+                    <Select.Item value="latest" className="select-item">
                       <Select.ItemText>
                         Latest run
                         {discoveryRuns[0] ? ` (${discoveryRuns[0].weavesSaved} weaves)` : ''}
                       </Select.ItemText>
-                      <Select.ItemIndicator aria-hidden="true">
+                      <Select.ItemIndicator className="select-item-indicator" aria-hidden="true">
                         <svg
                           width="12"
                           height="12"
@@ -849,13 +827,13 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                         </svg>
                       </Select.ItemIndicator>
                     </Select.Item>
-                    {discoveryRuns.length > 0 && <Select.Separator />}
+                    {discoveryRuns.length > 0 && <Select.Separator className="select-separator" />}
                     {discoveryRuns.map((run) => (
-                      <Select.Item key={run.id} value={run.id}>
+                      <Select.Item key={run.id} value={run.id} className="select-item">
                         <Select.ItemText>
                           {formatRunDate(run.startedAt)} ({run.weavesSaved} weaves)
                         </Select.ItemText>
-                        <Select.ItemIndicator aria-hidden="true">
+                        <Select.ItemIndicator className="select-item-indicator" aria-hidden="true">
                           <svg
                             width="12"
                             height="12"
@@ -880,6 +858,27 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
             </Select.Portal>
           </Select.Root>
         </div>
+      </div>
+
+      {/* Score filter bar */}
+      <div className="weaves-score-filter-bar">
+        <div className="weaves-score-filter-bar__control">
+          <label htmlFor="weaves-min-score">
+            Min Score: <strong>{Math.round(minScore * 100)}%</strong>
+          </label>
+          <input
+            id="weaves-min-score"
+            type="range"
+            min="0"
+            max="100"
+            value={minScore * 100}
+            onChange={(e) => setMinScore(Number(e.target.value) / 100)}
+            className="weaves-score-slider-wide"
+          />
+        </div>
+        <span className="weaves-score-filter-bar__count">
+          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
+        </span>
       </div>
 
       {/* Graph View */}
