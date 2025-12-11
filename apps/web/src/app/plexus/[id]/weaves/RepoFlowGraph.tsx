@@ -517,7 +517,7 @@ function RepoFlowGraphInner({
   // Convert newWeaves to Weave type for display
   const displayWeaves = useMemo((): Weave[] => {
     if (isDiscoveryRunning && newWeaves && newWeaves.length > 0) {
-      // During discovery, only show newly discovered weaves
+      // During discovery, show newly discovered weaves from Pusher/polling
       console.log('[RepoFlowGraph] Showing newWeaves:', newWeaves.length)
       return newWeaves.map((w) => ({
         id: w.id,
@@ -531,8 +531,17 @@ function RepoFlowGraphInner({
         targetRepo: w.targetRepo,
       }))
     }
+    if (isDiscoveryRunning && weaves.length > 0) {
+      // Discovery running but newWeaves not populated yet - show server-side weaves as fallback
+      // These are weaves already saved to DB from the current run
+      console.log(
+        '[RepoFlowGraph] Discovery running, showing server weaves as fallback:',
+        weaves.length,
+      )
+      return weaves
+    }
     if (isDiscoveryRunning) {
-      // Discovery running but no weaves found yet - show empty
+      // Discovery running and no weaves anywhere yet - show empty
       console.log('[RepoFlowGraph] Discovery running, no weaves yet')
       return []
     }

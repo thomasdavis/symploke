@@ -675,12 +675,18 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
     },
   ]
 
+  // During discovery, show the higher of weavesFound (from Pusher/polling) or filteredWeaves (from server)
+  // This handles the case where the page loads mid-discovery with weaves already in DB
+  const displayWeaveCount = weaveProgress.isRunning
+    ? Math.max(weaveProgress.weavesFound, filteredWeaves.length)
+    : filteredWeaves.length
+
   return (
     <div className={`weaves-page ${activeView === 'table' ? 'weaves-page--table-view' : ''}`}>
       <div className="weaves-header">
         <PageHeader
           title="Weaves"
-          subtitle={`${repos.length} repositories · ${weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length} weave${(weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length) !== 1 ? 's' : ''}`}
+          subtitle={`${repos.length} repositories · ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''}`}
         />
         <div className="weaves-filters">
           <RunWeavesButton plexusId={plexusId} variant="primary" size="sm" />
@@ -696,7 +702,7 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
               <Select.Trigger className="run-selector-trigger">
                 <Select.Value>
                   {weaveProgress.isRunning
-                    ? `Running... ${weaveProgress.weavesFound} weave${weaveProgress.weavesFound !== 1 ? 's' : ''} found`
+                    ? `Running... ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''} found`
                     : selectedRunId === 'all'
                       ? `All runs (${weaves.length} weaves)`
                       : selectedRunId === 'latest'
@@ -727,8 +733,8 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                         <>
                           <Select.Item value="running">
                             <Select.ItemText>
-                              Running... {weaveProgress.weavesFound} weave
-                              {weaveProgress.weavesFound !== 1 ? 's' : ''} found
+                              Running... {displayWeaveCount} weave
+                              {displayWeaveCount !== 1 ? 's' : ''} found
                               {weaveProgress.currentSourceRepoName &&
                               weaveProgress.currentTargetRepoName
                                 ? ` (${weaveProgress.currentSourceRepoName} ↔ ${weaveProgress.currentTargetRepoName})`
@@ -869,11 +875,7 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
           />
         </div>
         <span className="weaves-score-filter-bar__count">
-          {weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length} weave
-          {(weaveProgress.isRunning ? weaveProgress.weavesFound : filteredWeaves.length) !== 1
-            ? 's'
-            : ''}{' '}
-          shown
+          {displayWeaveCount} weave{displayWeaveCount !== 1 ? 's' : ''} shown
         </span>
       </div>
 
