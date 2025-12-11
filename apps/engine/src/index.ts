@@ -465,6 +465,44 @@ const healthServer = http.createServer(async (req, res) => {
         },
       })
 
+      // Get chunk/embed job stats
+      const chunkJobsByStatus = await db.chunkSyncJob.groupBy({
+        by: ['status'],
+        _count: true,
+      })
+      const recentChunkJobs = await db.chunkSyncJob.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          totalFiles: true,
+          processedFiles: true,
+          chunksCreated: true,
+          embeddingsGenerated: true,
+          createdAt: true,
+          completedAt: true,
+          error: true,
+          repo: { select: { fullName: true } },
+        },
+      })
+
+      // Get recent weave discovery runs
+      const recentWeaveRuns = await db.weaveDiscoveryRun.findMany({
+        take: 10,
+        orderBy: { startedAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          weavesSaved: true,
+          repoPairsTotal: true,
+          repoPairsChecked: true,
+          plexus: { select: { name: true } },
+        },
+      })
+
       // Get Redis/BullMQ queue stats if available
       let queueStats = null
       if (USE_REDIS_QUEUE) {
@@ -599,6 +637,65 @@ const healthServer = http.createServer(async (req, res) => {
               createdAt: j.createdAt.toISOString(),
               completedAt: j.completedAt?.toISOString() ?? null,
               error: j.error,
+            }
+          }),
+        },
+        embedJobs: {
+          byStatus: Object.fromEntries(chunkJobsByStatus.map((s) => [s.status, s._count])),
+          recent: recentChunkJobs.map((j) => {
+            const durationMs =
+              j.completedAt && j.createdAt ? j.completedAt.getTime() - j.createdAt.getTime() : null
+            const durationStr = durationMs
+              ? durationMs < 60000
+                ? `${Math.round(durationMs / 1000)}s`
+                : `${Math.round(durationMs / 60000)}m ${Math.round((durationMs % 60000) / 1000)}s`
+              : null
+            return {
+              id: j.id,
+              repo: j.repo.fullName,
+              status: j.status,
+              progress:
+                j.totalFiles && j.totalFiles > 0
+                  ? {
+                      processed: j.processedFiles ?? 0,
+                      total: j.totalFiles,
+                      percent: Math.round(((j.processedFiles ?? 0) / j.totalFiles) * 100),
+                    }
+                  : null,
+              chunksCreated: j.chunksCreated,
+              embeddingsGenerated: j.embeddingsGenerated,
+              duration: durationStr,
+              createdAt: j.createdAt.toISOString(),
+              completedAt: j.completedAt?.toISOString() ?? null,
+              error: j.error,
+            }
+          }),
+        },
+        weaveRuns: {
+          recent: recentWeaveRuns.map((r) => {
+            const durationMs =
+              r.completedAt && r.startedAt ? r.completedAt.getTime() - r.startedAt.getTime() : null
+            const durationStr = durationMs
+              ? durationMs < 60000
+                ? `${Math.round(durationMs / 1000)}s`
+                : `${Math.round(durationMs / 60000)}m ${Math.round((durationMs % 60000) / 1000)}s`
+              : null
+            return {
+              id: r.id,
+              plexus: r.plexus.name,
+              status: r.status,
+              progress:
+                r.repoPairsTotal && r.repoPairsTotal > 0
+                  ? {
+                      checked: r.repoPairsChecked ?? 0,
+                      total: r.repoPairsTotal,
+                      percent: Math.round(((r.repoPairsChecked ?? 0) / r.repoPairsTotal) * 100),
+                    }
+                  : null,
+              weavesSaved: r.weavesSaved,
+              duration: durationStr,
+              startedAt: r.startedAt.toISOString(),
+              completedAt: r.completedAt?.toISOString() ?? null,
             }
           }),
         },
