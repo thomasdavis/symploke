@@ -48,6 +48,7 @@
     "./components/scroll-area.css": "./src/components/scroll-area.css",
     "./components/select.css": "./src/components/select.css",
     "./components/separator.css": "./src/components/separator.css",
+    "./components/skeleton.css": "./src/components/skeleton.css",
     "./components/slider.css": "./src/components/slider.css",
     "./components/switch.css": "./src/components/switch.css",
     "./components/table.css": "./src/components/table.css",
