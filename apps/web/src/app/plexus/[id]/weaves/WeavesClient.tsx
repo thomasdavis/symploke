@@ -730,8 +730,8 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
               }
             }}
           >
-            <Select.Trigger className="run-selector-trigger">
-              <Select.Value>
+            <Select.Trigger className="select-trigger">
+              <Select.Value className="select-value">
                 {weaveProgress.isRunning
                   ? `Running... ${displayWeaveCount} weave${displayWeaveCount !== 1 ? 's' : ''} found`
                   : selectedRunId === 'all'
@@ -744,7 +744,7 @@ export function WeavesClient({ repos, weaves, discoveryRuns, plexusId }: WeavesC
                         ? `${formatRunDate(selectedRun.startedAt)} (${selectedRun.weavesSaved} weaves)`
                         : 'Select run'}
               </Select.Value>
-              <Select.Icon aria-hidden="true">
+              <Select.Icon className="select-icon" aria-hidden="true">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                   <path
                     d="M3 4.5L6 7.5L9 4.5"
