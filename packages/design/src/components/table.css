@@ -2,7 +2,8 @@
   background: var(--color-bg-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .table {
@@ -61,4 +62,43 @@
 
 .table__row--clickable:active {
   background: var(--color-bg);
+}
+
+/* Linkable rows - proper <a> tags for right-click > open in new tab */
+.table__row--linkable {
+  padding: 0;
+}
+
+.table__row--linkable:hover {
+  background: transparent;
+}
+
+.table__row-link-cell {
+  padding: 0 !important;
+}
+
+.table__row-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+
+.table__row-link:hover {
+  background: var(--color-bg-subtle);
+}
+
+.table__row-link:active {
+  background: var(--color-bg);
+}
+
+.table__row-link-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table__row-link-table td {
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-fg);
 }
