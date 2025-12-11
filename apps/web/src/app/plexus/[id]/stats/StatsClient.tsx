@@ -230,9 +230,6 @@ export function StatsClient({ weaves, repos, lastRunId, lastRunDate }: StatsClie
     }
   }, [weaves, repos, activeTab, lastRunId, minScore])
 
-  // Count repos with weaves for display
-  const activeRepoCount = stats.repoStats.filter((r) => r.weaveCount > 0).length
-
   return (
     <>
       {/* Toolbar: Tabs + Score Filter */}
