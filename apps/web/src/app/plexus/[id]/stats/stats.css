@@ -5,6 +5,65 @@
   gap: var(--space-6);
 }
 
+/* Tabs */
+.stats-tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-lg);
+  width: fit-content;
+}
+
+.stats-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-in-out),
+    color var(--duration-fast) var(--ease-in-out);
+}
+
+.stats-tab:hover:not(.stats-tab--disabled) {
+  color: var(--color-fg);
+}
+
+.stats-tab--active {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-tab--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stats-tab__date {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  font-weight: 400;
+}
+
+.stats-tab--active .stats-tab__date {
+  color: var(--color-fg-muted);
+}
+
+.stats-empty {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+
 /* Overview Cards */
 .stats-overview {
   display: grid;
@@ -109,7 +168,7 @@
 
 .stats-leaderboard__header {
   display: grid;
-  grid-template-columns: 60px 1fr 80px 80px 80px 200px;
+  grid-template-columns: 60px 1fr 80px 80px 200px;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--color-bg-subtle);
@@ -123,7 +182,7 @@
 
 .stats-leaderboard__row {
   display: grid;
-  grid-template-columns: 60px 1fr 80px 80px 80px 200px;
+  grid-template-columns: 60px 1fr 80px 80px 200px;
   gap: var(--space-3);
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-border);
@@ -141,7 +200,7 @@
 @media (max-width: 900px) {
   .stats-leaderboard__header,
   .stats-leaderboard__row {
-    grid-template-columns: 50px 1fr 60px 60px;
+    grid-template-columns: 50px 1fr 60px;
   }
 
   .stats-leaderboard__col--score,
