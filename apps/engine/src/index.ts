@@ -42,6 +42,22 @@ const healthServer = http.createServer(async (req, res) => {
     return
   }
 
+  // Version endpoint - shows deployed commit hash for debugging deployments
+  if (req.url === '/version') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(
+      JSON.stringify({
+        service: 'symploke-engine',
+        commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown',
+        branch: process.env.RAILWAY_GIT_BRANCH || process.env.GIT_BRANCH || 'unknown',
+        deployedAt: process.env.RAILWAY_DEPLOY_TIMESTAMP || 'unknown',
+        nodeVersion: process.version,
+        uptime: Math.floor(process.uptime()),
+      }),
+    )
+    return
+  }
+
   // Trigger weave discovery endpoint
   if (req.method === 'POST' && req.url?.startsWith('/trigger-weaves/')) {
     const plexusId = req.url.replace('/trigger-weaves/', '')
