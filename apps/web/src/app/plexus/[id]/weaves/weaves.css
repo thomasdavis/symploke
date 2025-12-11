@@ -43,7 +43,7 @@
   width: 120px;
   height: 4px;
   appearance: none;
-  background: var(--color-bg-subtle);
+  background: var(--color-border);
   border-radius: var(--radius-full);
   cursor: pointer;
 }
@@ -930,7 +930,7 @@
   width: 200px;
   height: 6px;
   appearance: none;
-  background: var(--color-bg-subtle);
+  background: var(--color-border);
   border-radius: var(--radius-full);
   cursor: pointer;
 }
