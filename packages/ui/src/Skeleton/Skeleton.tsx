@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noArrayIndexKey: Static skeleton lists never reorder
 import type * as React from 'react'
 import '@symploke/design/components/skeleton.css'
 
