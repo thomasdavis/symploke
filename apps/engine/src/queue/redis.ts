@@ -173,7 +173,8 @@ export async function addEmbedJob(
     'embed',
     { repoId, triggeredBy },
     {
-      jobId: `embed-${repoId}`,
+      // Include timestamp to avoid BullMQ deduplication silently skipping jobs
+      jobId: `embed-${repoId}-${Date.now()}`,
     },
   )
 

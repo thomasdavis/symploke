@@ -287,6 +287,168 @@ const healthServer = http.createServer(async (req, res) => {
     return
   }
 
+  // Trigger embed for a specific repo
+  if (req.method === 'POST' && req.url?.startsWith('/trigger-embed/')) {
+    const repoId = req.url.replace('/trigger-embed/', '')
+
+    if (!repoId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Missing repoId' }))
+      return
+    }
+
+    try {
+      const { db } = await import('@symploke/db')
+
+      // Verify repo exists
+      const repo = await db.repo.findUnique({
+        where: { id: repoId },
+        select: { id: true, fullName: true },
+      })
+
+      if (!repo) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Repo not found' }))
+        return
+      }
+
+      if (USE_REDIS_QUEUE) {
+        const { addEmbedJob } = await import('./queue/redis.js')
+        const job = await addEmbedJob(repoId, 'manual')
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'queued',
+            message: 'Embed job queued',
+            repoId,
+            repoFullName: repo.fullName,
+            jobId: job.id,
+          }),
+        )
+        return
+      }
+
+      res.writeHead(501, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Redis queue not available' }))
+    } catch (error) {
+      console.error('Error triggering embed:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+    }
+    return
+  }
+
+  // Trigger embed for all repos in a plexus that need it
+  if (req.method === 'POST' && req.url?.startsWith('/embed-plexus/')) {
+    const plexusId = req.url.replace('/embed-plexus/', '')
+
+    if (!plexusId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Missing plexusId' }))
+      return
+    }
+
+    try {
+      const { db } = await import('@symploke/db')
+
+      // Find repos with files that need chunking or chunks that need embedding
+      const reposNeedingEmbed = await db.$queryRaw<
+        Array<{
+          repoId: string
+          fullName: string
+          filesNeedingChunking: bigint
+          chunksNeedingEmbedding: bigint
+        }>
+      >`
+        SELECT
+          r.id as "repoId",
+          r."fullName" as "fullName",
+          (
+            SELECT COUNT(*) FROM files f
+            WHERE f."repoId" = r.id
+              AND f.content IS NOT NULL
+              AND f."skippedReason" IS NULL
+              AND (f."lastChunkedSha" IS NULL OR f."lastChunkedSha" != f.sha)
+          ) as "filesNeedingChunking",
+          (
+            SELECT COUNT(*) FROM chunks c
+            JOIN files f ON c."fileId" = f.id
+            WHERE f."repoId" = r.id
+              AND c."embeddedAt" IS NULL
+          ) as "chunksNeedingEmbedding"
+        FROM repos r
+        WHERE r."plexusId" = ${plexusId}
+        HAVING (
+          SELECT COUNT(*) FROM files f
+          WHERE f."repoId" = r.id
+            AND f.content IS NOT NULL
+            AND f."skippedReason" IS NULL
+            AND (f."lastChunkedSha" IS NULL OR f."lastChunkedSha" != f.sha)
+        ) > 0
+        OR (
+          SELECT COUNT(*) FROM chunks c
+          JOIN files f ON c."fileId" = f.id
+          WHERE f."repoId" = r.id
+            AND c."embeddedAt" IS NULL
+        ) > 0
+      `
+
+      if (reposNeedingEmbed.length === 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'nothing_to_do',
+            message: 'All repos in plexus already have embeddings',
+          }),
+        )
+        return
+      }
+
+      if (USE_REDIS_QUEUE) {
+        const { addEmbedJob } = await import('./queue/redis.js')
+
+        const jobPromises = reposNeedingEmbed.map((repo) => addEmbedJob(repo.repoId, 'manual'))
+        const jobs = await Promise.all(jobPromises)
+
+        console.log(`Queued embed for ${jobs.length} repos in plexus ${plexusId} via Redis`)
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            status: 'queued',
+            message: `Embed jobs queued for ${jobs.length} repos`,
+            reposQueued: jobs.length,
+            repos: reposNeedingEmbed.map((r) => ({
+              repoId: r.repoId,
+              fullName: r.fullName,
+              filesNeedingChunking: Number(r.filesNeedingChunking),
+              chunksNeedingEmbedding: Number(r.chunksNeedingEmbedding),
+            })),
+            jobIds: jobs.map((j) => j.id),
+          }),
+        )
+        return
+      }
+
+      res.writeHead(501, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Redis queue not available' }))
+    } catch (error) {
+      console.error('Error triggering plexus embed:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+    }
+    return
+  }
+
   // Get sync status for a plexus
   if (req.method === 'GET' && req.url?.startsWith('/sync-status/')) {
     const plexusId = req.url.replace('/sync-status/', '')
