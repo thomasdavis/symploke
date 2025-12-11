@@ -1,6 +1,6 @@
 import type { TableColumn } from '../Table/Table'
 import { Table } from '../Table/Table'
-import type { VirtualTableColumn } from '../VirtualTable/VirtualTable'
+import type { VirtualTableColumn, VirtualTableToolbarProps } from '../VirtualTable/VirtualTable'
 import { VirtualTable } from '../VirtualTable/VirtualTable'
 import '@symploke/design/components/files-table.css'
 
@@ -241,6 +241,7 @@ export type VirtualFilesTableProps = {
   onLoadMore: () => void
   isLoadingMore: boolean
   className?: string
+  toolbar?: VirtualTableToolbarProps
 }
 
 export function VirtualFilesTable({
@@ -250,6 +251,7 @@ export function VirtualFilesTable({
   onLoadMore,
   isLoadingMore,
   className,
+  toolbar,
 }: VirtualFilesTableProps) {
   const columns = createVirtualColumns()
 
@@ -265,6 +267,7 @@ export function VirtualFilesTable({
       emptyMessage="No files synced yet"
       className={className}
       estimatedRowHeight={52}
+      toolbar={toolbar}
     />
   )
 }

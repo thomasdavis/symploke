@@ -42,15 +42,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const cursor = searchParams.get('cursor') || undefined
     const limitParam = searchParams.get('limit')
     const limit = Math.min(limitParam ? parseInt(limitParam, 10) : DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+    const search = searchParams.get('search')?.trim() || undefined
+
+    // Build where clause with optional search filter
+    const whereClause = {
+      file: {
+        repo: { plexusId },
+        ...(search ? { path: { contains: search, mode: 'insensitive' as const } } : {}),
+      },
+      ...(cursor ? { id: { lt: cursor } } : {}),
+    }
 
     // Fetch chunks with cursor-based pagination
     const chunks = await db.chunk.findMany({
-      where: {
-        file: {
-          repo: { plexusId },
-        },
-        ...(cursor ? { id: { lt: cursor } } : {}),
-      },
+      where: whereClause,
       include: {
         file: {
           select: {
@@ -73,9 +78,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const items = hasMore ? chunks.slice(0, -1) : chunks
     const nextCursor = hasMore ? (items.at(-1)?.id ?? null) : null
 
-    // Get total count
+    // Get total count (filtered if searching)
     const totalCount = await db.chunk.count({
-      where: { file: { repo: { plexusId } } },
+      where: {
+        file: {
+          repo: { plexusId },
+          ...(search ? { path: { contains: search, mode: 'insensitive' as const } } : {}),
+        },
+      },
     })
 
     const response: PaginatedResponse<(typeof items)[0]> = {

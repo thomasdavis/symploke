@@ -7,6 +7,7 @@ export type UseInfinitePaginationOptions<T> = {
   pageSize?: number
   initialData?: PaginatedResponse<T>
   enabled?: boolean
+  search?: string
 }
 
 export function useInfinitePagination<T>({
@@ -15,12 +16,17 @@ export function useInfinitePagination<T>({
   pageSize = 50,
   initialData,
   enabled = true,
+  search,
 }: UseInfinitePaginationOptions<T>) {
+  // Include search in query key so queries are cached per search term
+  const fullQueryKey = search ? [...queryKey, { search }] : queryKey
+
   return useInfiniteQuery({
-    queryKey,
+    queryKey: fullQueryKey,
     queryFn: async ({ pageParam }): Promise<PaginatedResponse<T>> => {
       const params = new URLSearchParams({ limit: String(pageSize) })
       if (pageParam) params.set('cursor', pageParam)
+      if (search) params.set('search', search)
 
       const response = await fetch(`${endpoint}?${params}`)
       if (!response.ok) {
@@ -30,7 +36,9 @@ export function useInfinitePagination<T>({
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    initialData: initialData ? { pages: [initialData], pageParams: [undefined] } : undefined,
+    // Only use initialData when there's no search (initial page load)
+    initialData:
+      !search && initialData ? { pages: [initialData], pageParams: [undefined] } : undefined,
     enabled,
   })
 }

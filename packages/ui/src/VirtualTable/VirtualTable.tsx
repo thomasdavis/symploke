@@ -13,6 +13,13 @@ export type VirtualTableColumn<T> = {
   align?: 'left' | 'center' | 'right'
 }
 
+export type VirtualTableToolbarProps = {
+  search?: string
+  onSearchChange?: (value: string) => void
+  searchPlaceholder?: string
+  isSearching?: boolean
+}
+
 export type VirtualTableProps<T> = {
   columns: VirtualTableColumn<T>[]
   data: T[]
@@ -26,6 +33,7 @@ export type VirtualTableProps<T> = {
   emptyMessage?: string
   className?: string
   compact?: boolean
+  toolbar?: VirtualTableToolbarProps
 }
 
 function getGridTemplateColumns<T>(columns: VirtualTableColumn<T>[]): string {
@@ -52,6 +60,7 @@ export function VirtualTable<T>({
   emptyMessage = 'No data available',
   className,
   compact = false,
+  toolbar,
 }: VirtualTableProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null)
 
@@ -90,9 +99,66 @@ export function VirtualTable<T>({
     .filter(Boolean)
     .join(' ')
 
+  const renderToolbar = () => {
+    if (!toolbar) return null
+    return (
+      <div className="virtual-table__toolbar">
+        <div className="virtual-table__search">
+          <svg
+            className="virtual-table__search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            className="virtual-table__search-input"
+            placeholder={toolbar.searchPlaceholder ?? 'Filter...'}
+            value={toolbar.search ?? ''}
+            onChange={(e) => toolbar.onSearchChange?.(e.target.value)}
+          />
+          {toolbar.isSearching && <div className="virtual-table__search-spinner" />}
+          {!toolbar.isSearching && toolbar.search && (
+            <button
+              type="button"
+              className="virtual-table__search-clear"
+              onClick={() => toolbar.onSearchChange?.('')}
+              aria-label="Clear filter"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   if (data.length === 0 && !isLoadingMore) {
     return (
       <div className={containerClasses}>
+        {renderToolbar()}
         <div className="virtual-table__header" style={{ gridTemplateColumns }}>
           {columns.map((col) => (
             <div
@@ -103,13 +169,16 @@ export function VirtualTable<T>({
             </div>
           ))}
         </div>
-        <div className="virtual-table__empty">{emptyMessage}</div>
+        <div className="virtual-table__empty">
+          {toolbar?.search ? `No results for "${toolbar.search}"` : emptyMessage}
+        </div>
       </div>
     )
   }
 
   return (
     <div className={containerClasses}>
+      {renderToolbar()}
       {/* Header */}
       <div className="virtual-table__header" style={{ gridTemplateColumns }}>
         {columns.map((col) => (

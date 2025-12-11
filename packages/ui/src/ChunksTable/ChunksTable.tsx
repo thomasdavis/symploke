@@ -1,6 +1,6 @@
 import type { TableColumn } from '../Table/Table'
 import { Table } from '../Table/Table'
-import type { VirtualTableColumn } from '../VirtualTable/VirtualTable'
+import type { VirtualTableColumn, VirtualTableToolbarProps } from '../VirtualTable/VirtualTable'
 import { VirtualTable } from '../VirtualTable/VirtualTable'
 import '@symploke/design/components/chunks-table.css'
 
@@ -179,6 +179,7 @@ export type VirtualChunksTableProps = {
   onLoadMore: () => void
   isLoadingMore: boolean
   className?: string
+  toolbar?: VirtualTableToolbarProps
 }
 
 export function VirtualChunksTable({
@@ -188,6 +189,7 @@ export function VirtualChunksTable({
   onLoadMore,
   isLoadingMore,
   className,
+  toolbar,
 }: VirtualChunksTableProps) {
   const columns = createVirtualColumns()
 
@@ -203,6 +205,7 @@ export function VirtualChunksTable({
       emptyMessage="No chunks created yet"
       className={className}
       estimatedRowHeight={52}
+      toolbar={toolbar}
     />
   )
 }
