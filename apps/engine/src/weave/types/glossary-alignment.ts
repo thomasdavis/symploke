@@ -195,11 +195,10 @@ const ComparisonResultSchema = z.object({
     ),
   overallScore: z
     .number()
-    .min(0)
-    .max(1)
     .describe(
       'Integration potential from 0 to 1. 0 = no practical connection, 0.5 = some overlap worth exploring, 1 = strong integration opportunity',
-    ),
+    )
+    .transform((val) => Math.max(0, Math.min(1, val))), // Clamp to 0-1
   relationshipType: z
     .enum([
       'supply_demand',
@@ -208,30 +207,38 @@ const ComparisonResultSchema = z.object({
       'complementary_tools',
       'philosophical_alignment',
       'competing',
+      'unrelated',
     ])
     .describe(
-      'Primary relationship type: supply_demand (A provides what B needs), pipeline (A outputs what B inputs), shared_domain (same problem space), complementary_tools (different strengths), philosophical_alignment (shared values/enemies), competing (similar solutions)',
+      'Primary relationship type: supply_demand (A provides what B needs), pipeline (A outputs what B inputs), shared_domain (same problem space), complementary_tools (different strengths), philosophical_alignment (shared values/enemies), competing (similar solutions), unrelated (no meaningful connection)',
     ),
   integrationOpportunities: z
     .array(z.string())
+    .default([])
     .describe(
-      'SPECIFIC integration ideas. Not "could work together" but "B could use A\'s PDF generation for its resume output" or "A\'s CLI could load B\'s MCP tools"',
+      'SPECIFIC integration ideas. Not "could work together" but "B could use A\'s PDF generation for its resume output" or "A\'s CLI could load B\'s MCP tools". Empty array if none.',
     ),
   supplyDemandMatches: z
     .array(z.string())
-    .describe('Specific matches: "A provides X, B needs X". List actual matches found.'),
+    .default([])
+    .describe(
+      'Specific matches: "A provides X, B needs X". List actual matches found. Empty array if none.',
+    ),
   pipelineConnections: z
     .array(z.string())
+    .default([])
     .describe(
-      'Data flow opportunities: "A outputs Y, B consumes Y". List actual data/artifact connections.',
+      'Data flow opportunities: "A outputs Y, B consumes Y". List actual data/artifact connections. Empty array if none.',
     ),
   sharedChallenges: z
     .array(z.string())
-    .describe('Problems both repos face that could be solved together.'),
+    .default([])
+    .describe('Problems both repos face that could be solved together. Empty array if none.'),
   tensions: z
     .array(z.string())
+    .default([])
     .describe(
-      'Technical or philosophical conflicts that would make integration difficult (0-3 items)',
+      'Technical or philosophical conflicts that would make integration difficult (0-3 items). Empty array if none.',
     ),
 })
 
@@ -385,6 +392,7 @@ type RelationshipType =
   | 'complementary_tools'
   | 'philosophical_alignment'
   | 'competing'
+  | 'unrelated'
 
 function generateTitle(
   sourceName: string,
@@ -409,6 +417,7 @@ function generateTitle(
     complementary_tools: 'Complementary tools',
     philosophical_alignment: 'Shared values',
     competing: 'Alternative approaches',
+    unrelated: 'Potential connection',
   }
 
   return `${sourceName} & ${targetName}: ${typeLabels[relationshipType]}`

@@ -67,6 +67,7 @@ export interface GlossaryAlignmentMetadata {
     | 'complementary_tools'
     | 'philosophical_alignment'
     | 'competing'
+    | 'unrelated'
 
   // Actionable insights
   integrationOpportunities: string[] // Specific integration ideas
