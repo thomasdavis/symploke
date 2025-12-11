@@ -47,6 +47,7 @@ export function useWeaveProgress(plexusId: string) {
   const [state, setState] = useState<WeaveProgressState>(initialState)
   const [isConnected, setIsConnected] = useState(false)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastPusherEventRef = useRef<number>(0) // Track when we last received a Pusher event
 
   // Poll for status as a fallback (works even without Pusher)
   const fetchStatus = useCallback(async () => {
@@ -84,12 +85,23 @@ export function useWeaveProgress(plexusId: string) {
             currentTargetRepoName: data.currentPair?.targetRepoName ?? null,
           }))
         } else if (data.status === 'idle' && state.status === 'running') {
-          // Discovery just completed
-          console.log('[useWeaveProgress] Discovery completed')
-          setState((prev) => ({
-            ...prev,
-            status: 'completed',
-          }))
+          // Don't override running status if we recently received a Pusher event (within 5 seconds)
+          // This handles the race condition where poll returns 'idle' but Pusher is still sending events
+          const timeSinceLastPusher = Date.now() - lastPusherEventRef.current
+          if (timeSinceLastPusher > 5000) {
+            // Discovery just completed
+            console.log('[useWeaveProgress] Discovery completed')
+            setState((prev) => ({
+              ...prev,
+              status: 'completed',
+            }))
+          } else {
+            console.log(
+              '[useWeaveProgress] Ignoring idle poll - recent Pusher event received',
+              timeSinceLastPusher,
+              'ms ago',
+            )
+          }
         }
       }
     } catch (err) {
@@ -144,6 +156,7 @@ export function useWeaveProgress(plexusId: string) {
         'weave:started',
         (data: { runId: string; plexusId: string; repoPairsTotal: number }) => {
           console.log('[useWeaveProgress] Pusher weave:started', data)
+          lastPusherEventRef.current = Date.now()
           setState({
             status: 'running',
             runId: data.runId,
@@ -170,8 +183,11 @@ export function useWeaveProgress(plexusId: string) {
           currentTargetRepoName: string | null
         }) => {
           console.log('[useWeaveProgress] Pusher weave:progress', data)
+          lastPusherEventRef.current = Date.now()
           setState((prev) => ({
             ...prev,
+            status: 'running', // Always set running when receiving progress
+            runId: data.runId,
             repoPairsChecked: data.repoPairsChecked,
             repoPairsTotal: data.repoPairsTotal,
             weavesFound: data.weavesFound,
@@ -183,6 +199,7 @@ export function useWeaveProgress(plexusId: string) {
 
       channel.bind('weave:discovered', (data: { runId: string; weave: WeaveDiscoveredWeave }) => {
         console.log('[useWeaveProgress] Pusher weave:discovered', data)
+        lastPusherEventRef.current = Date.now()
         setState((prev) => ({
           ...prev,
           weavesFound: prev.weavesFound + 1,
