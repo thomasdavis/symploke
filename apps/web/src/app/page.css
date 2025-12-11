@@ -228,9 +228,10 @@
 .welcome-main {
   display: flex;
   min-height: calc(100vh - 4rem);
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: var(--space-8);
+  padding-top: 15vh;
 }
 
 .welcome-content {

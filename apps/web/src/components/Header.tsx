@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { auth, signOut, signIn } from '@/lib/auth'
 import { Button } from '@symploke/ui/Button/Button'
 import { ThemeToggle } from './ThemeToggle'
@@ -9,9 +10,9 @@ export async function Header() {
   return (
     <header className="header">
       <div className="header-container">
-        <div className="header-logo">
+        <Link href="/" className="header-logo">
           <h1 className="header-title">Symploke</h1>
-        </div>
+        </Link>
 
         <div className="header-actions">
           <ThemeToggle />
