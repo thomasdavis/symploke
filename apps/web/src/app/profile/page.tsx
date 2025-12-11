@@ -12,17 +12,25 @@ export default async function ProfilePage() {
     redirect('/')
   }
 
-  // Get user's plexuses with activity stats
-  const userPlexuses = await db.plexusMember.findMany({
-    where: { userId: session.user.id },
-    include: {
-      plexus: {
-        include: {
-          _count: { select: { repos: true, weaves: true } },
+  // Get user's data including subscription status
+  const [user, userPlexuses] = await Promise.all([
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { subscriptionStatus: true },
+    }),
+    db.plexusMember.findMany({
+      where: { userId: session.user.id },
+      include: {
+        plexus: {
+          include: {
+            _count: { select: { repos: true, weaves: true } },
+          },
         },
       },
-    },
-  })
+    }),
+  ])
+
+  const isGoldMember = user?.subscriptionStatus === 'active'
 
   // Get recent activity
   const recentWeaves = await db.weave.findMany({
@@ -58,15 +66,33 @@ export default async function ProfilePage() {
       <div className="profile-container">
         {/* Profile Header */}
         <div className="profile-header">
-          {session.user.image && (
-            <img
-              src={session.user.image}
-              alt={session.user.name || 'User'}
-              className="profile-avatar"
-            />
-          )}
+          <div className="profile-avatar-wrapper">
+            {session.user.image && (
+              <img
+                src={session.user.image}
+                alt={session.user.name || 'User'}
+                className={`profile-avatar ${isGoldMember ? 'profile-avatar--gold' : ''}`}
+              />
+            )}
+            {isGoldMember && (
+              <span className="profile-gold-badge" title="Gold Member">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+              </span>
+            )}
+          </div>
           <div className="profile-info">
-            <h1 className="profile-name">{session.user.name}</h1>
+            <div className="profile-name-row">
+              <h1 className="profile-name">{session.user.name}</h1>
+              {isGoldMember && <span className="profile-gold-text">Gold Member</span>}
+            </div>
             <p className="profile-email">{session.user.email}</p>
             <p className="profile-joined">Symploke member</p>
           </div>

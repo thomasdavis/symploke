@@ -20,6 +20,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Polar.sh subscription
+  polarCustomerId    String?   @unique
+  polarSubscriptionId String?
+  subscriptionStatus String?   @default("free") // free, active, canceled
+  subscribedAt       DateTime?
+
   accounts              Account[]
   sessions              Session[]
   plexusMember          PlexusMember[]

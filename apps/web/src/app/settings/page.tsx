@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@symploke/db'
@@ -12,17 +13,28 @@ export default async function SettingsPage() {
     redirect('/')
   }
 
-  // Get user's plexuses
-  const userPlexuses = await db.plexusMember.findMany({
-    where: { userId: session.user.id },
-    include: {
-      plexus: {
-        include: {
-          _count: { select: { repos: true, members: true } },
+  // Get user's data including subscription status
+  const [user, userPlexuses] = await Promise.all([
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        subscriptionStatus: true,
+        subscribedAt: true,
+      },
+    }),
+    db.plexusMember.findMany({
+      where: { userId: session.user.id },
+      include: {
+        plexus: {
+          include: {
+            _count: { select: { repos: true, members: true } },
+          },
         },
       },
-    },
-  })
+    }),
+  ])
+
+  const isSubscribed = user?.subscriptionStatus === 'active'
 
   return (
     <main className="settings-page">
@@ -49,6 +61,47 @@ export default async function SettingsPage() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscription Section */}
+          <Card className={isSubscribed ? 'settings-subscription-card--active' : ''}>
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isSubscribed ? (
+                <div className="settings-subscription">
+                  <div className="settings-subscription-status">
+                    <span className="settings-gold-badge">Gold Member</span>
+                    <span className="settings-subscription-date">
+                      Member since{' '}
+                      {user?.subscribedAt
+                        ? new Intl.DateTimeFormat('en-US', {
+                            month: 'long',
+                            year: 'numeric',
+                          }).format(new Date(user.subscribedAt))
+                        : 'recently'}
+                    </span>
+                  </div>
+                  <p className="settings-subscription-thanks">Thank you for supporting Symploke!</p>
+                </div>
+              ) : (
+                <div className="settings-subscription">
+                  <div className="settings-subscription-info">
+                    <p className="settings-subscription-pitch">
+                      Upgrade to Gold and get a badge on your profile to show your support.
+                    </p>
+                    <p className="settings-subscription-price">
+                      <span className="settings-price">$1</span>
+                      <span className="settings-price-period">/month</span>
+                    </p>
+                  </div>
+                  <Link href="/api/checkout" className="settings-upgrade-button">
+                    Upgrade to Gold
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
 
