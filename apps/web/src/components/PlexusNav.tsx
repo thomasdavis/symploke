@@ -38,6 +38,27 @@ const primaryNavItems: NavItem[] = [
     ),
   },
   {
+    href: '/stats',
+    label: 'Stats',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Stats</title>
+        <path
+          d="M3 17V11M8 17V7M13 17V10M18 17V4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: '/repos',
     label: 'Repos',
     icon: (
