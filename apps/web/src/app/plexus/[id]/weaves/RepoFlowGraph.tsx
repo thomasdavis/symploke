@@ -24,20 +24,17 @@ import type { WeaveDiscoveredWeave } from '@/hooks/useWeaveProgress'
 import '@xyflow/react/dist/style.css'
 import './weaves.css'
 
-// Neural animation system - synaptic pulses traveling along connections
-type SynapseAnimation = {
-  intensity: 'subtle' | 'medium' | 'bright' // How bright the pulse is
-  speed: number // Duration in ms (800-2500)
-  delay: number // Stagger delay
-  reverse: boolean
-  cascadeGroup: number // Edges in same group fire together like neural cascades
+// Pulse particle - a single glowing nodule traveling along edges
+type PulseParticle = {
+  id: number
+  edgeId: string
+  progress: number // 0 to 1
+  speed: number // pixels per frame
+  reverse: boolean // traveling source→target or target→source
 }
 
-// Context to track which edges are currently animating with their animation config
-const AnimatingEdgesContext = createContext<Map<string, SynapseAnimation>>(new Map())
-
-// Breathing phase context - shared breathing rhythm for all edges
-const BreathingPhaseContext = createContext<number>(0)
+// Context for active pulses on each edge
+const ActivePulsesContext = createContext<Map<string, PulseParticle[]>>(new Map())
 
 type Repo = {
   id: string
@@ -178,11 +175,10 @@ function WeaveEdge({
   markerEnd,
 }: EdgeProps<Edge<WeaveEdgeData>>) {
   const [isHovered, setIsHovered] = useState(false)
-  // Store screen coordinates for the tooltip (not SVG coordinates)
   const [screenPosition, setScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const weave = data?.weave
-  const animatingEdges = useContext(AnimatingEdgesContext)
-  const breathingPhase = useContext(BreathingPhaseContext)
+  const activePulses = useContext(ActivePulsesContext)
+  const pathRef = useRef<SVGPathElement>(null)
 
   const [edgePath] = getBezierPath({
     sourceX,
@@ -198,51 +194,27 @@ function WeaveEdge({
 
   const scorePercent = Math.round(weave.score * 100)
 
-  // Calculate stroke width using exponential scaling (1-20px range)
-  const baseStrokeWidth = 1 + 19 * weave.score ** 2
-  const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 24)
+  // Stroke width based on score
+  const baseStrokeWidth = 1 + 12 * weave.score ** 2
+  const hoverStrokeWidth = Math.min(baseStrokeWidth + 3, 18)
 
-  // Base opacity with subtle breathing effect (varies by ±0.08)
-  const breathingOffset = Math.sin(breathingPhase + weave.score * Math.PI) * 0.08
-  const baseOpacity = 0.4 + weave.score * 0.35 + breathingOffset
+  // Base opacity - dimmer to let pulses stand out
+  const baseOpacity = 0.25 + weave.score * 0.25
 
-  // Color: purple-blue spectrum, higher scores are brighter
-  const lightness = 70 - weave.score * 25
-  const chroma = 0.12 + weave.score * 0.08
-  const strokeColor = `oklch(${lightness}% ${chroma} 280)`
+  // Color: purple-blue spectrum
+  const lightness = 65 - weave.score * 20
+  const strokeColor = `oklch(${lightness}% 0.12 280)`
 
-  // Check if this edge should be animating (either hovered or randomly selected)
-  const animation = animatingEdges.get(id)
-  const isAnimating = isHovered || !!animation
+  // Get pulses for this edge
+  const edgePulses = activePulses.get(id) || []
 
-  // Unique gradient ID for this edge
-  const gradientId = `synapse-gradient-${id}`
-
-  // Get gradient for synaptic pulse - electric blues/cyans with intensity variation
-  const getSynapseGradient = () => {
-    if (isHovered) {
-      return [
-        { offset: '0%', color: '#06b6d4', opacity: 0 },
-        { offset: '10%', color: '#06b6d4', opacity: 0.6 },
-        { offset: '35%', color: '#22d3ee', opacity: 1 },
-        { offset: '50%', color: '#67e8f9', opacity: 1 },
-        { offset: '65%', color: '#22d3ee', opacity: 1 },
-        { offset: '90%', color: '#06b6d4', opacity: 0.6 },
-        { offset: '100%', color: '#06b6d4', opacity: 0 },
-      ]
-    }
-    // Intensity affects how bright the pulse is
-    const intensityMultiplier =
-      animation?.intensity === 'bright' ? 1 : animation?.intensity === 'medium' ? 0.7 : 0.4
-    return [
-      { offset: '0%', color: '#0891b2', opacity: 0 },
-      { offset: '15%', color: '#06b6d4', opacity: 0.3 * intensityMultiplier },
-      { offset: '40%', color: '#22d3ee', opacity: 0.8 * intensityMultiplier },
-      { offset: '50%', color: '#67e8f9', opacity: intensityMultiplier },
-      { offset: '60%', color: '#22d3ee', opacity: 0.8 * intensityMultiplier },
-      { offset: '85%', color: '#06b6d4', opacity: 0.3 * intensityMultiplier },
-      { offset: '100%', color: '#0891b2', opacity: 0 },
-    ]
+  // Calculate pulse positions along the path
+  const getPulsePosition = (progress: number, reverse: boolean) => {
+    if (!pathRef.current) return null
+    const pathLength = pathRef.current.getTotalLength()
+    const actualProgress = reverse ? 1 - progress : progress
+    const point = pathRef.current.getPointAtLength(actualProgress * pathLength)
+    return { x: point.x, y: point.y }
   }
 
   // Track screen position (clientX/clientY) so tooltip doesn't scale with zoom
@@ -308,34 +280,21 @@ function WeaveEdge({
         )
       : null
 
-  const gradientStops = getSynapseGradient()
-  const animationDelay = animation?.delay || 0
-  const animationDuration = animation?.speed || 1500
+  // Unique filter ID for glow effect
+  const glowFilterId = `pulse-glow-${id}`
 
   return (
     <>
-      {/* Animated gradient definition */}
-      {isAnimating && (
-        <defs>
-          <linearGradient
-            id={gradientId}
-            gradientUnits="userSpaceOnUse"
-            x1={animation?.reverse ? targetX : sourceX}
-            y1={animation?.reverse ? targetY : sourceY}
-            x2={animation?.reverse ? sourceX : targetX}
-            y2={animation?.reverse ? sourceY : targetY}
-          >
-            {gradientStops.map((stop, i) => (
-              <stop
-                key={i}
-                offset={stop.offset}
-                stopColor={stop.color}
-                stopOpacity={stop.opacity}
-              />
-            ))}
-          </linearGradient>
-        </defs>
-      )}
+      {/* Glow filter for pulses */}
+      <defs>
+        <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group needs hover/click events for edge interaction */}
       <g
         onMouseEnter={handleMouseEnter}
@@ -352,33 +311,35 @@ function WeaveEdge({
           stroke="transparent"
           strokeWidth={Math.max(24, baseStrokeWidth + 8)}
         />
-        {/* Base edge - breathing opacity effect */}
+        {/* Base edge - dim background line */}
         <path
+          ref={pathRef}
           id={id}
           d={edgePath}
           fill="none"
-          stroke={isHovered ? '#22d3ee' : strokeColor}
+          stroke={isHovered ? '#67e8f9' : strokeColor}
           strokeWidth={isHovered ? hoverStrokeWidth : baseStrokeWidth}
-          strokeOpacity={isHovered ? 1 : baseOpacity}
+          strokeOpacity={isHovered ? 0.8 : baseOpacity}
           markerEnd={markerEnd}
           className="weave-edge__path"
-          style={{ transition: 'stroke 0.2s, stroke-width 0.2s' }}
+          style={{ transition: 'stroke 0.15s, stroke-width 0.15s, stroke-opacity 0.15s' }}
         />
-        {/* Synaptic pulse overlay - fires when animating */}
-        {isAnimating && (
-          <path
-            d={edgePath}
-            fill="none"
-            stroke={`url(#${gradientId})`}
-            strokeWidth={isHovered ? hoverStrokeWidth + 4 : baseStrokeWidth + 3}
-            strokeLinecap="round"
-            className={`weave-edge__synapse ${isHovered ? 'weave-edge__synapse--hover' : ''}`}
-            style={{
-              animationDelay: `${animationDelay}ms`,
-              animationDuration: `${animationDuration}ms`,
-            }}
-          />
-        )}
+        {/* Render pulse nodules */}
+        {edgePulses.map((pulse) => {
+          const pos = getPulsePosition(pulse.progress, pulse.reverse)
+          if (!pos) return null
+          return (
+            <circle
+              key={pulse.id}
+              cx={pos.x}
+              cy={pos.y}
+              r={6 + weave.score * 4}
+              fill="#22d3ee"
+              filter={`url(#${glowFilterId})`}
+              className="weave-edge__pulse"
+            />
+          )
+        })}
       </g>
       {tooltip}
     </>
@@ -476,10 +437,11 @@ function RepoFlowGraphInner({
   const { fitView } = useReactFlow()
   const [showEdges, setShowEdges] = useState(false)
   const [edgesReady, setEdgesReady] = useState(false)
-  const [animatingEdges, setAnimatingEdges] = useState<Map<string, SynapseAnimation>>(new Map())
-  const [breathingPhase, setBreathingPhase] = useState(0)
+  const [activePulses, setActivePulses] = useState<Map<string, PulseParticle[]>>(new Map())
   const edgeIdsRef = useRef<string[]>([])
   const edgeConnectionsRef = useRef<Map<string, { source: string; target: string }>>(new Map())
+  const pulseIdCounter = useRef(0)
+  const particlesRef = useRef<PulseParticle[]>([])
 
   // Create initial nodes
   const initialNodes = useMemo(() => createInitialNodes(repos), [repos])
@@ -586,7 +548,7 @@ function RepoFlowGraphInner({
     }
   }, [isDiscoveryRunning, newWeaves])
 
-  // Keep track of edge IDs and their connections for cascade animation
+  // Keep track of edge IDs and their connections
   useEffect(() => {
     edgeIdsRef.current = edges.map((e) => e.id)
     const connections = new Map<string, { source: string; target: string }>()
@@ -596,29 +558,11 @@ function RepoFlowGraphInner({
     edgeConnectionsRef.current = connections
   }, [edges])
 
-  // Breathing animation - slow sine wave for all edges
-  useEffect(() => {
-    if (!showEdges) return
-
-    let animationFrame: number
-    let startTime = performance.now()
-
-    const animate = (time: number) => {
-      const elapsed = (time - startTime) / 1000 // seconds
-      // Very slow breathing: 8 second cycle
-      setBreathingPhase(elapsed * (Math.PI / 4))
-      animationFrame = requestAnimationFrame(animate)
-    }
-
-    animationFrame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animationFrame)
-  }, [showEdges])
-
-  // Neural cascade animation system
+  // Pulse particle animation system
   useEffect(() => {
     if (!showEdges || edges.length === 0) return
 
-    // Find edges connected to a node
+    // Get edges connected to a node
     const getConnectedEdges = (nodeId: string, excludeEdge: string): string[] => {
       const connected: string[] = []
       for (const [edgeId, conn] of edgeConnectionsRef.current) {
@@ -629,108 +573,102 @@ function RepoFlowGraphInner({
       return connected
     }
 
-    const triggerCascade = () => {
+    // Spawn a new particle on a random edge
+    const spawnParticle = (edgeId?: string) => {
       const edgeIds = edgeIdsRef.current
       if (edgeIds.length === 0) return
 
-      const selectedEdges = new Map<string, SynapseAnimation>()
-      let cascadeGroup = 0
+      const targetEdge = edgeId || edgeIds[Math.floor(Math.random() * edgeIds.length)]
+      if (!targetEdge) return
 
-      // Pick 2-4 "origin" edges to start cascades from
-      const originCount = Math.min(edgeIds.length, 2 + Math.floor(Math.random() * 3))
-      const shuffled = [...edgeIds].sort(() => Math.random() - 0.5)
-      const origins = shuffled.slice(0, originCount)
+      const conn = edgeConnectionsRef.current.get(targetEdge)
+      if (!conn) return
 
-      // For each origin, potentially cascade to connected edges
-      for (const originId of origins) {
-        const intensity: SynapseAnimation['intensity'] =
-          Math.random() > 0.6 ? 'bright' : Math.random() > 0.3 ? 'medium' : 'subtle'
-        const baseSpeed = 1200 + Math.random() * 1000 // 1200-2200ms
-
-        selectedEdges.set(originId, {
-          intensity,
-          speed: baseSpeed,
-          delay: cascadeGroup * 80,
-          reverse: Math.random() > 0.5,
-          cascadeGroup,
-        })
-
-        // 60% chance to cascade to connected edges
-        if (Math.random() > 0.4) {
-          const conn = edgeConnectionsRef.current.get(originId)
-          if (conn) {
-            // Get edges connected to either end of this edge
-            const cascadeTargets = [
-              ...getConnectedEdges(conn.source, originId),
-              ...getConnectedEdges(conn.target, originId),
-            ]
-            // Pick 1-3 connected edges to cascade to
-            const cascadeCount = Math.min(cascadeTargets.length, 1 + Math.floor(Math.random() * 3))
-            const cascadeEdges = cascadeTargets
-              .sort(() => Math.random() - 0.5)
-              .slice(0, cascadeCount)
-
-            for (let i = 0; i < cascadeEdges.length; i++) {
-              const cascadeId = cascadeEdges[i]
-              if (cascadeId && !selectedEdges.has(cascadeId)) {
-                selectedEdges.set(cascadeId, {
-                  intensity: intensity === 'bright' ? 'medium' : 'subtle', // Cascaded pulses are dimmer
-                  speed: baseSpeed + 200 + Math.random() * 400, // Slightly slower
-                  delay: cascadeGroup * 80 + 150 + i * 100, // Staggered after origin
-                  reverse: Math.random() > 0.5,
-                  cascadeGroup,
-                })
-              }
-            }
-          }
-        }
-        cascadeGroup++
+      const particle: PulseParticle = {
+        id: pulseIdCounter.current++,
+        edgeId: targetEdge,
+        progress: 0,
+        speed: 0.008 + Math.random() * 0.006, // Progress per frame (0.008-0.014)
+        reverse: Math.random() > 0.5,
       }
 
-      // Also add some random "background" pulses (very subtle)
-      const backgroundCount = Math.min(
-        edgeIds.length - selectedEdges.size,
-        Math.floor(Math.random() * 4),
-      )
-      const remainingEdges = edgeIds.filter((id) => !selectedEdges.has(id))
-      for (let i = 0; i < backgroundCount; i++) {
-        const bgEdge = remainingEdges[Math.floor(Math.random() * remainingEdges.length)]
-        if (bgEdge && !selectedEdges.has(bgEdge)) {
-          selectedEdges.set(bgEdge, {
-            intensity: 'subtle',
-            speed: 2000 + Math.random() * 500,
-            delay: Math.random() * 800,
-            reverse: Math.random() > 0.5,
-            cascadeGroup: -1,
-          })
-        }
-      }
-
-      setAnimatingEdges(selectedEdges)
-
-      // Clear after longest animation completes
-      const maxDuration = Math.max(
-        ...Array.from(selectedEdges.values()).map((a) => a.speed + a.delay),
-      )
-      setTimeout(() => {
-        setAnimatingEdges(new Map())
-      }, maxDuration + 200)
+      particlesRef.current.push(particle)
     }
 
-    // Start first cascade after a short delay
-    const initialTimer = setTimeout(triggerCascade, 600)
+    // Animation loop
+    let animationFrame: number
+    let lastSpawnTime = 0
+    const SPAWN_INTERVAL = 800 // Spawn new particle every 800ms
+    const MAX_PARTICLES = Math.min(8, Math.ceil(edges.length / 3)) // Scale with edge count
 
-    // Trigger cascades at semi-random intervals (more frequent for livelier feel)
-    const interval = setInterval(
-      () => {
-        triggerCascade()
-      },
-      800 + Math.random() * 1200, // Every 0.8-2 seconds
-    )
+    const animate = (time: number) => {
+      // Spawn new particles periodically
+      if (time - lastSpawnTime > SPAWN_INTERVAL && particlesRef.current.length < MAX_PARTICLES) {
+        spawnParticle()
+        lastSpawnTime = time
+      }
+
+      // Update particle positions
+      const updatedParticles: PulseParticle[] = []
+      const newPulseMap = new Map<string, PulseParticle[]>()
+
+      for (const particle of particlesRef.current) {
+        particle.progress += particle.speed
+
+        if (particle.progress >= 1) {
+          // Particle reached the end - find next edge
+          const conn = edgeConnectionsRef.current.get(particle.edgeId)
+          if (conn) {
+            const endNode = particle.reverse ? conn.source : conn.target
+            const connectedEdges = getConnectedEdges(endNode, particle.edgeId)
+
+            if (connectedEdges.length > 0) {
+              // Pick a random connected edge and continue
+              const nextEdge = connectedEdges[Math.floor(Math.random() * connectedEdges.length)]
+              if (nextEdge) {
+                const nextConn = edgeConnectionsRef.current.get(nextEdge)
+                if (nextConn) {
+                  // Determine direction: continue away from current node
+                  const reverse = nextConn.target === endNode
+                  particle.edgeId = nextEdge
+                  particle.progress = 0
+                  particle.reverse = reverse
+                  particle.speed = 0.008 + Math.random() * 0.006
+                  updatedParticles.push(particle)
+                }
+              }
+            }
+            // If no connected edges, particle dies
+          }
+        } else {
+          updatedParticles.push(particle)
+        }
+      }
+
+      // Group particles by edge for rendering
+      for (const particle of updatedParticles) {
+        const existing = newPulseMap.get(particle.edgeId) || []
+        existing.push(particle)
+        newPulseMap.set(particle.edgeId, existing)
+      }
+
+      particlesRef.current = updatedParticles
+      setActivePulses(newPulseMap)
+
+      animationFrame = requestAnimationFrame(animate)
+    }
+
+    // Spawn initial particles
+    const initialCount = Math.min(4, Math.ceil(edges.length / 4))
+    for (let i = 0; i < initialCount; i++) {
+      setTimeout(() => spawnParticle(), i * 200)
+    }
+
+    animationFrame = requestAnimationFrame(animate)
 
     return () => {
-      clearTimeout(initialTimer)
-      clearInterval(interval)
+      cancelAnimationFrame(animationFrame)
+      particlesRef.current = []
     }
   }, [showEdges, edges.length])
 
@@ -742,41 +680,39 @@ function RepoFlowGraphInner({
   )
 
   return (
-    <AnimatingEdgesContext.Provider value={animatingEdges}>
-      <BreathingPhaseContext.Provider value={breathingPhase}>
-        <ReactFlow
-          nodes={nodes}
-          edges={showEdges ? edges : []}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          minZoom={0.1}
-          maxZoom={2}
-          defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-          proOptions={{ hideAttribution: true }}
-          nodesDraggable={true}
-          nodesConnectable={false}
-          elementsSelectable={true}
-        >
-          <Background color="var(--color-border-subtle)" gap={20} size={1} />
-          <Controls className="repo-flow-controls" showInteractive={false} />
-          <MiniMap
-            className="repo-flow-minimap"
-            nodeColor={(node) => {
-              const data = node.data as RepoNodeData
-              return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
-            }}
-            maskColor="rgba(0, 0, 0, 0.1)"
-            zoomable
-            pannable
-          />
-        </ReactFlow>
-      </BreathingPhaseContext.Provider>
-    </AnimatingEdgesContext.Provider>
+    <ActivePulsesContext.Provider value={activePulses}>
+      <ReactFlow
+        nodes={nodes}
+        edges={showEdges ? edges : []}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.1}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+        proOptions={{ hideAttribution: true }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+      >
+        <Background color="var(--color-border-subtle)" gap={20} size={1} />
+        <Controls className="repo-flow-controls" showInteractive={false} />
+        <MiniMap
+          className="repo-flow-minimap"
+          nodeColor={(node) => {
+            const data = node.data as RepoNodeData
+            return data.repo.lastIndexed ? 'var(--color-success)' : 'var(--color-fg-muted)'
+          }}
+          maskColor="rgba(0, 0, 0, 0.1)"
+          zoomable
+          pannable
+        />
+      </ReactFlow>
+    </ActivePulsesContext.Provider>
   )
 }
 

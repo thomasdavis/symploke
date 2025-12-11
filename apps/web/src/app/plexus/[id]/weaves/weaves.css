@@ -1415,63 +1415,11 @@
 .react-flow__edge:nth-child(n+11) { animation-delay: 300ms; }
 
 /* ========================================
-   NEURAL SYNAPSE ANIMATION SYSTEM
-   Brain-like pulsing with cascading activity
+   PULSE PARTICLE ANIMATION
+   Glowing nodules traveling along edges
    ======================================== */
 
-/* Synaptic pulse - electric signal traveling along connection */
-@keyframes synapsePulse {
-  0% {
-    stroke-dashoffset: 100%;
-    opacity: 0;
-    filter: blur(0px) drop-shadow(0 0 0px transparent);
-  }
-  8% {
-    opacity: 0.3;
-  }
-  20% {
-    opacity: 1;
-    filter: blur(0px) drop-shadow(0 0 4px rgba(34, 211, 238, 0.6));
-  }
-  50% {
-    filter: blur(1px) drop-shadow(0 0 8px rgba(34, 211, 238, 0.8));
-  }
-  80% {
-    opacity: 1;
-    filter: blur(0px) drop-shadow(0 0 4px rgba(34, 211, 238, 0.6));
-  }
-  92% {
-    opacity: 0.3;
-  }
-  100% {
-    stroke-dashoffset: -100%;
-    opacity: 0;
-    filter: blur(0px) drop-shadow(0 0 0px transparent);
-  }
-}
-
-/* Hover animation - brighter, continuous flow */
-@keyframes synapseHover {
-  0% {
-    stroke-dashoffset: 80%;
-    filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
-  }
-  50% {
-    filter: drop-shadow(0 0 12px rgba(103, 232, 249, 1));
-  }
-  100% {
-    stroke-dashoffset: -80%;
-    filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
-  }
-}
-
-.weave-edge__synapse {
+.weave-edge__pulse {
   pointer-events: none;
-  stroke-dasharray: 30% 70%;
-  animation: synapsePulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.weave-edge__synapse--hover {
-  stroke-dasharray: 40% 60%;
-  animation: synapseHover 0.8s linear infinite;
+  opacity: 0.9;
 }
