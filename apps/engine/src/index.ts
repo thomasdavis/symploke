@@ -365,37 +365,27 @@ const healthServer = http.createServer(async (req, res) => {
           chunksNeedingEmbedding: bigint
         }>
       >`
-        SELECT
-          r.id as "repoId",
-          r."fullName" as "fullName",
-          (
-            SELECT COUNT(*) FROM files f
-            WHERE f."repoId" = r.id
-              AND f.content IS NOT NULL
-              AND f."skippedReason" IS NULL
-              AND (f."lastChunkedSha" IS NULL OR f."lastChunkedSha" != f.sha)
-          ) as "filesNeedingChunking",
-          (
-            SELECT COUNT(*) FROM chunks c
-            JOIN files f ON c."fileId" = f.id
-            WHERE f."repoId" = r.id
-              AND c."embeddedAt" IS NULL
-          ) as "chunksNeedingEmbedding"
-        FROM repos r
-        WHERE r."plexusId" = ${plexusId}
-        HAVING (
-          SELECT COUNT(*) FROM files f
-          WHERE f."repoId" = r.id
-            AND f.content IS NOT NULL
-            AND f."skippedReason" IS NULL
-            AND (f."lastChunkedSha" IS NULL OR f."lastChunkedSha" != f.sha)
-        ) > 0
-        OR (
-          SELECT COUNT(*) FROM chunks c
-          JOIN files f ON c."fileId" = f.id
-          WHERE f."repoId" = r.id
-            AND c."embeddedAt" IS NULL
-        ) > 0
+        SELECT * FROM (
+          SELECT
+            r.id as "repoId",
+            r."fullName" as "fullName",
+            (
+              SELECT COUNT(*) FROM files f
+              WHERE f."repoId" = r.id
+                AND f.content IS NOT NULL
+                AND f."skippedReason" IS NULL
+                AND (f."lastChunkedSha" IS NULL OR f."lastChunkedSha" != f.sha)
+            ) as "filesNeedingChunking",
+            (
+              SELECT COUNT(*) FROM chunks c
+              JOIN files f ON c."fileId" = f.id
+              WHERE f."repoId" = r.id
+                AND c."embeddedAt" IS NULL
+            ) as "chunksNeedingEmbedding"
+          FROM repos r
+          WHERE r."plexusId" = ${plexusId}
+        ) sub
+        WHERE "filesNeedingChunking" > 0 OR "chunksNeedingEmbedding" > 0
       `
 
       if (reposNeedingEmbed.length === 0) {
