@@ -8,7 +8,13 @@ type PlexusNavProps = {
   plexusId: string
 }
 
-const navItems = [
+type NavItem = {
+  href: string
+  label: string
+  icon: React.ReactNode
+}
+
+const primaryNavItems: NavItem[] = [
   {
     href: '/weaves',
     label: 'Weaves',
@@ -48,6 +54,31 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: '/members',
+    label: 'Members',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Members</title>
+        <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" />
+        <path
+          d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+]
+
+const developerNavItems: NavItem[] = [
   {
     href: '/files',
     label: 'Files',
@@ -129,50 +160,34 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    href: '/members',
-    label: 'Members',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <title>Members</title>
-        <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" />
-        <path
-          d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
 ]
 
 export function PlexusNav({ plexusId }: PlexusNavProps) {
   const pathname = usePathname()
 
+  const renderNavItem = (item: NavItem) => {
+    const href = `/plexus/${plexusId}${item.href}`
+    const isActive = pathname === href
+
+    return (
+      <Link
+        key={item.href}
+        href={href}
+        className={`plexus-nav__item ${isActive ? 'plexus-nav__item--active' : ''}`}
+      >
+        <span className="plexus-nav__icon">{item.icon}</span>
+        <span className="plexus-nav__label">{item.label}</span>
+      </Link>
+    )
+  }
+
   return (
     <nav className="plexus-nav">
-      {navItems.map((item) => {
-        const href = `/plexus/${plexusId}${item.href}`
-        const isActive = pathname === href
-
-        return (
-          <Link
-            key={item.href}
-            href={href}
-            className={`plexus-nav__item ${isActive ? 'plexus-nav__item--active' : ''}`}
-          >
-            <span className="plexus-nav__icon">{item.icon}</span>
-            <span className="plexus-nav__label">{item.label}</span>
-          </Link>
-        )
-      })}
+      <div className="plexus-nav__section">{primaryNavItems.map(renderNavItem)}</div>
+      <div className="plexus-nav__section">
+        <div className="plexus-nav__section-header">Developer</div>
+        {developerNavItems.map(renderNavItem)}
+      </div>
     </nav>
   )
 }
