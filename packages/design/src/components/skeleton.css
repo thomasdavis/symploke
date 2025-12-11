@@ -1,23 +1,18 @@
 /* Skeleton Loading Components */
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
+@keyframes skeleton-pulse {
+  0%,
   100% {
-    background-position: 200% 0;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-bg-subtle) 25%,
-    var(--color-border) 50%,
-    var(--color-bg-subtle) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite ease-in-out;
+  background: var(--color-border);
+  animation: skeleton-pulse 2s ease-in-out infinite;
   border-radius: var(--radius-sm);
 }
 
