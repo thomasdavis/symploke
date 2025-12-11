@@ -191,11 +191,27 @@ export async function addWeaveJob(
 ): Promise<Job<WeaveJobData>> {
   const queue = getWeaveQueue()
 
+  // Use a stable jobId per plexus to prevent duplicate jobs being queued
+  // BullMQ will reject jobs with the same jobId that are already in queue
+  const jobId = `weave-${plexusId}`
+
+  // Check if job already exists in queue (waiting, active, or delayed)
+  const existingJob = await queue.getJob(jobId)
+  if (existingJob) {
+    const state = await existingJob.getState()
+    if (state === 'waiting' || state === 'active' || state === 'delayed') {
+      logger.info({ plexusId, jobId, state }, 'Weave job already in queue, skipping')
+      return existingJob
+    }
+    // If the job is completed/failed, remove it so we can add a new one
+    await existingJob.remove()
+  }
+
   const job = await queue.add(
     'weave',
     { plexusId, triggeredBy },
     {
-      jobId: `weave-${plexusId}-${Date.now()}`,
+      jobId,
     },
   )
 
