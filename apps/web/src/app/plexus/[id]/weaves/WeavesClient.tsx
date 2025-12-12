@@ -83,7 +83,7 @@ type GraphWeave = {
   targetRepo: { name: string }
 }
 
-type DiscoveryRun = Pick<WeaveDiscoveryRun, 'id' | 'startedAt' | 'weavesSaved'>
+type DiscoveryRun = Pick<WeaveDiscoveryRun, 'id' | 'startedAt' | 'weavesSaved' | 'logs'>
 
 type WeavesData = {
   repos: Repo[]
@@ -763,6 +763,31 @@ export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
         ? discoveryRuns[0]
         : null
 
+  // Get logs to display - from running discovery OR from selected run's stored logs
+  const displayLogs = useMemo((): WeaveLogEntry[] => {
+    // If discovery is running, show real-time logs
+    if (weaveProgress.isRunning) {
+      return weaveProgress.logs
+    }
+    // If we have a selected run with stored logs, parse and return them
+    if (selectedRun?.logs) {
+      const rawLogs = selectedRun.logs as Array<{
+        timestamp: string
+        level: string
+        message: string
+        data?: Record<string, unknown>
+      }>
+      return rawLogs.map((log, index) => ({
+        id: `stored-${index}`,
+        timestamp: log.timestamp,
+        level: log.level as WeaveLogEntry['level'],
+        message: log.message,
+        data: log.data,
+      }))
+    }
+    return []
+  }, [weaveProgress.isRunning, weaveProgress.logs, selectedRun])
+
   const columns = [
     {
       header: 'Type',
@@ -1069,22 +1094,22 @@ export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
 
             <Tabs.Root defaultValue="all" onValueChange={setLogFilter}>
               <Tabs.List className="weaves-logs-tabs">
-                <Tabs.Tab value="all">All ({weaveProgress.logs.length})</Tabs.Tab>
+                <Tabs.Tab value="all">All ({displayLogs.length})</Tabs.Tab>
                 <Tabs.Tab value="info">
-                  Info ({weaveProgress.logs.filter((l) => l.level === 'info').length})
+                  Info ({displayLogs.filter((l) => l.level === 'info').length})
                 </Tabs.Tab>
                 <Tabs.Tab value="debug">
-                  Debug ({weaveProgress.logs.filter((l) => l.level === 'debug').length})
+                  Debug ({displayLogs.filter((l) => l.level === 'debug').length})
                 </Tabs.Tab>
                 <Tabs.Tab value="warn">
-                  Warn ({weaveProgress.logs.filter((l) => l.level === 'warn').length})
+                  Warn ({displayLogs.filter((l) => l.level === 'warn').length})
                 </Tabs.Tab>
                 <Tabs.Tab value="error">
-                  Error ({weaveProgress.logs.filter((l) => l.level === 'error').length})
+                  Error ({displayLogs.filter((l) => l.level === 'error').length})
                 </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value={logFilter} keepMounted>
-                <LogPanel logs={weaveProgress.logs} filter={logFilter} />
+                <LogPanel logs={displayLogs} filter={logFilter} />
               </Tabs.Panel>
             </Tabs.Root>
           </div>
