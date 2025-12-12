@@ -386,6 +386,12 @@
   color: oklch(50% 0.15 160);
 }
 
+/* Dependency Profile Type Badge */
+.weave-type-badge--dependency_profile {
+  background: oklch(60% 0.15 45 / 0.15);
+  color: oklch(55% 0.18 45);
+}
+
 /* Glossary Alignment Detail */
 .glossary-alignment-detail {
   padding: 0;

@@ -4,13 +4,14 @@ import { findTopSimilarChunks, getRepoChunkCounts } from './similarity.js'
 import type { WeaveCandidate, WeaveOptions, WeaveTypeHandler } from './types/base.js'
 // import { IntegrationOpportunityWeave } from './types/integration-opportunity.js'
 import { GlossaryAlignmentWeave } from './types/glossary-alignment.js'
+import { DependencyProfileWeave } from './types/dependency-profile.js'
 import { notifyWeavesDiscovered } from '../discord/service.js'
 import type { PusherService } from '../pusher/service.js'
 
 /**
  * Registry of all weave type handlers
  */
-const WEAVE_TYPES: WeaveTypeHandler[] = [GlossaryAlignmentWeave]
+const WEAVE_TYPES: WeaveTypeHandler[] = [GlossaryAlignmentWeave, DependencyProfileWeave]
 
 export interface FinderOptions extends WeaveOptions {
   weaveTypes?: PrismaWeaveType[] // Which types to run (default: all)

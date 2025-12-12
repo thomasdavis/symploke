@@ -731,6 +731,11 @@
   color: oklch(50% 0.12 180);
 }
 
+.weave-type-badge--dependency_profile {
+  background: oklch(60% 0.15 45 / 0.15);
+  color: oklch(55% 0.18 45);
+}
+
 /* Logs section in detail */
 .discovery-detail__logs {
   flex: 1;

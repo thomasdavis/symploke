@@ -85,6 +85,70 @@ export interface GlossaryAlignmentMetadata {
   targetSummary: string
 }
 
+// === Dependency Profile Types ===
+
+export type ManifestType =
+  | 'npm'
+  | 'pip'
+  | 'cargo'
+  | 'go'
+  | 'composer'
+  | 'maven'
+  | 'gradle'
+  | 'gemfile'
+  | 'other'
+
+export type DependencyCategory =
+  | 'framework'
+  | 'utility'
+  | 'testing'
+  | 'build'
+  | 'database'
+  | 'api'
+  | 'ui'
+  | 'other'
+
+/**
+ * A single dependency entry
+ */
+export interface DependencyEntry {
+  name: string
+  version?: string
+  category?: DependencyCategory
+}
+
+/**
+ * A parsed dependency manifest file
+ */
+export interface DependencyManifest {
+  type: ManifestType
+  filePath: string
+  dependencies: DependencyEntry[]
+  devDependencies: DependencyEntry[]
+}
+
+/**
+ * Metadata specific to dependency_profile weaves
+ */
+export interface DependencyProfileMetadata {
+  sourceManifests: DependencyManifest[]
+  targetManifests: DependencyManifest[]
+  sharedDependencies: string[]
+  sharedDevDependencies: string[]
+  sharedFrameworks: string[]
+  overlapScore: number
+  frameworkScore: number
+  ecosystemMatch: boolean // same primary language/ecosystem
+  narrative: string // AI explanation
+  integrationSuggestions: string[]
+  relationshipType:
+    | 'same_stack' // nearly identical dependencies
+    | 'complementary' // different but work together well
+    | 'overlapping' // some shared, some different
+    | 'different_ecosystems' // different languages but similar purpose
+    | 'minimal_overlap' // few shared deps
+}
+
 /**
  * A pair of files that have similar code
  */

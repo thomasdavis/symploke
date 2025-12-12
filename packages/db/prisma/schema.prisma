@@ -120,13 +120,14 @@ model Repo {
   lastCommitSha  String?   // SHA of last processed commit (for delta sync)
   createdAt      DateTime  @default(now())
 
-  plexus        Plexus         @relation(fields: [plexusId], references: [id], onDelete: Cascade)
-  files         File[]
-  syncJobs      RepoSyncJob[]
-  chunkSyncJobs ChunkSyncJob[]
-  sourceWeaves  Weave[]        @relation("SourceRepo")
-  targetWeaves  Weave[]        @relation("TargetRepo")
-  glossary      RepoGlossary?
+  plexus            Plexus                 @relation(fields: [plexusId], references: [id], onDelete: Cascade)
+  files             File[]
+  syncJobs          RepoSyncJob[]
+  chunkSyncJobs     ChunkSyncJob[]
+  sourceWeaves      Weave[]                @relation("SourceRepo")
+  targetWeaves      Weave[]                @relation("TargetRepo")
+  glossary          RepoGlossary?
+  dependencyProfile RepoDependencyProfile?
 
   @@unique([plexusId, fullName])
   @@map("repos")
@@ -317,6 +318,7 @@ enum WeaveType {
   refactor_candidate
   philosophical_alignment // repos that share worldview/approach even if functionally different
   glossary_alignment // repos with aligned vocabulary, beliefs, resentments
+  dependency_profile // repos with similar dependency profiles and tech stacks
 }
 
 model Comment {
@@ -397,4 +399,38 @@ enum GlossaryStatus {
   COMPLETE
   UNGLOSSABLE
   FAILED
+}
+
+// === Repo Dependency Profiles ===
+
+enum DependencyProfileStatus {
+  PENDING
+  EXTRACTING
+  COMPLETE
+  FAILED
+  NO_MANIFESTS // repo has no recognizable dependency files
+}
+
+model RepoDependencyProfile {
+  id     String @id @default(cuid())
+  repoId String @unique
+
+  status    DependencyProfileStatus @default(PENDING)
+  manifests Json? // DependencyManifest[] - all parsed manifests
+
+  // Summary fields for quick queries
+  primaryEcosystem   String? // 'npm' | 'pip' | 'cargo' | etc.
+  dependencyCount    Int     @default(0)
+  devDependencyCount Int     @default(0)
+  frameworks         String[] // ['react', 'express', 'prisma']
+
+  extractedAt DateTime?
+  error       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repo Repo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@map("repo_dependency_profiles")
 }
