@@ -54,7 +54,8 @@
     "./ToggleGroup/ToggleGroup": "./src/ToggleGroup/ToggleGroup.tsx",
     "./Toolbar/Toolbar": "./src/Toolbar/Toolbar.tsx",
     "./Tooltip/Tooltip": "./src/Tooltip/Tooltip.tsx",
-    "./VirtualTable/VirtualTable": "./src/VirtualTable/VirtualTable.tsx"
+    "./VirtualTable/VirtualTable": "./src/VirtualTable/VirtualTable.tsx",
+    "./VirtualLogTable/VirtualLogTable": "./src/VirtualLogTable/VirtualLogTable.tsx"
   },
   "scripts": {
     "build": "tsc",

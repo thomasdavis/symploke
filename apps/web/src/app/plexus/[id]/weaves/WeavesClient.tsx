@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useTransition, useRef, useEffect } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -11,12 +11,12 @@ import { Table } from '@symploke/ui/Table/Table'
 import { Card, CardContent } from '@symploke/ui/Card/Card'
 import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
 import { Tabs } from '@symploke/ui/Tabs/Tabs'
+import { VirtualLogTable, type LogEntry } from '@symploke/ui/VirtualLogTable/VirtualLogTable'
 import { RepoFlowGraph } from './RepoFlowGraph'
 import { WeaveDiscoveryOverlay } from './WeaveDiscoveryOverlay'
-import { useWeaveDiscovery, type WeaveLogEntry } from '@/contexts/WeaveDiscoveryContext'
+import { useWeaveDiscovery } from '@/contexts/WeaveDiscoveryContext'
 import { ScoreFilter } from '@/components/ScoreFilter'
 import './weaves.css'
-import './run/weave-run.css'
 
 // Glossary data from database
 type GlossaryData = {
@@ -605,109 +605,6 @@ function LogsIcon() {
   )
 }
 
-function formatLogTime(isoString: string): string {
-  const date = new Date(isoString)
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
-
-function LogLevel({ level }: { level: WeaveLogEntry['level'] }) {
-  return <span className={`weave-run-log__level weave-run-log__level--${level}`}>{level}</span>
-}
-
-function LogDataValue({ value }: { value: unknown }) {
-  if (value === null) return <span className="weave-run-log__data-null">null</span>
-  if (value === undefined) return <span className="weave-run-log__data-null">undefined</span>
-  if (typeof value === 'boolean')
-    return <span className="weave-run-log__data-boolean">{value ? 'true' : 'false'}</span>
-  if (typeof value === 'number') return <span className="weave-run-log__data-number">{value}</span>
-  if (typeof value === 'string')
-    return <span className="weave-run-log__data-string">"{value}"</span>
-  if (Array.isArray(value))
-    return <span className="weave-run-log__data-array">[{value.length}]</span>
-  if (typeof value === 'object')
-    return <span className="weave-run-log__data-object">{'{...}'}</span>
-  return <span>{String(value)}</span>
-}
-
-function LogDataDisplay({ data }: { data: Record<string, unknown> }) {
-  const entries = Object.entries(data)
-  if (entries.length === 0) return null
-
-  return (
-    <div className="weave-run-log__data-grid">
-      {entries.map(([key, value]) => (
-        <div key={key} className="weave-run-log__data-row">
-          <span className="weave-run-log__data-key">{key}</span>
-          <LogDataValue value={value} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function LogPanel({ logs, filter }: { logs: WeaveLogEntry[]; filter: string }) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [autoScroll, setAutoScroll] = useState(true)
-
-  const filteredLogs = useMemo(() => {
-    if (filter === 'all') return logs
-    return logs.filter((log) => log.level === filter)
-  }, [logs, filter])
-
-  useEffect(() => {
-    if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [filteredLogs, autoScroll])
-
-  const handleScroll = () => {
-    if (scrollRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
-      setAutoScroll(scrollHeight - scrollTop - clientHeight < 50)
-    }
-  }
-
-  return (
-    <div className="weave-run-logs__content" ref={scrollRef} onScroll={handleScroll}>
-      {filteredLogs.length === 0 ? (
-        <div className="weave-run-logs__empty">No logs yet...</div>
-      ) : (
-        filteredLogs.map((log) => (
-          <div key={log.id} className={`weave-run-log weave-run-log--${log.level}`}>
-            <span className="weave-run-log__time">{formatLogTime(log.timestamp)}</span>
-            <LogLevel level={log.level} />
-            <span className="weave-run-log__message">{log.message}</span>
-            {log.data && Object.keys(log.data).length > 0 && (
-              <details className="weave-run-log__data">
-                <summary>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  {Object.keys(log.data).length}{' '}
-                  {Object.keys(log.data).length === 1 ? 'field' : 'fields'}
-                </summary>
-                <LogDataDisplay data={log.data} />
-              </details>
-            )}
-          </div>
-        ))
-      )}
-    </div>
-  )
-}
-
 export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -809,7 +706,7 @@ export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
         : null
 
   // Get logs to display - from running discovery OR from selected run's stored logs
-  const displayLogs = useMemo((): WeaveLogEntry[] => {
+  const displayLogs = useMemo((): LogEntry[] => {
     // If discovery is running, show real-time logs
     if (weaveProgress.isRunning) {
       return weaveProgress.logs
@@ -825,13 +722,33 @@ export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
       return rawLogs.map((log, index) => ({
         id: `stored-${index}`,
         timestamp: log.timestamp,
-        level: log.level as WeaveLogEntry['level'],
+        level: log.level as LogEntry['level'],
         message: log.message,
         data: log.data,
       }))
     }
     return []
   }, [weaveProgress.isRunning, weaveProgress.logs, selectedRun])
+
+  // Filter logs by level and text
+  const [logTextFilter, setLogTextFilter] = useState('')
+  const filteredLogs = useMemo(() => {
+    let result = displayLogs
+    // Filter by level
+    if (logFilter !== 'all') {
+      result = result.filter((log) => log.level === logFilter)
+    }
+    // Filter by text
+    if (logTextFilter) {
+      const lower = logTextFilter.toLowerCase()
+      result = result.filter(
+        (log) =>
+          log.message.toLowerCase().includes(lower) ||
+          (log.data && JSON.stringify(log.data).toLowerCase().includes(lower)),
+      )
+    }
+    return result
+  }, [displayLogs, logFilter, logTextFilter])
 
   const columns = [
     {
@@ -1126,38 +1043,40 @@ export function WeavesClient({ plexusId, initialData }: WeavesClientProps) {
       {/* Logs View */}
       {activeView === 'logs' && (
         <div className="weaves-logs-view">
-          <div className="weaves-logs-card">
-            <div className="weaves-logs-header">
-              <h3 className="weaves-logs-title">Discovery Logs</h3>
-              {weaveProgress.isRunning && (
-                <div className="weaves-logs-live">
-                  <span className="weaves-logs-live__dot" />
-                  Live
-                </div>
-              )}
-            </div>
-
-            <Tabs.Root defaultValue="all" onValueChange={setLogFilter}>
-              <Tabs.List className="weaves-logs-tabs">
-                <Tabs.Tab value="all">All ({displayLogs.length})</Tabs.Tab>
-                <Tabs.Tab value="info">
-                  Info ({displayLogs.filter((l) => l.level === 'info').length})
-                </Tabs.Tab>
-                <Tabs.Tab value="debug">
-                  Debug ({displayLogs.filter((l) => l.level === 'debug').length})
-                </Tabs.Tab>
-                <Tabs.Tab value="warn">
-                  Warn ({displayLogs.filter((l) => l.level === 'warn').length})
-                </Tabs.Tab>
-                <Tabs.Tab value="error">
-                  Error ({displayLogs.filter((l) => l.level === 'error').length})
-                </Tabs.Tab>
-              </Tabs.List>
-              <Tabs.Panel value={logFilter} keepMounted>
-                <LogPanel logs={displayLogs} filter={logFilter} />
-              </Tabs.Panel>
-            </Tabs.Root>
-          </div>
+          <VirtualLogTable
+            logs={filteredLogs}
+            totalCount={displayLogs.length}
+            filter={logTextFilter}
+            onFilterChange={setLogTextFilter}
+            filterPlaceholder="Filter logs..."
+            toolbarExtra={
+              <div className="weaves-logs-toolbar-left">
+                {weaveProgress.isRunning && (
+                  <div className="weaves-logs-live">
+                    <span className="weaves-logs-live__dot" />
+                    Live
+                  </div>
+                )}
+                <Tabs.Root value={logFilter} onValueChange={setLogFilter}>
+                  <Tabs.List className="weaves-logs-tabs">
+                    <Tabs.Tab value="all">All ({displayLogs.length})</Tabs.Tab>
+                    <Tabs.Tab value="info">
+                      Info ({displayLogs.filter((l) => l.level === 'info').length})
+                    </Tabs.Tab>
+                    <Tabs.Tab value="debug">
+                      Debug ({displayLogs.filter((l) => l.level === 'debug').length})
+                    </Tabs.Tab>
+                    <Tabs.Tab value="warn">
+                      Warn ({displayLogs.filter((l) => l.level === 'warn').length})
+                    </Tabs.Tab>
+                    <Tabs.Tab value="error">
+                      Error ({displayLogs.filter((l) => l.level === 'error').length})
+                    </Tabs.Tab>
+                  </Tabs.List>
+                </Tabs.Root>
+              </div>
+            }
+          />
         </div>
       )}
     </div>
