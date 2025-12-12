@@ -618,6 +618,37 @@ function LogLevel({ level }: { level: WeaveLogEntry['level'] }) {
   return <span className={`weave-run-log__level weave-run-log__level--${level}`}>{level}</span>
 }
 
+function LogDataValue({ value }: { value: unknown }) {
+  if (value === null) return <span className="weave-run-log__data-null">null</span>
+  if (value === undefined) return <span className="weave-run-log__data-null">undefined</span>
+  if (typeof value === 'boolean')
+    return <span className="weave-run-log__data-boolean">{value ? 'true' : 'false'}</span>
+  if (typeof value === 'number') return <span className="weave-run-log__data-number">{value}</span>
+  if (typeof value === 'string')
+    return <span className="weave-run-log__data-string">"{value}"</span>
+  if (Array.isArray(value))
+    return <span className="weave-run-log__data-array">[{value.length}]</span>
+  if (typeof value === 'object')
+    return <span className="weave-run-log__data-object">{'{...}'}</span>
+  return <span>{String(value)}</span>
+}
+
+function LogDataDisplay({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data)
+  if (entries.length === 0) return null
+
+  return (
+    <div className="weave-run-log__data-grid">
+      {entries.map(([key, value]) => (
+        <div key={key} className="weave-run-log__data-row">
+          <span className="weave-run-log__data-key">{key}</span>
+          <LogDataValue value={value} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function LogPanel({ logs, filter }: { logs: WeaveLogEntry[]; filter: string }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -652,8 +683,22 @@ function LogPanel({ logs, filter }: { logs: WeaveLogEntry[]; filter: string }) {
             <span className="weave-run-log__message">{log.message}</span>
             {log.data && Object.keys(log.data).length > 0 && (
               <details className="weave-run-log__data">
-                <summary>data</summary>
-                <pre>{JSON.stringify(log.data, null, 2)}</pre>
+                <summary>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                  {Object.keys(log.data).length}{' '}
+                  {Object.keys(log.data).length === 1 ? 'field' : 'fields'}
+                </summary>
+                <LogDataDisplay data={log.data} />
               </details>
             )}
           </div>

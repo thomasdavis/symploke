@@ -266,11 +266,13 @@
 
 /* Log Entry */
 .weave-run-log {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-border);
+  align-items: start;
 }
 
 .weave-run-log:last-child {
@@ -282,20 +284,24 @@
 }
 
 .weave-run-log__time {
-  flex-shrink: 0;
+  grid-column: 1;
+  grid-row: 1;
   color: var(--color-fg-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .weave-run-log__level {
-  flex-shrink: 0;
-  width: 48px;
+  grid-column: 2;
+  grid-row: 1;
+  width: 52px;
   text-align: center;
-  padding: 0 var(--space-1);
+  padding: var(--space-0-5) var(--space-1);
   border-radius: var(--radius-sm);
   font-size: var(--text-xxs);
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .weave-run-log__level--info {
@@ -319,9 +325,11 @@
 }
 
 .weave-run-log__message {
-  flex: 1;
+  grid-column: 3;
+  grid-row: 1;
   color: var(--color-fg);
   word-break: break-word;
+  min-width: 0;
 }
 
 .weave-run-log--error .weave-run-log__message {
@@ -333,24 +341,103 @@
 }
 
 .weave-run-log__data {
-  margin-top: var(--space-1);
-  width: 100%;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: var(--space-2);
 }
 
 .weave-run-log__data summary {
   cursor: pointer;
   color: var(--color-fg-muted);
-  font-size: var(--text-xxs);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  user-select: none;
+}
+
+.weave-run-log__data summary:hover {
+  background: var(--color-border);
+}
+
+.weave-run-log__data[open] summary {
+  margin-bottom: var(--space-2);
 }
 
 .weave-run-log__data pre {
-  margin: var(--space-2) 0 0 0;
-  padding: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
   background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow-x: auto;
+  color: var(--color-fg);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+/* Data display - key/value grid */
+.weave-run-log__data-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.weave-run-log__data-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.weave-run-log__data-key {
   color: var(--color-fg-muted);
-  font-size: var(--text-xxs);
+  flex-shrink: 0;
+}
+
+.weave-run-log__data-key::after {
+  content: ':';
+}
+
+.weave-run-log__data-string {
+  color: #22863a;
+}
+
+.weave-run-log__data-number {
+  color: #005cc5;
+}
+
+.weave-run-log__data-boolean {
+  color: #d73a49;
+}
+
+.weave-run-log__data-null {
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.weave-run-log__data-array,
+.weave-run-log__data-object {
+  color: var(--color-fg-muted);
+}
+
+/* Chevron rotation on open */
+.weave-run-log__data summary svg {
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.weave-run-log__data[open] summary svg {
+  transform: rotate(90deg);
 }
 
 /* Actions */
