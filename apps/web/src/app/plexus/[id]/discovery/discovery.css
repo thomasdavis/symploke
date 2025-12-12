@@ -591,3 +591,164 @@
   background: oklch(55% 0.22 25 / 0.15);
   color: oklch(55% 0.22 25);
 }
+
+/* Detail Tabs */
+.discovery-detail__tabs {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.discovery-tabs-list {
+  gap: var(--space-2);
+}
+
+.discovery-tabs-list .tabs__tab {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Discovered Weaves Section */
+.discovery-detail__weaves {
+  padding: var(--space-4);
+}
+
+.discovered-weaves-empty {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+
+.discovered-weaves-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.discovered-weaves-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.discovered-weaves-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.discovered-weaves-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.discovered-weaves-table tr:last-child td {
+  border-bottom: none;
+}
+
+.discovered-weave-row:hover {
+  background: var(--color-bg-subtle);
+}
+
+.repo-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+.weave-title-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.weave-title-link:hover {
+  text-decoration: underline;
+}
+
+.score-badge {
+  display: inline-flex;
+  padding: var(--space-1) var(--space-2);
+  background: oklch(55% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* Weave Type Badges */
+.weave-type-badge {
+  display: inline-flex;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.weave-type-badge--shared_module {
+  background: oklch(60% 0.15 280 / 0.15);
+  color: oklch(60% 0.2 280);
+}
+
+.weave-type-badge--integration_opportunity {
+  background: oklch(60% 0.15 145 / 0.15);
+  color: oklch(55% 0.15 145);
+}
+
+.weave-type-badge--shared_dependency {
+  background: oklch(60% 0.15 220 / 0.15);
+  color: oklch(55% 0.15 220);
+}
+
+.weave-type-badge--api_compatibility {
+  background: oklch(60% 0.15 75 / 0.15);
+  color: oklch(55% 0.18 75);
+}
+
+.weave-type-badge--refactor_candidate {
+  background: oklch(60% 0.15 25 / 0.15);
+  color: oklch(55% 0.22 25);
+}
+
+.weave-type-badge--philosophical_alignment {
+  background: oklch(60% 0.15 330 / 0.15);
+  color: oklch(55% 0.2 330);
+}
+
+.weave-type-badge--glossary_alignment {
+  background: oklch(60% 0.12 180 / 0.15);
+  color: oklch(50% 0.12 180);
+}
+
+/* Logs section in detail */
+.discovery-detail__logs {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.discovery-detail__logs .virtual-log-table {
+  flex: 1;
+  border-radius: 0;
+}
+
+.discovery-log-tabs {
+  gap: var(--space-2);
+}
+
+.discovery-log-tabs .tabs__tab {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+}

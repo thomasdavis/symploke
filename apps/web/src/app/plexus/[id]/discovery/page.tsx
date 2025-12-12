@@ -8,6 +8,19 @@ export default async function DiscoveryPage({ params }: { params: Promise<{ id: 
     where: { plexusId: id },
     orderBy: { startedAt: 'desc' },
     take: 50,
+    include: {
+      weaves: {
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          score: true,
+          sourceRepo: { select: { fullName: true } },
+          targetRepo: { select: { fullName: true } },
+        },
+        orderBy: { score: 'desc' },
+      },
+    },
   })
 
   return <DiscoveryPageClient plexusId={id} runs={runs} />
