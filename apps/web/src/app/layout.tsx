@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Sora, Sen, Azeret_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
 import { Header } from '@/components/Header'
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
   )
