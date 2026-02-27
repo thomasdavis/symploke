@@ -23,7 +23,7 @@ export function MatchCard({ username, match }: MatchCardProps) {
   const facets = (targetProfile.facets as Array<{ title: string; content: string }>) ?? []
 
   return (
-    <Link href={`/${username}/match/${targetProfile.username}`} style={{ textDecoration: 'none' }}>
+    <Link href={`/${targetProfile.username}`} style={{ textDecoration: 'none' }}>
       <Card className="mates-match-card">
         <Avatar.Root size="lg">
           {targetProfile.avatarUrl ? (
@@ -57,6 +57,14 @@ export function MatchCard({ username, match }: MatchCardProps) {
               ))}
             </div>
           )}
+
+          <Link
+            href={`/${username}/match/${targetProfile.username}`}
+            className="mates-match-narrative-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            How you connect &rarr;
+          </Link>
         </div>
       </Card>
     </Link>
