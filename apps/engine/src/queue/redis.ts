@@ -56,6 +56,7 @@ export interface WeaveJobData {
 export interface MatesJobData {
   profileId: string
   username: string
+  rematch?: boolean
 }
 
 // Singleton queues
@@ -435,16 +436,17 @@ export async function addMatesEmbedJob(
 export async function addMatesMatchJob(
   profileId: string,
   username: string,
+  rematch?: boolean,
 ): Promise<Job<MatesJobData>> {
   const queue = getMatesMatchQueue()
   const job = await queue.add(
     'mates-match',
-    { profileId, username },
+    { profileId, username, rematch },
     {
       jobId: `mates-match-${profileId}-${Date.now()}`,
     },
   )
-  logger.info({ profileId, username, jobId: job.id }, 'Added mates match job')
+  logger.info({ profileId, username, rematch, jobId: job.id }, 'Added mates match job')
   return job
 }
 

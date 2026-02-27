@@ -1,5 +1,5 @@
 import type { Job, Worker } from 'bullmq'
-import { db, SyncJobStatus, ChunkJobStatus } from '@symploke/db'
+import { db, SyncJobStatus, ChunkJobStatus, MatesProfileStatus } from '@symploke/db'
 import { logger } from '@symploke/logger'
 import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
@@ -182,12 +182,34 @@ async function processMatesEmbedJob(job: Job<MatesJobData>): Promise<void> {
 }
 
 async function processMatesMatchJob(job: Job<MatesJobData>): Promise<void> {
-  const { profileId, username } = job.data
+  const { profileId, username, rematch } = job.data
   const pusher = getPusherService()
-  logger.info({ jobId: job.id, profileId, username }, 'Processing mates match job')
+  logger.info({ jobId: job.id, profileId, username, rematch }, 'Processing mates match job')
 
   try {
     await processMatch(profileId, { pusher })
+
+    // After a NEW profile completes matching (not a re-match), re-match all
+    // other READY profiles so they pick up this new profile as a potential mate.
+    if (!rematch) {
+      const otherProfiles = await db.matesProfile.findMany({
+        where: {
+          id: { not: profileId },
+          status: MatesProfileStatus.READY,
+        },
+        select: { id: true, username: true },
+      })
+
+      if (otherProfiles.length > 0) {
+        logger.info(
+          { profileId, username, rematchCount: otherProfiles.length },
+          'Queuing re-match jobs for existing profiles',
+        )
+        for (const other of otherProfiles) {
+          await addMatesMatchJob(other.id, other.username, true)
+        }
+      }
+    }
   } catch (error) {
     logger.error({ error, profileId, username }, 'Mates match job failed')
     throw error

@@ -1,3 +1,5 @@
+'use client'
+
 import { Avatar } from '@symploke/ui/Avatar/Avatar'
 import { Card } from '@symploke/ui/Card/Card'
 import Link from 'next/link'
