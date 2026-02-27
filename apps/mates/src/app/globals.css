@@ -298,6 +298,7 @@ body {
 
 .mates-submit-row {
   display: flex;
+  gap: var(--space-3);
 }
 
 .mates-input-wrapper {
@@ -321,9 +322,8 @@ body {
   height: 48px;
   padding: 0 var(--space-3);
   padding-left: 7.5rem;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  border-right: none;
   background: var(--color-bg);
   color: var(--color-fg);
   font-size: var(--text-base);
@@ -340,6 +340,7 @@ body {
 .mates-input-field:focus {
   outline: none;
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .mates-input-field:disabled {
@@ -348,13 +349,10 @@ body {
 }
 
 .mates-submit-row .btn {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
   height: 48px !important;
   padding: 0 var(--space-5) !important;
   white-space: nowrap;
   flex-shrink: 0;
-  border: 1px solid var(--color-border) !important;
-  border-left: none !important;
 }
 
 /* Footer */
