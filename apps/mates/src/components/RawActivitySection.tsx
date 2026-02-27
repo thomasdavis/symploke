@@ -152,7 +152,9 @@ function RepoCard({ repo }: { repo: CrawledRepo }) {
                 <ul className="mates-raw-detail-list">
                   {repo.commits.map((c, i) => (
                     <li key={i} className="mates-raw-commit">
-                      <span className="mates-raw-commit-msg">{c.message.split('\n')[0]}</span>
+                      <span className="mates-raw-commit-msg">
+                        {(c.message ?? '').split('\n')[0]}
+                      </span>
                       <span className="mates-raw-commit-date">
                         {new Date(c.date).toLocaleDateString()}
                       </span>

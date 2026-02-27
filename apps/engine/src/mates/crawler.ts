@@ -85,7 +85,7 @@ export async function crawlGitHubUser(
       events.push(
         ...data.map((e) => ({
           type: e.type ?? '',
-          repo: { name: e.repo.name },
+          repo: { name: e.repo?.name },
           created_at: e.created_at ?? '',
         })),
       )
@@ -100,7 +100,7 @@ export async function crawlGitHubUser(
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28)
 
   const recentEvents = events.filter((e) => new Date(e.created_at) > fourWeeksAgo)
-  const repoFullNames = [...new Set(recentEvents.map((e) => e.repo.name))]
+  const repoFullNames = [...new Set(recentEvents.map((e) => e.repo?.name).filter(Boolean))]
 
   // If no recent events, fall back to user's own repos
   if (repoFullNames.length === 0) {
