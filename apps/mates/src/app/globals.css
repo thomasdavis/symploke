@@ -1,0 +1,45 @@
+@import "@symploke/design/index.css";
+
+body {
+  font-family: var(--font-sora), system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+/* Mates-specific styles */
+.mates-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, oklch(75% 0.15 150) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mates-card {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mates-card:hover {
+  border-color: var(--color-border);
+  box-shadow: 0 4px 12px oklch(0% 0 0 / 0.08);
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.step-appear {
+  animation: step-appear 0.3s ease-out;
+}
+
+@keyframes step-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

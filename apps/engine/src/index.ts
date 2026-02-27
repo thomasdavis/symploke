@@ -886,6 +886,237 @@ const healthServer = http.createServer(async (req, res) => {
     return
   }
 
+  // === Mates endpoints ===
+
+  // Submit a username for mates processing
+  if (req.method === 'POST' && req.url?.startsWith('/mates/submit/')) {
+    const username = req.url.replace('/mates/submit/', '').toLowerCase()
+
+    if (!username || !/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i.test(username)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Invalid GitHub username' }))
+      return
+    }
+
+    try {
+      const { db, MatesProfileStatus } = await import('@symploke/db')
+
+      // Check for existing profile
+      let profile = await db.matesProfile.findUnique({
+        where: { username },
+        select: { id: true, status: true, lastCrawledAt: true },
+      })
+
+      // If profile exists and is READY, check TTL (14 days)
+      if (profile && profile.status === MatesProfileStatus.READY && profile.lastCrawledAt) {
+        const ttlMs = 14 * 24 * 60 * 60 * 1000
+        const isStale = Date.now() - profile.lastCrawledAt.getTime() > ttlMs
+
+        if (!isStale) {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ profileId: profile.id, status: 'READY', cached: true }))
+          return
+        }
+
+        // Stale — reset for re-crawl
+        await db.matesProfile.update({
+          where: { id: profile.id },
+          data: { status: MatesProfileStatus.PENDING, error: null },
+        })
+      }
+
+      // If profile is currently processing, return current status
+      if (
+        profile &&
+        profile.status !== MatesProfileStatus.READY &&
+        profile.status !== MatesProfileStatus.FAILED &&
+        profile.status !== MatesProfileStatus.PENDING
+      ) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ profileId: profile.id, status: profile.status, cached: false }))
+        return
+      }
+
+      // Create or reset profile
+      if (!profile) {
+        profile = await db.matesProfile.create({
+          data: { username },
+          select: { id: true, status: true, lastCrawledAt: true },
+        })
+      } else if (profile.status === MatesProfileStatus.FAILED) {
+        await db.matesProfile.update({
+          where: { id: profile.id },
+          data: { status: MatesProfileStatus.PENDING, error: null },
+        })
+      }
+
+      // Enqueue crawl job
+      if (USE_REDIS_QUEUE) {
+        const { addMatesCrawlJob } = await import('./queue/redis.js')
+        await addMatesCrawlJob(profile.id, username)
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ profileId: profile.id, status: 'PENDING', queued: true }))
+      } else {
+        // Fallback: run synchronously in background
+        const { runFullPipeline } = await import('./mates/pipeline.js')
+        const { getPusherService } = await import('./pusher/service.js')
+        const pusher = getPusherService()
+
+        runFullPipeline(profile.id, { pusher }).catch((error) => {
+          console.error(`Mates pipeline failed for ${username}:`, error)
+        })
+
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ profileId: profile.id, status: 'PENDING', queued: false }))
+      }
+    } catch (error) {
+      console.error('Error submitting mates profile:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }))
+    }
+    return
+  }
+
+  // Get mates profile status/data
+  if (req.method === 'GET' && req.url?.startsWith('/mates/profile/')) {
+    const username = req.url.replace('/mates/profile/', '').toLowerCase()
+
+    try {
+      const { db } = await import('@symploke/db')
+
+      const profile = await db.matesProfile.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          username: true,
+          githubId: true,
+          avatarUrl: true,
+          bio: true,
+          company: true,
+          location: true,
+          blog: true,
+          profileText: true,
+          facets: true,
+          status: true,
+          error: true,
+          lastCrawledAt: true,
+          createdAt: true,
+          matchesAsSource: {
+            orderBy: { similarityScore: 'desc' },
+            take: 20,
+            select: {
+              id: true,
+              similarityScore: true,
+              teaser: true,
+              targetProfile: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                  profileText: true,
+                  facets: true,
+                },
+              },
+            },
+          },
+        },
+      })
+
+      if (!profile) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Profile not found' }))
+        return
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(profile))
+    } catch (error) {
+      console.error('Error fetching mates profile:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }))
+    }
+    return
+  }
+
+  // Get mates stats (for homepage social proof)
+  if (req.method === 'GET' && req.url === '/mates/stats') {
+    try {
+      const { db } = await import('@symploke/db')
+
+      const totalProfiles = await db.matesProfile.count()
+      const readyProfiles = await db.matesProfile.count({ where: { status: 'READY' } })
+      const totalMatches = await db.matesMatch.count()
+
+      const recentLookups = await db.matesProfile.findMany({
+        where: { status: 'READY' },
+        orderBy: { updatedAt: 'desc' },
+        take: 10,
+        select: {
+          username: true,
+          avatarUrl: true,
+          _count: { select: { matchesAsSource: true } },
+        },
+      })
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(
+        JSON.stringify({
+          totalProfiles,
+          readyProfiles,
+          totalMatches,
+          recentLookups: recentLookups.map((l) => ({
+            username: l.username,
+            avatarUrl: l.avatarUrl,
+            matchCount: l._count.matchesAsSource,
+          })),
+        }),
+      )
+    } catch (error) {
+      console.error('Error fetching mates stats:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }))
+    }
+    return
+  }
+
+  // Generate match narrative (on-demand)
+  if (req.method === 'GET' && req.url?.match(/^\/mates\/narrative\/[^/]+\/[^/]+$/)) {
+    const parts = req.url.replace('/mates/narrative/', '').split('/')
+    const sourceUsername = parts[0]?.toLowerCase()
+    const targetUsername = parts[1]?.toLowerCase()
+
+    try {
+      const { db } = await import('@symploke/db')
+      const { generateMatchNarrative } = await import('./mates/matcher.js')
+
+      const sourceProfile = await db.matesProfile.findUnique({
+        where: { username: sourceUsername },
+        select: { id: true },
+      })
+      const targetProfile = await db.matesProfile.findUnique({
+        where: { username: targetUsername },
+        select: { id: true },
+      })
+
+      if (!sourceProfile || !targetProfile) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Profile not found' }))
+        return
+      }
+
+      const narrative = await generateMatchNarrative(sourceProfile.id, targetProfile.id)
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ narrative }))
+    } catch (error) {
+      console.error('Error generating narrative:', error)
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }))
+    }
+    return
+  }
+
   // Check weave status endpoint
   if (req.method === 'GET' && req.url?.startsWith('/weave-status/')) {
     const plexusId = req.url.replace('/weave-status/', '')

@@ -1,0 +1,30 @@
+{
+  "name": "@symploke/mates",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3002",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@prisma/extension-accelerate": "^1.2.1",
+    "@symploke/db": "workspace:*",
+    "@symploke/design": "workspace:*",
+    "@vercel/analytics": "^1.6.1",
+    "next": "latest",
+    "pusher-js": "^8.4.0",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@symploke/tsconfig": "workspace:*",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

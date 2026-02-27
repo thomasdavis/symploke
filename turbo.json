@@ -22,7 +22,11 @@
         "PUSHER_KEY",
         "PUSHER_SECRET",
         "PUSHER_CLUSTER",
-        "DISCORD_WEBHOOK"
+        "DISCORD_WEBHOOK",
+        "ENGINE_URL",
+        "GITHUB_PAT",
+        "NEXT_PUBLIC_PUSHER_KEY",
+        "NEXT_PUBLIC_PUSHER_CLUSTER"
       ]
     },
     "dev": {

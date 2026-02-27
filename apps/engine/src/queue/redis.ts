@@ -31,6 +31,10 @@ export const QUEUE_NAMES = {
   SYNC: 'repo-sync',
   EMBED: 'repo-embed',
   WEAVE: 'weave-discovery',
+  MATES_CRAWL: 'mates-crawl',
+  MATES_PROFILE: 'mates-profile',
+  MATES_EMBED: 'mates-embed',
+  MATES_MATCH: 'mates-match',
 } as const
 
 // Job data types
@@ -49,10 +53,19 @@ export interface WeaveJobData {
   triggeredBy: 'manual' | 'scheduled'
 }
 
+export interface MatesJobData {
+  profileId: string
+  username: string
+}
+
 // Singleton queues
 let syncQueue: Queue<SyncJobData> | null = null
 let embedQueue: Queue<EmbedJobData> | null = null
 let weaveQueue: Queue<WeaveJobData> | null = null
+let matesCrawlQueue: Queue<MatesJobData> | null = null
+let matesProfileQueue: Queue<MatesJobData> | null = null
+let matesEmbedQueue: Queue<MatesJobData> | null = null
+let matesMatchQueue: Queue<MatesJobData> | null = null
 
 const connection = getRedisConnection()
 
@@ -300,6 +313,192 @@ export function createWeaveWorker(
   return worker
 }
 
+// === Mates Queues ===
+
+function getMatesQueueOptions() {
+  return {
+    connection,
+    defaultJobOptions: {
+      attempts: 2,
+      backoff: {
+        type: 'exponential' as const,
+        delay: 5000,
+      },
+      removeOnComplete: {
+        age: 24 * 60 * 60,
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 7 * 24 * 60 * 60,
+      },
+    },
+  }
+}
+
+export function getMatesCrawlQueue(): Queue<MatesJobData> {
+  if (!matesCrawlQueue) {
+    matesCrawlQueue = new Queue<MatesJobData>(QUEUE_NAMES.MATES_CRAWL, getMatesQueueOptions())
+    logger.info('Mates crawl queue initialized')
+  }
+  return matesCrawlQueue
+}
+
+export function getMatesProfileQueue(): Queue<MatesJobData> {
+  if (!matesProfileQueue) {
+    matesProfileQueue = new Queue<MatesJobData>(QUEUE_NAMES.MATES_PROFILE, getMatesQueueOptions())
+    logger.info('Mates profile queue initialized')
+  }
+  return matesProfileQueue
+}
+
+export function getMatesEmbedQueue(): Queue<MatesJobData> {
+  if (!matesEmbedQueue) {
+    matesEmbedQueue = new Queue<MatesJobData>(QUEUE_NAMES.MATES_EMBED, getMatesQueueOptions())
+    logger.info('Mates embed queue initialized')
+  }
+  return matesEmbedQueue
+}
+
+export function getMatesMatchQueue(): Queue<MatesJobData> {
+  if (!matesMatchQueue) {
+    matesMatchQueue = new Queue<MatesJobData>(QUEUE_NAMES.MATES_MATCH, getMatesQueueOptions())
+    logger.info('Mates match queue initialized')
+  }
+  return matesMatchQueue
+}
+
+export async function addMatesCrawlJob(
+  profileId: string,
+  username: string,
+): Promise<Job<MatesJobData>> {
+  const queue = getMatesCrawlQueue()
+  const job = await queue.add(
+    'mates-crawl',
+    { profileId, username },
+    {
+      jobId: `mates-crawl-${profileId}`,
+    },
+  )
+  logger.info({ profileId, username, jobId: job.id }, 'Added mates crawl job')
+  return job
+}
+
+export async function addMatesProfileJob(
+  profileId: string,
+  username: string,
+): Promise<Job<MatesJobData>> {
+  const queue = getMatesProfileQueue()
+  const job = await queue.add(
+    'mates-profile',
+    { profileId, username },
+    {
+      jobId: `mates-profile-${profileId}-${Date.now()}`,
+    },
+  )
+  logger.info({ profileId, username, jobId: job.id }, 'Added mates profile job')
+  return job
+}
+
+export async function addMatesEmbedJob(
+  profileId: string,
+  username: string,
+): Promise<Job<MatesJobData>> {
+  const queue = getMatesEmbedQueue()
+  const job = await queue.add(
+    'mates-embed',
+    { profileId, username },
+    {
+      jobId: `mates-embed-${profileId}-${Date.now()}`,
+    },
+  )
+  logger.info({ profileId, username, jobId: job.id }, 'Added mates embed job')
+  return job
+}
+
+export async function addMatesMatchJob(
+  profileId: string,
+  username: string,
+): Promise<Job<MatesJobData>> {
+  const queue = getMatesMatchQueue()
+  const job = await queue.add(
+    'mates-match',
+    { profileId, username },
+    {
+      jobId: `mates-match-${profileId}-${Date.now()}`,
+    },
+  )
+  logger.info({ profileId, username, jobId: job.id }, 'Added mates match job')
+  return job
+}
+
+export function createMatesCrawlWorker(
+  processor: (job: Job<MatesJobData>) => Promise<void>,
+): Worker<MatesJobData> {
+  const worker = new Worker<MatesJobData>(QUEUE_NAMES.MATES_CRAWL, processor, {
+    connection,
+    concurrency: 2,
+  })
+  logger.info('Mates crawl worker started')
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id, profileId: job.data.profileId }, 'Mates crawl job completed')
+  })
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, error: err.message }, 'Mates crawl job failed')
+  })
+  return worker
+}
+
+export function createMatesProfileWorker(
+  processor: (job: Job<MatesJobData>) => Promise<void>,
+): Worker<MatesJobData> {
+  const worker = new Worker<MatesJobData>(QUEUE_NAMES.MATES_PROFILE, processor, {
+    connection,
+    concurrency: 2,
+  })
+  logger.info('Mates profile worker started')
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id, profileId: job.data.profileId }, 'Mates profile job completed')
+  })
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, error: err.message }, 'Mates profile job failed')
+  })
+  return worker
+}
+
+export function createMatesEmbedWorker(
+  processor: (job: Job<MatesJobData>) => Promise<void>,
+): Worker<MatesJobData> {
+  const worker = new Worker<MatesJobData>(QUEUE_NAMES.MATES_EMBED, processor, {
+    connection,
+    concurrency: 2,
+  })
+  logger.info('Mates embed worker started')
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id, profileId: job.data.profileId }, 'Mates embed job completed')
+  })
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, error: err.message }, 'Mates embed job failed')
+  })
+  return worker
+}
+
+export function createMatesMatchWorker(
+  processor: (job: Job<MatesJobData>) => Promise<void>,
+): Worker<MatesJobData> {
+  const worker = new Worker<MatesJobData>(QUEUE_NAMES.MATES_MATCH, processor, {
+    connection,
+    concurrency: 1,
+  })
+  logger.info('Mates match worker started')
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id, profileId: job.data.profileId }, 'Mates match job completed')
+  })
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, error: err.message }, 'Mates match job failed')
+  })
+  return worker
+}
+
 /**
  * Schedule hourly sync for all repos
  */
@@ -325,6 +524,14 @@ export async function scheduleHourlySync(): Promise<void> {
  * Close all queue connections
  */
 export async function closeQueues(): Promise<void> {
-  await Promise.all([syncQueue?.close(), embedQueue?.close(), weaveQueue?.close()])
+  await Promise.all([
+    syncQueue?.close(),
+    embedQueue?.close(),
+    weaveQueue?.close(),
+    matesCrawlQueue?.close(),
+    matesProfileQueue?.close(),
+    matesEmbedQueue?.close(),
+    matesMatchQueue?.close(),
+  ])
   logger.info('All queues closed')
 }

@@ -26,6 +26,8 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   EMBED_BATCH_SIZE: z.coerce.number().default(50),
   EMBED_RATE_LIMIT_DELAY_MS: z.coerce.number().default(100),
+  // Mates - GitHub PAT for public API access (optional — falls back to unauthenticated)
+  GITHUB_PAT: z.string().optional(),
 })
 
 function createConfig() {

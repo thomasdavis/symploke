@@ -5,19 +5,32 @@ import { syncRepo, failJob } from '../sync/repo-sync.js'
 import { embedRepo, failChunkJob } from '../embed/embed-sync.js'
 import { findWeaves } from '../weave/finder.js'
 import { getPusherService } from '../pusher/service.js'
+import { processCrawl, processProfile, processEmbed, processMatch } from '../mates/pipeline.js'
 import {
   createSyncWorker,
   createEmbedWorker,
   createWeaveWorker,
+  createMatesCrawlWorker,
+  createMatesProfileWorker,
+  createMatesEmbedWorker,
+  createMatesMatchWorker,
   addSyncJob,
+  addMatesProfileJob,
+  addMatesEmbedJob,
+  addMatesMatchJob,
   type SyncJobData,
   type EmbedJobData,
   type WeaveJobData,
+  type MatesJobData,
 } from './redis.js'
 
 let syncWorker: Worker<SyncJobData> | null = null
 let embedWorker: Worker<EmbedJobData> | null = null
 let weaveWorker: Worker<WeaveJobData> | null = null
+let matesCrawlWorker: Worker<MatesJobData> | null = null
+let matesProfileWorker: Worker<MatesJobData> | null = null
+let matesEmbedWorker: Worker<MatesJobData> | null = null
+let matesMatchWorker: Worker<MatesJobData> | null = null
 
 /**
  * Process a sync job from the BullMQ queue
@@ -121,6 +134,66 @@ async function processWeaveJob(job: Job<WeaveJobData>): Promise<void> {
   }
 }
 
+// === Mates Pipeline Workers ===
+
+async function processMatesCrawlJob(job: Job<MatesJobData>): Promise<void> {
+  const { profileId, username } = job.data
+  const pusher = getPusherService()
+  logger.info({ jobId: job.id, profileId, username }, 'Processing mates crawl job')
+
+  try {
+    await processCrawl(profileId, { pusher })
+    // Chain to next stage
+    await addMatesProfileJob(profileId, username)
+  } catch (error) {
+    logger.error({ error, profileId, username }, 'Mates crawl job failed')
+    throw error
+  }
+}
+
+async function processMatesProfileJob(job: Job<MatesJobData>): Promise<void> {
+  const { profileId, username } = job.data
+  const pusher = getPusherService()
+  logger.info({ jobId: job.id, profileId, username }, 'Processing mates profile job')
+
+  try {
+    await processProfile(profileId, { pusher })
+    // Chain to next stage
+    await addMatesEmbedJob(profileId, username)
+  } catch (error) {
+    logger.error({ error, profileId, username }, 'Mates profile job failed')
+    throw error
+  }
+}
+
+async function processMatesEmbedJob(job: Job<MatesJobData>): Promise<void> {
+  const { profileId, username } = job.data
+  const pusher = getPusherService()
+  logger.info({ jobId: job.id, profileId, username }, 'Processing mates embed job')
+
+  try {
+    await processEmbed(profileId, { pusher })
+    // Chain to next stage
+    await addMatesMatchJob(profileId, username)
+  } catch (error) {
+    logger.error({ error, profileId, username }, 'Mates embed job failed')
+    throw error
+  }
+}
+
+async function processMatesMatchJob(job: Job<MatesJobData>): Promise<void> {
+  const { profileId, username } = job.data
+  const pusher = getPusherService()
+  logger.info({ jobId: job.id, profileId, username }, 'Processing mates match job')
+
+  try {
+    await processMatch(profileId, { pusher })
+  } catch (error) {
+    logger.error({ error, profileId, username }, 'Mates match job failed')
+    throw error
+  }
+}
+
 /**
  * Run hourly sync for all repos across all plexuses
  */
@@ -195,6 +268,12 @@ export async function startWorkers(): Promise<void> {
   embedWorker = createEmbedWorker(processEmbedJob)
   weaveWorker = createWeaveWorker(processWeaveJob)
 
+  // Mates pipeline workers
+  matesCrawlWorker = createMatesCrawlWorker(processMatesCrawlJob)
+  matesProfileWorker = createMatesProfileWorker(processMatesProfileJob)
+  matesEmbedWorker = createMatesEmbedWorker(processMatesEmbedJob)
+  matesMatchWorker = createMatesMatchWorker(processMatesMatchJob)
+
   logger.info('All BullMQ workers started')
 }
 
@@ -204,11 +283,23 @@ export async function startWorkers(): Promise<void> {
 export async function stopWorkers(): Promise<void> {
   logger.info('Stopping BullMQ workers...')
 
-  await Promise.all([syncWorker?.close(), embedWorker?.close(), weaveWorker?.close()])
+  await Promise.all([
+    syncWorker?.close(),
+    embedWorker?.close(),
+    weaveWorker?.close(),
+    matesCrawlWorker?.close(),
+    matesProfileWorker?.close(),
+    matesEmbedWorker?.close(),
+    matesMatchWorker?.close(),
+  ])
 
   syncWorker = null
   embedWorker = null
   weaveWorker = null
+  matesCrawlWorker = null
+  matesProfileWorker = null
+  matesEmbedWorker = null
+  matesMatchWorker = null
 
   logger.info('All BullMQ workers stopped')
 }
@@ -220,10 +311,18 @@ export function getWorkerStatus(): {
   sync: boolean
   embed: boolean
   weave: boolean
+  matesCrawl: boolean
+  matesProfile: boolean
+  matesEmbed: boolean
+  matesMatch: boolean
 } {
   return {
     sync: syncWorker?.isRunning() ?? false,
     embed: embedWorker?.isRunning() ?? false,
     weave: weaveWorker?.isRunning() ?? false,
+    matesCrawl: matesCrawlWorker?.isRunning() ?? false,
+    matesProfile: matesProfileWorker?.isRunning() ?? false,
+    matesEmbed: matesEmbedWorker?.isRunning() ?? false,
+    matesMatch: matesMatchWorker?.isRunning() ?? false,
   }
 }

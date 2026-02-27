@@ -304,6 +304,53 @@ export class PusherService {
       // Don't log every log event failure, too noisy
     }
   }
+
+  // === Mates events (public channels, no auth required) ===
+
+  /**
+   * Emit mates status update event
+   */
+  async emitMatesStatus(
+    username: string,
+    event: { profileId: string; status: string; step: string; error?: string },
+  ): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`mates-${username}`, 'status-update', event)
+    } catch {
+      // Non-critical
+    }
+  }
+
+  /**
+   * Emit mates progress event
+   */
+  async emitMatesProgress(username: string, step: string): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`mates-${username}`, 'progress', { username, step })
+    } catch {
+      // Non-critical
+    }
+  }
+
+  /**
+   * Emit mates profile-ready event
+   */
+  async emitMatesProfileReady(
+    username: string,
+    event: { profileId: string; matchCount: number },
+  ): Promise<void> {
+    if (!this.client) return
+
+    try {
+      await this.client.trigger(`mates-${username}`, 'profile-ready', event)
+    } catch {
+      // Non-critical
+    }
+  }
 }
 
 // Singleton instance

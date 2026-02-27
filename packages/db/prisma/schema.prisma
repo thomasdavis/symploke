@@ -434,3 +434,89 @@ model RepoDependencyProfile {
 
   @@map("repo_dependency_profiles")
 }
+
+// === Mates ===
+
+enum MatesProfileStatus {
+  PENDING
+  CRAWLING
+  SUMMARIZING
+  EMBEDDING
+  MATCHING
+  READY
+  FAILED
+}
+
+model MatesProfile {
+  id        String             @id @default(cuid())
+  username  String             @unique
+  githubId  Int?
+  avatarUrl String?
+  bio       String?
+  company   String?
+  location  String?
+  blog      String?
+
+  // Raw crawled data
+  rawActivity Json? // Raw GitHub activity data
+
+  // LLM-generated profile
+  profileText String? // Full synthesized profile
+  facets      Json? // Array of { title: string, content: string }
+
+  // Processing state
+  status        MatesProfileStatus @default(PENDING)
+  processingLog Json?
+  error         String?
+
+  // TTL
+  lastCrawledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  chunks          MatesChunk[]
+  matchesAsSource MatesMatch[] @relation("sourceProfile")
+  matchesAsTarget MatesMatch[] @relation("targetProfile")
+
+  @@map("mates_profiles")
+}
+
+model MatesChunk {
+  id         String                       @id @default(cuid())
+  profileId  String
+  facetTitle String // e.g., "Distributed Systems"
+  content    String // The facet text that was embedded
+  embedding  Unsupported("vector(3072)")
+
+  createdAt DateTime @default(now())
+
+  profile MatesProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("mates_chunks")
+}
+
+model MatesMatch {
+  id              String @id @default(cuid())
+  sourceProfileId String
+  targetProfileId String
+
+  similarityScore Float
+  teaser          String? // 2-sentence "why you match" preview
+  narrative       String? // Full narrative comparison (generated on-demand, cached here)
+
+  // Which chunks matched strongest
+  topChunkPairs Json? // Array of { sourceChunkId, targetChunkId, similarity }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sourceProfile MatesProfile @relation("sourceProfile", fields: [sourceProfileId], references: [id], onDelete: Cascade)
+  targetProfile MatesProfile @relation("targetProfile", fields: [targetProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceProfileId, targetProfileId])
+  @@index([sourceProfileId, similarityScore])
+  @@map("mates_matches")
+}
