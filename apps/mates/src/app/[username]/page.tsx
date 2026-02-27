@@ -1,5 +1,9 @@
-import { ProcessingView } from '@/components/ProcessingView'
+import { Avatar } from '@symploke/ui/Avatar/Avatar'
+import { Button } from '@symploke/ui/Button/Button'
+import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
+import { Separator } from '@symploke/ui/Separator/Separator'
 import { MatchCard } from '@/components/MatchCard'
+import { ProcessingView } from '@/components/ProcessingView'
 
 interface MatchData {
   id: string
@@ -41,61 +45,51 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const { username } = await params
   const profile = await getProfile(username)
 
-  // If profile doesn't exist, show submit prompt
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-6 gap-6">
-        <h2 className="text-2xl font-bold">No profile found for {username}</h2>
-        <p className="text-[var(--color-fg-muted)]">This user hasn&apos;t been analyzed yet.</p>
-        <a
-          href="/"
-          className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-fg)] font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
-        >
-          Submit a username
-        </a>
-      </div>
+      <EmptyState
+        title={`No profile for ${username}`}
+        description="This user hasn't been analyzed yet. Submit their username to get started."
+        actionLabel="Submit a username"
+        actionHref="/"
+      />
     )
   }
 
-  // If still processing, show progress view
   if (profile.status !== 'READY' && profile.status !== 'FAILED') {
     return <ProcessingView username={username} initialStatus={profile.status} />
   }
 
-  // If failed, show error
   if (profile.status === 'FAILED') {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-6 gap-6">
-        <h2 className="text-2xl font-bold">Something went wrong</h2>
-        <p className="text-[var(--color-fg-muted)]">
-          {profile.error || 'Failed to build profile. Please try again.'}
-        </p>
-        <a
-          href="/"
-          className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-fg)] font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
-        >
-          Try again
-        </a>
-      </div>
+      <EmptyState
+        title="Something went wrong"
+        description={profile.error || 'Failed to build profile. Please try again.'}
+        actionLabel="Try again"
+        actionHref="/"
+      />
     )
   }
 
-  // Ready — show profile + matches
   const matches = profile.matchesAsSource || []
   const facets = (profile.facets as Array<{ title: string; content: string }>) ?? []
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-6">
+    <div className="mates-profile">
       {/* Profile header */}
-      <div className="flex items-start gap-5 mb-8">
-        {profile.avatarUrl && (
-          <img src={profile.avatarUrl} alt={profile.username} className="w-20 h-20 rounded-full" />
-        )}
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">{profile.username}</h1>
-          {profile.bio && <p className="text-[var(--color-fg-muted)] mt-1">{profile.bio}</p>}
+      <div className="mates-profile-header">
+        <Avatar.Root size="lg" style={{ width: 80, height: 80 }}>
+          {profile.avatarUrl ? (
+            <Avatar.Image src={profile.avatarUrl} alt={profile.username} />
+          ) : (
+            <Avatar.Fallback>{profile.username[0]?.toUpperCase()}</Avatar.Fallback>
+          )}
+        </Avatar.Root>
+        <div style={{ flex: 1 }}>
+          <h1 className="mates-profile-name">{profile.username}</h1>
+          {profile.bio && <p className="mates-profile-bio">{profile.bio}</p>}
           {(profile.company || profile.location) && (
-            <p className="text-sm text-[var(--color-fg-muted)] mt-1">
+            <p className="mates-profile-meta">
               {[profile.company, profile.location].filter(Boolean).join(' · ')}
             </p>
           )}
@@ -103,53 +97,69 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </div>
 
       {/* AI Profile */}
-      {profile.profileText && (
-        <div className="mb-8">
-          <p className="text-[var(--color-fg)] leading-relaxed">{profile.profileText}</p>
-        </div>
-      )}
+      {profile.profileText && <p className="mates-profile-text">{profile.profileText}</p>}
 
       {/* Facets */}
       {facets.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-10">
+        <div className="mates-facets">
           {facets.map((facet) => (
-            <span
-              key={facet.title}
-              className="px-3 py-1.5 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-sm font-medium"
-              title={facet.content}
-            >
+            <span key={facet.title} className="mates-facet" title={facet.content}>
               {facet.title}
             </span>
           ))}
         </div>
       )}
 
+      <Separator />
+
       {/* Matches */}
-      <div className="border-t border-[var(--color-border-subtle)] pt-8">
+      <div style={{ paddingTop: 'var(--space-8)' }}>
         {matches.length > 0 ? (
           <>
-            <h2 className="text-xl font-bold mb-4">Your Mates ({matches.length})</h2>
-            <div className="flex flex-col gap-3">
+            <h2
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'var(--text-xl)',
+                fontWeight: 600,
+                marginBottom: 'var(--space-4)',
+              }}
+            >
+              Your Mates ({matches.length})
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {matches.map((match: MatchData) => (
                 <MatchCard key={match.id} username={username} match={match} />
               ))}
             </div>
           </>
         ) : (
-          <div className="text-center py-12">
-            <h2 className="text-xl font-bold mb-2">No mates yet</h2>
-            <p className="text-[var(--color-fg-muted)] mb-4 max-w-md mx-auto">
+          <div style={{ textAlign: 'center', padding: 'var(--space-12) 0' }}>
+            <h2
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'var(--text-xl)',
+                fontWeight: 600,
+                marginBottom: 'var(--space-2)',
+              }}
+            >
+              No mates yet
+            </h2>
+            <p
+              style={{
+                fontSize: 'var(--text-base)',
+                color: 'var(--color-fg-muted)',
+                maxWidth: '28rem',
+                margin: '0 auto var(--space-6)',
+              }}
+            >
               You&apos;re among the first developers in the network. As more people join,
               you&apos;ll start seeing matches. Share this page to grow the network!
             </p>
-            <div className="flex justify-center gap-3">
-              <a
-                href="/"
-                className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg-subtle)] transition-colors"
-              >
+            <a href="/">
+              <Button variant="secondary" size="md">
                 Invite others
-              </a>
-            </div>
+              </Button>
+            </a>
           </div>
         )}
       </div>

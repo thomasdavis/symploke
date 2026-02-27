@@ -1,8 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { Button } from '@symploke/ui/Button/Button'
+import { Card } from '@symploke/ui/Card/Card'
+import { Separator } from '@symploke/ui/Separator/Separator'
+import { Skeleton, SkeletonText } from '@symploke/ui/Skeleton/Skeleton'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function MatchDetailPage() {
   const params = useParams()
@@ -29,55 +33,59 @@ export default function MatchDetailPage() {
   }, [username, matchUsername])
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-6">
-      <Link
-        href={`/${username}`}
-        className="text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] transition-colors mb-6 inline-block"
-      >
+    <div className="mates-narrative">
+      <Link href={`/${username}`} className="mates-back-link">
         &larr; Back to {username}&apos;s profile
       </Link>
 
-      <h1 className="text-3xl font-bold mb-2">
-        {username} <span className="text-[var(--color-fg-muted)] font-normal">&amp;</span>{' '}
+      <h1 className="mates-narrative-title">
+        {username} <span style={{ color: 'var(--color-fg-muted)', fontWeight: 400 }}>&amp;</span>{' '}
         {matchUsername}
       </h1>
-      <p className="text-[var(--color-fg-muted)] mb-8">How these two developers connect</p>
+      <p className="mates-narrative-subtitle">How these two developers connect</p>
 
       {loading && (
-        <div className="flex flex-col items-center gap-4 py-12">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-          <p className="text-sm text-[var(--color-fg-muted)]">Generating comparison narrative...</p>
-        </div>
+        <Card style={{ padding: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Skeleton height={16} width="60%" />
+            <SkeletonText lines={4} />
+            <Skeleton height={16} width="40%" />
+            <SkeletonText lines={3} />
+          </div>
+        </Card>
       )}
 
       {error && (
-        <div className="text-center py-12">
-          <p className="text-[var(--color-danger)]">{error}</p>
-        </div>
+        <Card style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-danger)', marginBottom: 'var(--space-4)' }}>{error}</p>
+          <a href={`/${username}`}>
+            <Button variant="secondary" size="sm">
+              Go back
+            </Button>
+          </a>
+        </Card>
       )}
 
       {narrative && (
-        <div className="prose prose-neutral max-w-none">
+        <div className="mates-narrative-text">
           {narrative.split('\n\n').map((paragraph, i) => (
-            <p key={i} className="text-[var(--color-fg)] leading-relaxed mb-4">
-              {paragraph}
-            </p>
+            <p key={i}>{paragraph}</p>
           ))}
         </div>
       )}
 
-      <div className="flex gap-3 mt-8 pt-8 border-t border-[var(--color-border-subtle)]">
-        <Link
-          href={`/${username}`}
-          className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg-subtle)] transition-colors"
-        >
-          View {username}&apos;s profile
+      <Separator style={{ marginTop: 'var(--space-8)' }} />
+
+      <div style={{ display: 'flex', gap: 'var(--space-3)', paddingTop: 'var(--space-6)' }}>
+        <Link href={`/${username}`}>
+          <Button variant="secondary" size="sm">
+            {username}&apos;s profile
+          </Button>
         </Link>
-        <Link
-          href={`/${matchUsername}`}
-          className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg-subtle)] transition-colors"
-        >
-          View {matchUsername}&apos;s profile
+        <Link href={`/${matchUsername}`}>
+          <Button variant="secondary" size="sm">
+            {matchUsername}&apos;s profile
+          </Button>
         </Link>
       </div>
     </div>

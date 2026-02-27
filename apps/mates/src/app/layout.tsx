@@ -1,6 +1,6 @@
-import type { Metadata } from 'next'
-import { Sora, Sen, Azeret_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import type { Metadata } from 'next'
+import { Azeret_Mono, Sen, Sora } from 'next/font/google'
 import './globals.css'
 
 const sora = Sora({
@@ -40,20 +40,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${sora.variable} ${sen.variable} ${azeretMono.variable}`}
     >
       <body className={sora.className}>
-        <div className="min-h-screen flex flex-col">
-          <header className="border-b border-[var(--color-border-subtle)] px-6 py-4">
-            <a href="/" className="flex items-center gap-2">
-              <span className="font-bold text-lg">Mates</span>
-              <span className="text-xs text-[var(--color-fg-muted)]">by Symploke</span>
-            </a>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <header className="mates-header">
+            <div className="mates-header-inner">
+              <a href="/" className="mates-header-logo">
+                <span className="mates-header-title">Mates</span>
+                <span className="mates-header-badge">by Symploke</span>
+              </a>
+            </div>
           </header>
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-[var(--color-border-subtle)] px-6 py-4 text-center text-xs text-[var(--color-fg-muted)]">
-            All data sourced from public GitHub profiles. Built by{' '}
-            <a href="https://symploke.com" className="underline">
-              Symploke
-            </a>
-            .
+          <main style={{ flex: 1 }}>{children}</main>
+          <footer className="mates-footer">
+            <p>
+              All data sourced from public GitHub profiles. Built by{' '}
+              <a href="https://symploke.com">Symploke</a>.
+            </p>
           </footer>
         </div>
         <Analytics />

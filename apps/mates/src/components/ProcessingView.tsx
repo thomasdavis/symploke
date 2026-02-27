@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { Card } from '@symploke/ui/Card/Card'
+import { useEffect, useRef, useState } from 'react'
 import { getPusherClient } from '@/lib/pusher'
 
 const STEPS = [
@@ -41,7 +42,6 @@ export function ProcessingView({
     })
 
     channel.bind('profile-ready', () => {
-      // Reload the page to show matches
       window.location.reload()
     })
 
@@ -52,7 +52,6 @@ export function ProcessingView({
     }
   }, [username])
 
-  // Also poll as fallback
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -73,49 +72,56 @@ export function ProcessingView({
   const currentStepIndex = STEPS.findIndex((s) => s.key === currentStatus)
 
   return (
-    <div className="flex flex-col items-center gap-8 py-16 px-6">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-[var(--color-bg-subtle)] flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+    <div className="mates-processing">
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 'var(--space-4)',
+        }}
+      >
+        <div className="mates-spinner">
+          <div className="mates-spinner-ring" />
         </div>
-        <h2 className="text-2xl font-bold">Building profile for {username}</h2>
-        <p className="text-[var(--color-fg-muted)] text-sm">This usually takes 30-60 seconds</p>
+        <h2
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'var(--text-2xl)',
+            fontWeight: 700,
+          }}
+        >
+          Building profile for {username}
+        </h2>
+        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-fg-muted)' }}>
+          This usually takes 30-60 seconds
+        </p>
       </div>
 
-      <div className="flex flex-col gap-3 w-full max-w-sm">
-        {STEPS.slice(0, -1).map((step, i) => {
-          const isActive = i === currentStepIndex
-          const isDone = i < currentStepIndex
-          const isPending = i > currentStepIndex
+      <Card style={{ width: '100%', maxWidth: '22rem', padding: 'var(--space-6)' }}>
+        <div className="mates-steps">
+          {STEPS.slice(0, -1).map((step, i) => {
+            const isActive = i === currentStepIndex
+            const isDone = i < currentStepIndex
+            const isPending = i > currentStepIndex
 
-          return (
-            <div
-              key={step.key}
-              className={`flex items-center gap-3 text-sm transition-opacity ${isPending ? 'opacity-30' : 'opacity-100'} ${isActive ? 'step-appear' : ''}`}
-            >
-              {isDone && (
-                <span className="w-5 h-5 rounded-full bg-[var(--color-success)] flex items-center justify-center text-white text-xs">
-                  ✓
-                </span>
-              )}
-              {isActive && (
-                <span className="w-5 h-5 rounded-full bg-[var(--color-primary)] pulse-dot" />
-              )}
-              {isPending && (
-                <span className="w-5 h-5 rounded-full border border-[var(--color-border)]" />
-              )}
-              <span className={isActive ? 'font-medium' : ''}>{step.label}</span>
-            </div>
-          )
-        })}
-      </div>
+            return (
+              <div
+                key={step.key}
+                className={`mates-step ${isPending ? 'mates-step--pending' : ''}`}
+              >
+                {isDone && <span className="mates-step-dot mates-step-dot--done">✓</span>}
+                {isActive && <span className="mates-step-dot mates-step-dot--active" />}
+                {isPending && <span className="mates-step-dot mates-step-dot--pending" />}
+                <span style={{ fontWeight: isActive ? 500 : 400 }}>{step.label}</span>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
 
       {progressMessages.length > 0 && (
-        <div className="w-full max-w-sm mt-4">
-          <p className="text-xs text-[var(--color-fg-muted)] font-[var(--font-azeret-mono)]">
-            {progressMessages[progressMessages.length - 1]}
-          </p>
-        </div>
+        <p className="mates-progress-log">{progressMessages[progressMessages.length - 1]}</p>
       )}
     </div>
   )
