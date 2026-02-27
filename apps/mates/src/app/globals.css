@@ -338,9 +338,9 @@ body {
 }
 
 .mates-input-field:focus {
-  outline: none;
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .mates-input-field:disabled {
