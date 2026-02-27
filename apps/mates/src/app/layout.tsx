@@ -1,6 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import { Azeret_Mono, Sen, Sora } from 'next/font/google'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import './globals.css'
 
 const sora = Sora({
@@ -53,23 +55,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${sora.variable} ${sen.variable} ${azeretMono.variable}`}
     >
       <body className={sora.className}>
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <header className="mates-header">
-            <div className="mates-header-inner">
-              <a href="/" className="mates-header-logo">
-                <span className="mates-header-title">Mates</span>
-                <span className="mates-header-badge">by Symploke</span>
-              </a>
-            </div>
-          </header>
-          <main style={{ flex: 1 }}>{children}</main>
-          <footer className="mates-footer">
-            <p>
-              All data sourced from public GitHub profiles. Built by{' '}
-              <a href="https://symploke.dev">Symploke</a>.
-            </p>
-          </footer>
-        </div>
+        <ThemeProvider>
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <header className="mates-header">
+              <div className="mates-header-inner">
+                <a href="/" className="mates-header-logo">
+                  <span className="mates-header-title">Mates</span>
+                  <span className="mates-header-badge">by Symploke</span>
+                </a>
+                <ThemeToggle />
+              </div>
+            </header>
+            <main style={{ flex: 1 }}>{children}</main>
+            <footer className="mates-footer">
+              <p>
+                All data sourced from public GitHub profiles. Built by{' '}
+                <a href="https://symploke.dev">Symploke</a>.
+              </p>
+            </footer>
+          </div>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>
