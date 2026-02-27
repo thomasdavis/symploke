@@ -36,9 +36,30 @@ async function getProfile(username: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params
+  const profile = await getProfile(username)
+
+  const title = profile?.username ?? username
+  const description = profile?.profileText
+    ? profile.profileText.slice(0, 200)
+    : `See ${username}'s developer profile and coding mates.`
+  const images = profile?.avatarUrl ? [{ url: profile.avatarUrl, width: 400, height: 400 }] : []
+
   return {
-    title: `${username} — Mates by Symploke`,
-    description: `See ${username}'s developer profile and coding mates.`,
+    title,
+    description,
+    openGraph: {
+      title: `${title} — Mates by Symploke`,
+      description,
+      type: 'profile' as const,
+      url: `https://mates.symploke.dev/${username}`,
+      images,
+    },
+    twitter: {
+      card: 'summary' as const,
+      title: `${title} — Mates by Symploke`,
+      description,
+      images,
+    },
   }
 }
 

@@ -21,14 +21,27 @@ const azeretMono = Azeret_Mono({
   display: 'swap',
 })
 
+const siteUrl = 'https://mates.symploke.dev'
+
 export const metadata: Metadata = {
-  title: 'Mates by Symploke — Find Your GitHub Coding Mates',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Mates by Symploke — Find Your GitHub Coding Mates',
+    template: '%s — Mates by Symploke',
+  },
   description:
     'Submit your GitHub username and discover developers who share your technical interests, coding style, and open source philosophy.',
   openGraph: {
     title: 'Mates by Symploke',
     description: 'Find developers who code like you. AI-powered GitHub profile matching.',
     type: 'website',
+    siteName: 'Mates by Symploke',
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mates by Symploke',
+    description: 'Find developers who code like you. AI-powered GitHub profile matching.',
   },
 }
 
