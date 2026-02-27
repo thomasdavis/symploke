@@ -5,6 +5,7 @@ import { Separator } from '@symploke/ui/Separator/Separator'
 import { MatchCard } from '@/components/MatchCard'
 import { ProcessingView } from '@/components/ProcessingView'
 import { RawActivitySection } from '@/components/RawActivitySection'
+import { RefreshButton } from '@/components/RefreshButton'
 
 interface MatchData {
   id: string
@@ -193,6 +194,19 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           <RawActivitySection rawActivity={profile.rawActivity} />
         </>
       )}
+
+      {/* Refresh */}
+      <Separator style={{ marginTop: 'var(--space-8)' }} />
+      <div className="mates-profile-refresh">
+        <p className="mates-profile-refresh-text">
+          Data last crawled{' '}
+          {profile.lastCrawledAt
+            ? new Date(profile.lastCrawledAt).toLocaleDateString()
+            : 'recently'}
+          .
+        </p>
+        <RefreshButton username={username} />
+      </div>
     </div>
   )
 }

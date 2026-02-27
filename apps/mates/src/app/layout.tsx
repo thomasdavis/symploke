@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <footer className="mates-footer">
             <p>
               All data sourced from public GitHub profiles. Built by{' '}
-              <a href="https://symploke.com">Symploke</a>.
+              <a href="https://symploke.dev">Symploke</a>.
             </p>
           </footer>
         </div>

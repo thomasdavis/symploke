@@ -890,7 +890,9 @@ const healthServer = http.createServer(async (req, res) => {
 
   // Submit a username for mates processing
   if (req.method === 'POST' && req.url?.startsWith('/mates/submit/')) {
-    const username = req.url.replace('/mates/submit/', '').toLowerCase()
+    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
+    const username = parsedUrl.pathname.replace('/mates/submit/', '').toLowerCase()
+    const force = parsedUrl.searchParams.get('force') === 'true'
 
     if (!username || !/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i.test(username)) {
       res.writeHead(400, { 'Content-Type': 'application/json' })
@@ -907,18 +909,18 @@ const healthServer = http.createServer(async (req, res) => {
         select: { id: true, status: true, lastCrawledAt: true },
       })
 
-      // If profile exists and is READY, check TTL (14 days)
+      // If profile exists and is READY, check TTL (14 days) unless force refresh
       if (profile && profile.status === MatesProfileStatus.READY && profile.lastCrawledAt) {
         const ttlMs = 14 * 24 * 60 * 60 * 1000
         const isStale = Date.now() - profile.lastCrawledAt.getTime() > ttlMs
 
-        if (!isStale) {
+        if (!isStale && !force) {
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ profileId: profile.id, status: 'READY', cached: true }))
           return
         }
 
-        // Stale — reset for re-crawl
+        // Stale or forced — reset for re-crawl
         await db.matesProfile.update({
           where: { id: profile.id },
           data: { status: MatesProfileStatus.PENDING, error: null },

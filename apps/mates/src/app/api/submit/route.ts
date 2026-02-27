@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { engineJson } from '@/lib/engine'
 
 export async function POST(req: NextRequest) {
-  const { username } = await req.json()
+  const { username, force } = await req.json()
 
   if (!username || typeof username !== 'string') {
     return NextResponse.json({ error: 'Username is required' }, { status: 400 })
@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { data, status, ok } = await engineJson(`/mates/submit/${cleaned}`, { method: 'POST' })
+    const path = force ? `/mates/submit/${cleaned}?force=true` : `/mates/submit/${cleaned}`
+    const { data, status, ok } = await engineJson(path, { method: 'POST' })
 
     if (!ok) {
       return NextResponse.json(data || { error: `Engine returned ${status}` }, { status })
