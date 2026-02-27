@@ -998,6 +998,7 @@ const healthServer = http.createServer(async (req, res) => {
           blog: true,
           profileText: true,
           facets: true,
+          rawActivity: true,
           status: true,
           error: true,
           lastCrawledAt: true,

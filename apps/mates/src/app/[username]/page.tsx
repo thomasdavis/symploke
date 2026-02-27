@@ -4,6 +4,7 @@ import { EmptyState } from '@symploke/ui/EmptyState/EmptyState'
 import { Separator } from '@symploke/ui/Separator/Separator'
 import { MatchCard } from '@/components/MatchCard'
 import { ProcessingView } from '@/components/ProcessingView'
+import { RawActivitySection } from '@/components/RawActivitySection'
 
 interface MatchData {
   id: string
@@ -163,6 +164,14 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           </div>
         )}
       </div>
+
+      {/* Raw activity data */}
+      {profile.rawActivity && (
+        <>
+          <Separator style={{ marginTop: 'var(--space-8)' }} />
+          <RawActivitySection rawActivity={profile.rawActivity} />
+        </>
+      )}
     </div>
   )
 }
