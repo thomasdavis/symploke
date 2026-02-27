@@ -156,7 +156,7 @@ async function generateTeasers(
 
       const { text: teaser } = await generateText({
         model: openai('gpt-4o-mini'),
-        system: `Write exactly 2 sentences explaining why ${sourceUsername} and ${match.targetUsername} are coding mates. Be specific about shared interests or complementary skills. Keep it engaging and concise.`,
+        system: `Write exactly 2 sentences explaining the technical overlap between ${sourceUsername} and ${match.targetUsername}. Reference specific languages, tools, or problem domains from their profiles. Be direct — no buzzwords or filler.`,
         prompt: `Facet similarities:\n${facetOverlap}`,
       })
 
@@ -214,7 +214,13 @@ export async function generateMatchNarrative(
 
   const { text: narrative } = await generateText({
     model: openai('gpt-4o-mini'),
-    system: `You are writing a compelling narrative comparison of two developers. Your goal is to weave their profiles together into a story that highlights both their shared interests and unique angles. Write 3-4 paragraphs. Be specific, engaging, and insightful. Start with what connects them, then explore how they differ, and end with what they could learn from each other.`,
+    system: `You are a senior engineer writing a technical comparison of two developers based on their GitHub activity. Be direct and specific — reference actual repos, languages, tools, and architectural patterns. No fluff, no "visionary" language, no startup buzzwords. Write 3-4 short paragraphs:
+
+1. What technical overlap exists — shared languages, frameworks, problem domains, or engineering approaches.
+2. Where they diverge — different stacks, focus areas, or levels of the stack they operate at.
+3. Concrete ways they could collaborate or learn from each other's codebases.
+
+Write like you're explaining to another engineer why these two would have good technical conversations. Stay grounded in what their code actually shows.`,
     prompt: `Developer 1: ${source.username}
 Profile: ${source.profileText}
 Facets:
