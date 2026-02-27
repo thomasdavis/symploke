@@ -340,7 +340,7 @@ body {
 .mates-input-field:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: -3px 0 0 0 transparent, 0 -3px 0 0 color-mix(in srgb, var(--color-primary) 20%, transparent), 0 3px 0 0 color-mix(in srgb, var(--color-primary) 20%, transparent), -3px 0 0 0 color-mix(in srgb, var(--color-primary) 20%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
   z-index: 1;
   position: relative;
 }
@@ -350,12 +350,12 @@ body {
   cursor: not-allowed;
 }
 
-.mates-submit-row button,
-.mates-submit-row [class*="Button"] {
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  height: 48px;
+.mates-submit-row .btn {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
+  height: 48px !important;
   white-space: nowrap;
   flex-shrink: 0;
+  border-left: none;
 }
 
 /* Footer */
@@ -983,7 +983,7 @@ body {
 
 .mates-how-step {
   position: relative;
-  padding: var(--space-5);
+  padding: var(--space-6) var(--space-6) var(--space-8);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg);
