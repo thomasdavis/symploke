@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { engineFetch } from '@/lib/engine'
+import { engineJson } from '@/lib/engine'
 
 export async function GET(
   _req: NextRequest,
@@ -8,16 +8,15 @@ export async function GET(
   const { username } = await params
 
   try {
-    const res = await engineFetch(`/mates/profile/${username.toLowerCase()}`)
-    const data = await res.json()
+    const { data, status, ok } = await engineJson(`/mates/profile/${username.toLowerCase()}`)
 
-    if (!res.ok) {
-      return NextResponse.json(data, { status: res.status })
+    if (!ok) {
+      return NextResponse.json(data || { error: `Engine returned ${status}` }, { status })
     }
 
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error fetching profile:', error)
-    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 502 })
   }
 }

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { engineFetch } from '@/lib/engine'
+import { engineJson } from '@/lib/engine'
 
 export async function POST(req: NextRequest) {
   const { username } = await req.json()
@@ -15,19 +15,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await engineFetch(`/mates/submit/${cleaned}`, { method: 'POST' })
-    const data = await res.json()
+    const { data, status, ok } = await engineJson(`/mates/submit/${cleaned}`, { method: 'POST' })
 
-    if (!res.ok) {
-      return NextResponse.json(data, { status: res.status })
+    if (!ok) {
+      return NextResponse.json(data || { error: `Engine returned ${status}` }, { status })
     }
 
-    return NextResponse.json({ ...data, username: cleaned })
+    return NextResponse.json({ ...(data as Record<string, unknown>), username: cleaned })
   } catch (error) {
     console.error('Error submitting profile:', error)
     return NextResponse.json(
-      { error: 'Failed to submit profile. Please try again.' },
-      { status: 500 },
+      { error: 'Failed to submit profile. The engine may not be available.' },
+      { status: 502 },
     )
   }
 }
