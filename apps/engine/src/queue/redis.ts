@@ -372,11 +372,28 @@ export async function addMatesCrawlJob(
   username: string,
 ): Promise<Job<MatesJobData>> {
   const queue = getMatesCrawlQueue()
+
+  // Remove any existing completed/failed job with stable ID to avoid dedup
+  const stableId = `mates-crawl-${profileId}`
+  const existing = await queue.getJob(stableId)
+  if (existing) {
+    const state = await existing.getState()
+    if (state === 'completed' || state === 'failed') {
+      await existing.remove()
+    } else if (state === 'waiting' || state === 'active' || state === 'delayed') {
+      logger.info(
+        { profileId, username, jobId: stableId, state },
+        'Mates crawl job already in queue',
+      )
+      return existing
+    }
+  }
+
   const job = await queue.add(
     'mates-crawl',
     { profileId, username },
     {
-      jobId: `mates-crawl-${profileId}`,
+      jobId: stableId,
     },
   )
   logger.info({ profileId, username, jobId: job.id }, 'Added mates crawl job')
