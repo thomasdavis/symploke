@@ -19,5 +19,10 @@
     "lefthook": "latest",
     "turbo": "latest"
   },
-  "packageManager": "pnpm@9.14.2"
+  "packageManager": "pnpm@9.14.2",
+  "pnpm": {
+    "overrides": {
+      "next@>=14.0.0 <16.0.10": "16.1.6"
+    }
+  }
 }

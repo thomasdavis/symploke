@@ -25,7 +25,7 @@ const runningWeaveJobs = new Map<string, { startedAt: Date; runId: string }>()
 // Track running daily sync jobs (only used in non-Redis mode)
 const runningSyncJobs = new Map<string, { startedAt: Date; reposQueued: number }>()
 
-console.log('Starting engine, PORT:', PORT)
+console.log('Starting engine v2, PORT:', PORT)
 
 const healthServer = http.createServer(async (req, res) => {
   console.log('Request:', req.method, req.url)
