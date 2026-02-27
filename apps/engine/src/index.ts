@@ -1052,10 +1052,15 @@ const healthServer = http.createServer(async (req, res) => {
       const recentLookups = await db.matesProfile.findMany({
         where: { status: 'READY' },
         orderBy: { updatedAt: 'desc' },
-        take: 10,
+        take: 20,
         select: {
           username: true,
           avatarUrl: true,
+          bio: true,
+          company: true,
+          location: true,
+          profileText: true,
+          facets: true,
           _count: { select: { matchesAsSource: true } },
         },
       })
@@ -1069,6 +1074,11 @@ const healthServer = http.createServer(async (req, res) => {
           recentLookups: recentLookups.map((l) => ({
             username: l.username,
             avatarUrl: l.avatarUrl,
+            bio: l.bio,
+            company: l.company,
+            location: l.location,
+            profileText: l.profileText,
+            facets: l.facets,
             matchCount: l._count.matchesAsSource,
           })),
         }),
