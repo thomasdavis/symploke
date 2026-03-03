@@ -10,9 +10,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@react-three/drei": "^9.120.3",
-    "@react-three/fiber": "^8.17.14",
-    "@react-three/rapier": "^1.5.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/rapier": "^2.2.0",
     "@symploke/design": "workspace:*",
     "@symploke/ui": "workspace:*",
     "@vercel/analytics": "^1.6.1",
