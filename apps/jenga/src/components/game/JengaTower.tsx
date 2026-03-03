@@ -60,7 +60,6 @@ export function JengaTower() {
             key={block.id}
             block={block}
             isKinematic={phase === 'BUILDING' && !buildComplete}
-            animationDelay={phase === 'BUILDING' ? i * 0.05 : 0}
           />
         ))}
       {phase === 'BUILDING' && (

@@ -14,12 +14,11 @@ import { BlockLabel } from './BlockLabel'
 interface JengaBlockProps {
   block: BlockData
   isKinematic: boolean
-  animationDelay: number
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
 
-export function JengaBlock({ block, isKinematic, animationDelay }: JengaBlockProps) {
+export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null)
   const meshRef = useRef<THREE.Mesh>(null)
   const [_isHovered, setIsHovered] = useState(false)
