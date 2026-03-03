@@ -1,0 +1,709 @@
+@import "@symploke/design/index.css";
+
+/* ── Global resets ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-sora), system-ui, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Header ── */
+.jenga-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: oklch(from var(--color-background) l c h / 0.85);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-6);
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.jenga-header-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.jenga-header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--color-foreground);
+}
+
+.jenga-header-title {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.jenga-header-badge {
+  font-size: 0.7rem;
+  font-family: var(--font-azeret-mono), monospace;
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+.jenga-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Theme toggle ── */
+.jenga-theme-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+
+.jenga-theme-toggle:hover {
+  color: var(--color-foreground);
+  background: var(--color-surface);
+}
+
+.jenga-theme-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Landing hero ── */
+.jenga-hero {
+  text-align: center;
+  padding: var(--space-16) var(--space-6) var(--space-12);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.jenga-hero h1 {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: var(--space-4);
+}
+
+.jenga-hero h1 em {
+  font-style: normal;
+  color: var(--color-primary);
+}
+
+.jenga-hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--color-muted);
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto var(--space-8);
+}
+
+.jenga-hero-xkcd {
+  font-family: var(--font-azeret-mono), monospace;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  opacity: 0.6;
+  margin-bottom: var(--space-8);
+}
+
+/* ── Repo input ── */
+.jenga-input-wrapper {
+  display: flex;
+  gap: var(--space-3);
+  max-width: 560px;
+  margin: 0 auto var(--space-6);
+}
+
+.jenga-input {
+  flex: 1;
+  font-family: var(--font-azeret-mono), monospace;
+  font-size: 0.95rem;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.jenga-input::placeholder {
+  color: var(--color-muted);
+  opacity: 0.5;
+}
+
+.jenga-input:focus {
+  border-color: var(--color-primary);
+}
+
+.jenga-input-error {
+  border-color: var(--color-danger, oklch(65% 0.25 25));
+}
+
+.jenga-build-btn {
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+}
+
+.jenga-build-btn:hover {
+  opacity: 0.9;
+}
+
+.jenga-build-btn:active {
+  transform: scale(0.97);
+}
+
+.jenga-build-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jenga-input-error-text {
+  font-size: 0.8rem;
+  color: var(--color-danger, oklch(65% 0.25 25));
+  margin-top: var(--space-1);
+  text-align: left;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── How it works ── */
+.jenga-how-it-works {
+  max-width: 800px;
+  margin: 0 auto var(--space-12);
+  padding: 0 var(--space-6);
+}
+
+.jenga-how-it-works h2 {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: var(--space-8);
+  letter-spacing: -0.02em;
+}
+
+.jenga-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .jenga-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.jenga-step {
+  text-align: center;
+}
+
+.jenga-step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+}
+
+.jenga-step-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-1);
+}
+
+.jenga-step-desc {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ── Featured repos ── */
+.jenga-featured {
+  max-width: 800px;
+  margin: 0 auto var(--space-16);
+  padding: 0 var(--space-6);
+}
+
+.jenga-featured h2 {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-align: center;
+  margin-bottom: var(--space-6);
+  color: var(--color-muted);
+}
+
+.jenga-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .jenga-featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.jenga-featured-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-decoration: none;
+  color: var(--color-foreground);
+  transition:
+    border-color 0.2s,
+    transform 0.1s;
+  cursor: pointer;
+}
+
+.jenga-featured-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.jenga-featured-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.jenga-featured-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.jenga-featured-desc {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+/* ── Footer ── */
+.jenga-footer {
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.jenga-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* ── Game page ── */
+.jenga-game-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.jenga-canvas-wrapper {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── HUD overlay ── */
+.jenga-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.jenga-hud > * {
+  pointer-events: auto;
+}
+
+.jenga-hud-top-left {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+}
+
+.jenga-hud-top-right {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.jenga-hud-bottom {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 400px;
+  width: 100%;
+}
+
+/* ── Score display ── */
+.jenga-score {
+  background: oklch(from var(--color-background) l c h / 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+}
+
+.jenga-score-label {
+  font-size: 0.7rem;
+  font-family: var(--font-azeret-mono), monospace;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.jenga-score-value {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.jenga-score-streak {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── Block info tooltip ── */
+.jenga-block-info {
+  background: oklch(from var(--color-background) l c h / 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+}
+
+.jenga-block-info-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-1);
+}
+
+.jenga-block-info-version {
+  font-family: var(--font-azeret-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.jenga-block-info-stats {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.jenga-block-info-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ── Risk meter ── */
+.jenga-risk-meter {
+  margin-top: var(--space-3);
+}
+
+.jenga-risk-meter-label {
+  font-size: 0.7rem;
+  font-family: var(--font-azeret-mono), monospace;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
+}
+
+.jenga-risk-meter-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.jenga-risk-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition:
+    width 0.4s ease,
+    background 0.4s ease;
+}
+
+/* ── Consequence panel ── */
+.jenga-consequence {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-16);
+  width: 280px;
+  background: oklch(from var(--color-background) l c h / 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.jenga-consequence h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+  color: var(--color-danger, oklch(65% 0.25 25));
+}
+
+.jenga-consequence-list {
+  list-style: none;
+  padding: 0;
+}
+
+.jenga-consequence-list li {
+  font-size: 0.8rem;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid oklch(from var(--color-border) l c h / 0.5);
+  color: var(--color-muted);
+}
+
+.jenga-consequence-list li:last-child {
+  border-bottom: none;
+}
+
+/* ── Game over overlay ── */
+.jenga-game-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(from var(--color-background) l c h / 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 20;
+}
+
+.jenga-game-over-card {
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-8) var(--space-10, 40px);
+  max-width: 400px;
+  width: 90%;
+}
+
+.jenga-game-over h2 {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+.jenga-game-over-score {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 3rem;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.jenga-game-over-blocks {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin-bottom: var(--space-6);
+}
+
+.jenga-game-over-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.jenga-replay-btn {
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.jenga-replay-btn:hover {
+  opacity: 0.9;
+}
+
+.jenga-share-btn {
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  color: var(--color-foreground);
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.jenga-share-btn:hover {
+  border-color: var(--color-primary);
+}
+
+/* ── Loading skeleton ── */
+.jenga-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 56px);
+  gap: var(--space-4);
+}
+
+.jenga-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: jenga-spin 0.8s linear infinite;
+}
+
+@keyframes jenga-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.jenga-loading-text {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.jenga-loading-status {
+  font-family: var(--font-azeret-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  opacity: 0.6;
+}
+
+/* ── HUD buttons ── */
+.jenga-hud-btn {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  background: oklch(from var(--color-background) l c h / 0.9);
+  backdrop-filter: blur(8px);
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.jenga-hud-btn:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-primary);
+}
+
+.jenga-hud-btn.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ── Tower illustration ── */
+.jenga-illustration {
+  max-width: 280px;
+  margin: 0 auto var(--space-6);
+}
+
+.jenga-illustration svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ── Build phase ── */
+.jenga-build-overlay {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  background: oklch(from var(--color-background) l c h / 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-6);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-family: var(--font-azeret-mono), monospace;
+  z-index: 10;
+}
