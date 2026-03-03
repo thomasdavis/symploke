@@ -32,7 +32,7 @@ export function JengaTower() {
         buildTimerRef.current = setTimeout(() => {
           setBuildComplete(true)
           setPhase('PLAYING')
-        }, 2000)
+        }, 1500)
         return
       }
 

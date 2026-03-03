@@ -159,14 +159,14 @@ export function JengaBlock({ block, isKinematic, animationDelay }: JengaBlockPro
   return (
     <RigidBody
       ref={rigidBodyRef}
-      type={isKinematic ? 'kinematicPosition' : 'dynamic'}
-      position={[x, y + (isKinematic ? 8 - animationDelay * 2 : 0), z]}
+      type={isKinematic ? 'fixed' : 'dynamic'}
+      position={[x, y, z]}
       rotation={[0, rotationY, 0]}
       friction={0.6}
       restitution={0.05}
       mass={1}
-      linearDamping={0.3}
-      angularDamping={0.5}
+      linearDamping={0.5}
+      angularDamping={0.8}
       ccd
     >
       <mesh

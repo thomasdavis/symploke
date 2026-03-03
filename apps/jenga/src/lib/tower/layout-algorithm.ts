@@ -45,7 +45,8 @@ export function buildTowerLayout(graph: DependencyGraph): TowerLayout {
 
   for (let level = 0; level < totalLevels; level++) {
     const isRotated = level % 2 === 1
-    const y = level * (BLOCK_HEIGHT + GAP)
+    // Place block center so its bottom sits on the floor (y=0) or on top of previous level
+    const y = BLOCK_HEIGHT / 2 + level * (BLOCK_HEIGHT + GAP)
 
     for (let i = 0; i < BLOCKS_PER_LEVEL; i++) {
       const nodeIndex = level * BLOCKS_PER_LEVEL + i
@@ -110,7 +111,7 @@ export function buildTowerLayout(graph: DependencyGraph): TowerLayout {
   return {
     blocks,
     levels: totalLevels,
-    totalHeight: totalLevels * (BLOCK_HEIGHT + GAP),
+    totalHeight: BLOCK_HEIGHT / 2 + totalLevels * (BLOCK_HEIGHT + GAP),
     xkcdBlockId: xkcdNode ? `block-${xkcdNode.name}` : null,
   }
 }

@@ -2,24 +2,38 @@
 
 import { useFrame } from '@react-three/fiber'
 import { useRapier } from '@react-three/rapier'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useGameStore } from '@/hooks/useGameState'
 import { playSound } from '@/lib/audio/sounds'
 
 const FALL_THRESHOLD_Y = -2
-const VELOCITY_THRESHOLD = 3
-const MIN_MOVING_BLOCKS = 3
-const CHECK_INTERVAL = 10 // frames
+const VELOCITY_THRESHOLD = 5
+const MIN_MOVING_BLOCKS = 4
+const CHECK_INTERVAL = 15 // frames
+const GRACE_PERIOD_MS = 4000 // wait 4s after PLAYING before checking
 
 export function CollapseDetector() {
   const phase = useGameStore((s) => s.phase)
   const setPhase = useGameStore((s) => s.setPhase)
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const frameCount = useRef(0)
+  const playStartTime = useRef<number | null>(null)
   const { world } = useRapier()
+
+  // Track when PLAYING phase begins
+  useEffect(() => {
+    if (phase === 'PLAYING') {
+      playStartTime.current = Date.now()
+    } else {
+      playStartTime.current = null
+    }
+  }, [phase])
 
   useFrame(() => {
     if (phase !== 'PLAYING') return
+
+    // Grace period: don't check until physics has settled
+    if (!playStartTime.current || Date.now() - playStartTime.current < GRACE_PERIOD_MS) return
 
     frameCount.current++
     if (frameCount.current % CHECK_INTERVAL !== 0) return
@@ -43,7 +57,7 @@ export function CollapseDetector() {
       }
     })
 
-    if (fallenCount >= 1 || fastMovingCount >= MIN_MOVING_BLOCKS) {
+    if (fallenCount >= 2 || fastMovingCount >= MIN_MOVING_BLOCKS) {
       setPhase('COLLAPSED')
       if (soundEnabled) {
         playSound('crash')
