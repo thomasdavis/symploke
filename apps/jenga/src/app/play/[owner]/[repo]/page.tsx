@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GameOverOverlay } from '@/components/hud/GameOverOverlay'
 import { HUD } from '@/components/hud/HUD'
 import { Header } from '@/components/shared/Header'
@@ -28,9 +28,11 @@ export default function PlayPage() {
 
   const [error, setError] = useState<string | null>(null)
   const [loadingStatus, setLoadingStatus] = useState('Fetching package.json...')
+  const hasStarted = useRef(false)
 
   useEffect(() => {
-    if (phase !== 'IDLE') return
+    if (hasStarted.current) return
+    hasStarted.current = true
 
     let cancelled = false
 
@@ -64,7 +66,6 @@ export default function PlayPage() {
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Something went wrong')
-        setPhase('IDLE')
       }
     }
 
@@ -72,7 +73,7 @@ export default function PlayPage() {
     return () => {
       cancelled = true
     }
-  }, [owner, repo, phase, setPhase, setGraph, setTower])
+  }, [owner, repo, setPhase, setGraph, setTower])
 
   if (error) {
     return (
