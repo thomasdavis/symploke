@@ -20,6 +20,10 @@ interface GameState {
   removedBlockIds: Set<string>
   removeBlock: (id: string) => void
 
+  // Jenga rules
+  highestCompletedLevel: number
+  isBlockEligible: (blockId: string) => boolean
+
   // Score
   score: Score
   addPoints: (points: number) => void
@@ -51,7 +55,35 @@ const initialScore: Score = {
   achievements: [],
 }
 
-export const useGameStore = create<GameState>((set, _get) => ({
+/**
+ * Compute the highest level where all blocks are still present.
+ */
+function computeHighestCompletedLevel(
+  tower: TowerLayout | null,
+  removedBlockIds: Set<string>,
+): number {
+  if (!tower) return -1
+
+  // Group blocks by level
+  const levelCounts = new Map<number, { total: number; remaining: number }>()
+  for (const block of tower.blocks) {
+    const entry = levelCounts.get(block.level) ?? { total: 0, remaining: 0 }
+    entry.total++
+    if (!removedBlockIds.has(block.id)) entry.remaining++
+    levelCounts.set(block.level, entry)
+  }
+
+  // Find highest level where all blocks remain
+  let highest = -1
+  for (const [level, counts] of levelCounts) {
+    if (counts.remaining === counts.total && level > highest) {
+      highest = level
+    }
+  }
+  return highest
+}
+
+export const useGameStore = create<GameState>((set, get) => ({
   phase: 'IDLE',
   setPhase: (phase) => set({ phase }),
 
@@ -59,14 +91,33 @@ export const useGameStore = create<GameState>((set, _get) => ({
   setGraph: (graph) => set({ graph }),
 
   tower: null,
-  setTower: (tower) => set({ tower }),
+  setTower: (tower) =>
+    set((state) => ({
+      tower,
+      highestCompletedLevel: computeHighestCompletedLevel(tower, state.removedBlockIds),
+    })),
   removedBlockIds: new Set(),
   removeBlock: (id) =>
     set((state) => {
       const next = new Set(state.removedBlockIds)
       next.add(id)
-      return { removedBlockIds: next }
+      return {
+        removedBlockIds: next,
+        highestCompletedLevel: computeHighestCompletedLevel(state.tower, next),
+      }
     }),
+
+  // Jenga rules
+  highestCompletedLevel: -1,
+  isBlockEligible: (blockId: string) => {
+    const state = get()
+    if (!state.tower) return false
+    const block = state.tower.blocks.find((b) => b.id === blockId)
+    if (!block) return false
+    if (block.isGrouped) return false
+    // Block must be below the highest completed level
+    return block.level < state.highestCompletedLevel
+  },
 
   score: { ...initialScore },
   addPoints: (points) =>
@@ -114,6 +165,7 @@ export const useGameStore = create<GameState>((set, _get) => ({
       graph: null,
       tower: null,
       removedBlockIds: new Set(),
+      highestCompletedLevel: -1,
       score: { ...initialScore },
       hoveredBlockId: null,
       grabbedBlockId: null,

@@ -2,12 +2,13 @@
 
 import { type ThreeEvent, useFrame } from '@react-three/fiber'
 import { type RapierRigidBody, RigidBody } from '@react-three/rapier'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useBlockInteraction } from '@/hooks/useBlockInteraction'
 import { useGameStore } from '@/hooks/useGameState'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { calculatePullScore } from '@/lib/game/scoring'
+import { getBlockRoughness } from '@/lib/tower/color-map'
 import type { BlockData } from '@/types/tower'
 import { BlockLabel } from './BlockLabel'
 
@@ -17,13 +18,21 @@ interface JengaBlockProps {
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
+const SPRING_K = 12 // spring stiffness for drag
+const DAMPING_K = 6 // velocity damping for drag
+
+// Reusable objects to avoid per-frame allocation
+const _raycaster = new THREE.Raycaster()
+const _plane = new THREE.Plane()
+const _intersection = new THREE.Vector3()
+const _upVector = new THREE.Vector3(0, 1, 0)
 
 export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null)
   const meshRef = useRef<THREE.Mesh>(null)
-  const [_isHovered, setIsHovered] = useState(false)
   const [pullProgress, setPullProgress] = useState(0)
   const dragStartPos = useRef<THREE.Vector3 | null>(null)
+  const prevIntersection = useRef<THREE.Vector3 | null>(null)
 
   const phase = useGameStore((s) => s.phase)
   const hoveredBlockId = useGameStore((s) => s.hoveredBlockId)
@@ -31,20 +40,21 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const addPoints = useGameStore((s) => s.addPoints)
   const incrementStreak = useGameStore((s) => s.incrementStreak)
   const removeBlock = useGameStore((s) => s.removeBlock)
-  const _graph = useGameStore((s) => s.graph)
-  const _tower = useGameStore((s) => s.tower)
+  const isBlockEligible = useGameStore((s) => s.isBlockEligible)
 
   const { onBlockHover, onBlockGrab, onBlockRelease } = useBlockInteraction()
   const { play } = useSoundEffects()
 
   const isThisHovered = hoveredBlockId === block.id
   const isThisGrabbed = grabbedBlockId === block.id
+  const eligible = isBlockEligible(block.id)
+
+  const roughness = useMemo(() => getBlockRoughness(block.dependency.name), [block.dependency.name])
 
   const handlePointerOver = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (phase !== 'PLAYING' || grabbedBlockId) return
       e.stopPropagation()
-      setIsHovered(true)
       onBlockHover(block.id)
     },
     [phase, grabbedBlockId, onBlockHover, block.id],
@@ -52,18 +62,19 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
   const handlePointerOut = useCallback(() => {
     if (grabbedBlockId === block.id) return
-    setIsHovered(false)
     onBlockHover(null)
   }, [grabbedBlockId, block.id, onBlockHover])
 
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (phase !== 'PLAYING' || block.isGrouped) return
+      if (!eligible) return // Jenga rule: can't grab top completed level
       e.stopPropagation()
       onBlockGrab(block.id)
       dragStartPos.current = e.point.clone()
+      prevIntersection.current = e.point.clone()
     },
-    [phase, block.id, block.isGrouped, onBlockGrab],
+    [phase, block.id, block.isGrouped, eligible, onBlockGrab],
   )
 
   const handlePointerUp = useCallback(() => {
@@ -72,14 +83,13 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     const elapsed = onBlockRelease()
 
     if (pullProgress >= PULL_THRESHOLD) {
-      // Successfully pulled!
       play('pull')
       removeBlock(block.id)
 
       const points = calculatePullScore(
         {
           dependentCount: block.dependency.dependentCount,
-          towerDisplacement: 10, // simplified
+          towerDisplacement: 10,
           timeTaken: elapsed,
           isXkcdBlock: block.isXkcdBlock,
           categoryStreak: 0,
@@ -90,12 +100,12 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
       addPoints(points)
       incrementStreak()
     } else {
-      // Spring back
       play('wobble')
     }
 
     setPullProgress(0)
     dragStartPos.current = null
+    prevIntersection.current = null
   }, [
     isThisGrabbed,
     pullProgress,
@@ -109,51 +119,71 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     incrementStreak,
   ])
 
-  // Apply forces during drag
+  // Spring-force drag following mouse direction
   useFrame((state) => {
     if (!isThisGrabbed || !rigidBodyRef.current || !dragStartPos.current) return
 
-    const pointer = state.pointer
-    const camera = state.camera
-
-    // Project pointer to world space at the block's depth
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(pointer, camera)
+    _raycaster.setFromCamera(state.pointer, state.camera)
 
     const bodyPos = rigidBodyRef.current.translation()
     const blockWorldPos = new THREE.Vector3(bodyPos.x, bodyPos.y, bodyPos.z)
 
-    // Calculate pull direction (perpendicular to the block's face)
-    const isRotated = block.position.rotationY !== 0
-    const pullAxis = isRotated ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1)
+    // Intersect pointer with horizontal plane at block's Y
+    _plane.setFromNormalAndCoplanarPoint(_upVector, blockWorldPos)
+    const hit = _raycaster.ray.intersectPlane(_plane, _intersection)
 
-    // Calculate displacement along pull axis from start
-    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-      new THREE.Vector3(0, 1, 0),
-      blockWorldPos,
-    )
-    const intersection = new THREE.Vector3()
-    raycaster.ray.intersectPlane(plane, intersection)
+    if (hit) {
+      // Target = where the mouse is on the plane
+      const target = _intersection.clone()
 
-    if (intersection) {
-      const delta = intersection.sub(dragStartPos.current)
-      const pullDistance = delta.dot(pullAxis)
+      // Constrain Y: block stays at its current height
+      target.y = bodyPos.y
+
+      // Spring-damper force: F = (target - pos) * springK - velocity * dampingK
+      const vel = rigidBodyRef.current.linvel()
+      const toTarget = new THREE.Vector3(target.x - bodyPos.x, 0, target.z - bodyPos.z)
+
+      const force = new THREE.Vector3(
+        toTarget.x * SPRING_K - vel.x * DAMPING_K,
+        0,
+        toTarget.z * SPRING_K - vel.z * DAMPING_K,
+      )
+
+      // Track drag speed for tower disturbance — faster drags = more force
+      if (prevIntersection.current) {
+        const dragDelta = _intersection.clone().sub(prevIntersection.current)
+        const dragSpeed = dragDelta.length()
+        // Scale force with drag speed (fast pulls disturb tower more)
+        const speedMultiplier = 1 + Math.min(dragSpeed * 3, 2)
+        force.multiplyScalar(speedMultiplier)
+      }
+
+      rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
+
+      // Counteract gravity during drag so block doesn't float or sink
+      rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
+
+      // Calculate pull progress based on total displacement from start
+      const totalDisplacement = new THREE.Vector3(
+        bodyPos.x - dragStartPos.current.x,
+        0,
+        bodyPos.z - dragStartPos.current.z,
+      ).length()
       const maxPull = block.dimensions.depth * 1.2
-      const progress = Math.min(Math.abs(pullDistance) / maxPull, 1)
-      setPullProgress(progress)
+      setPullProgress(Math.min(totalDisplacement / maxPull, 1))
 
-      // Apply force to slide the block
-      const force = pullAxis.clone().multiplyScalar(Math.sign(pullDistance) * progress * 3)
-      rigidBodyRef.current.applyImpulse({ x: force.x, y: 0, z: force.z }, true)
+      prevIntersection.current = _intersection.clone()
     }
   })
 
   const { width, height, depth } = block.dimensions
   const { x, y, z, rotationY } = block.position
 
-  // Block color with hover/grab highlighting
+  // Visual feedback for eligibility
   const baseColor = new THREE.Color(block.color)
-  const emissiveIntensity = isThisGrabbed ? 0.4 : isThisHovered ? 0.2 : 0
+  const materialOpacity = eligible || phase !== 'PLAYING' ? 1.0 : 0.85
+  const emissiveIntensity = isThisGrabbed ? 0.3 : isThisHovered && eligible ? 0.15 : 0
+  const edgeOpacity = isThisHovered ? 0.4 : 0.08
 
   return (
     <RigidBody
@@ -161,11 +191,11 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
       type={isKinematic ? 'fixed' : 'dynamic'}
       position={[x, y, z]}
       rotation={[0, rotationY, 0]}
-      friction={0.6}
-      restitution={0.05}
+      friction={0.75}
+      restitution={0.02}
       mass={1}
-      linearDamping={0.5}
-      angularDamping={0.8}
+      linearDamping={0.3}
+      angularDamping={0.5}
       ccd
     >
       <mesh
@@ -181,28 +211,30 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
         <boxGeometry args={[width, height, depth]} />
         <meshStandardMaterial
           color={baseColor}
-          roughness={0.7}
-          metalness={0.1}
+          roughness={roughness}
+          metalness={0}
           emissive={baseColor}
           emissiveIntensity={emissiveIntensity}
+          transparent={materialOpacity < 1}
+          opacity={materialOpacity}
         />
       </mesh>
 
-      {/* Edge lines for block definition */}
+      {/* Subtle edge lines */}
       <lineSegments>
         <edgesGeometry args={[new THREE.BoxGeometry(width, height, depth)]} />
         <lineBasicMaterial
           color={isThisHovered ? '#ffffff' : '#000000'}
           transparent
-          opacity={isThisHovered ? 0.6 : 0.15}
+          opacity={edgeOpacity}
         />
       </lineSegments>
 
-      {/* XKCD marker */}
+      {/* XKCD marker — small red diamond on top */}
       {block.isXkcdBlock && (
-        <mesh position={[0, height / 2 + 0.02, 0]}>
-          <planeGeometry args={[0.15, 0.15]} />
-          <meshBasicMaterial color="#ff4444" side={THREE.DoubleSide} />
+        <mesh position={[0, height / 2 + 0.02, 0]} rotation={[0, 0, Math.PI / 4]}>
+          <planeGeometry args={[0.1, 0.1]} />
+          <meshBasicMaterial color="#e05555" side={THREE.DoubleSide} />
         </mesh>
       )}
 

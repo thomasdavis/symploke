@@ -1,20 +1,25 @@
 import type { DependencyGraph, DependencyNode } from '@/types/dependency'
 import type { BlockData, TowerLayout } from '@/types/tower'
-import { BLOCK_HEIGHT, calculateBlockDimensions, ROW_WIDTH } from './block-sizing'
-import { categoryToHex } from './color-map'
+import {
+  BLOCK_HEIGHT,
+  ROW_WIDTH,
+  VISUAL_GAP,
+  computeRowWidths,
+  makeBlockDimensions,
+} from './block-sizing'
+import { getBlockColor } from './color-map'
 
 const MAX_BLOCKS = 54 // 18 levels x 3 per level
 const BLOCKS_PER_LEVEL = 3
-const GAP = 0.05
 
 /**
  * Convert a dependency graph into a Jenga tower layout.
  * Most critical deps at the bottom. Levels alternate 90deg.
+ * Block widths vary by importance — each row packs to fill ROW_WIDTH exactly.
  * Identifies the XKCD block (high dependentCount / popularity ratio).
  */
 export function buildTowerLayout(graph: DependencyGraph): TowerLayout {
   let nodes = [...graph.nodes]
-  const maxDependentCount = Math.max(...nodes.map((n) => n.dependentCount), 1)
 
   // Find the XKCD block: highest criticality-to-popularity ratio
   // (the tiny package that holds everything up)
@@ -37,98 +42,85 @@ export function buildTowerLayout(graph: DependencyGraph): TowerLayout {
     nodes = nodes.slice(0, MAX_BLOCKS - 1)
   }
 
-  const blocks: BlockData[] = []
-  let _blockIndex = 0
+  // Build list of all items to place (nodes + optional grouped block)
+  const allItems: Array<{ node: DependencyNode; isGrouped: boolean; groupedNames?: string[] }> =
+    nodes.map((n) => ({ node: n, isGrouped: false }))
+  if (grouped.length > 0) {
+    allItems.push({
+      node: {
+        name: `${grouped.length} more...`,
+        version: '',
+        depth: 999,
+        category: 'other',
+        dependentCount: 0,
+        transitiveSize: 0,
+        criticality: 0,
+        weeklyDownloads: 0,
+        lastPublished: null,
+        description: `${grouped.length} additional dependencies`,
+        maintainers: 0,
+        isDirectDep: false,
+        depType: 'prod',
+      },
+      isGrouped: true,
+      groupedNames: grouped.map((n) => n.name),
+    })
+  }
 
-  // Place blocks level by level, most critical at bottom
-  const totalLevels = Math.ceil((nodes.length + (grouped.length > 0 ? 1 : 0)) / BLOCKS_PER_LEVEL)
+  const totalLevels = Math.ceil(allItems.length / BLOCKS_PER_LEVEL)
+  const blocks: BlockData[] = []
 
   for (let level = 0; level < totalLevels; level++) {
     const isRotated = level % 2 === 1
-    // Place block center so its bottom sits on the floor (y=0) or on top of previous level
-    const y = BLOCK_HEIGHT / 2 + level * (BLOCK_HEIGHT + GAP)
+    const y = BLOCK_HEIGHT / 2 + level * (BLOCK_HEIGHT + VISUAL_GAP)
 
+    // Gather this level's items
+    const levelItems: typeof allItems = []
     for (let i = 0; i < BLOCKS_PER_LEVEL; i++) {
-      const nodeIndex = level * BLOCKS_PER_LEVEL + i
+      const idx = level * BLOCKS_PER_LEVEL + i
+      const item = allItems[idx]
+      if (item) levelItems.push(item)
+    }
 
-      // Check if this is the grouped "N more" block
-      if (grouped.length > 0 && nodeIndex === nodes.length) {
-        const dim = calculateBlockDimensions(0, maxDependentCount, false)
-        const pos = getBlockPosition(i, BLOCKS_PER_LEVEL, dim.width, y, isRotated)
+    // Compute proportional widths for this row
+    const weights = levelItems.map((item) => Math.max(item.node.dependentCount, 0.5))
+    const xkcdFlags = levelItems.map((item) => !!(xkcdNode && item.node.name === xkcdNode.name))
+    const widths = computeRowWidths(weights, xkcdFlags)
 
-        blocks.push({
-          id: `grouped-${level}-${i}`,
-          dependency: {
-            name: `${grouped.length} more...`,
-            version: '',
-            depth: 999,
-            category: 'other',
-            dependentCount: 0,
-            transitiveSize: 0,
-            criticality: 0,
-            weeklyDownloads: 0,
-            lastPublished: null,
-            description: `${grouped.length} additional dependencies`,
-            maintainers: 0,
-            isDirectDep: false,
-            depType: 'prod',
-          },
-          position: { x: pos.x, y: pos.y, z: pos.z, rotationY: isRotated ? Math.PI / 2 : 0 },
-          dimensions: dim,
-          level,
-          indexInLevel: i,
-          color: '#8899aa',
-          isXkcdBlock: false,
-          isGrouped: true,
-          groupedNames: grouped.map((n) => n.name),
-        })
-        continue
-      }
+    // Position blocks side-by-side, centered on the row
+    let cursor = -ROW_WIDTH / 2
+    for (let i = 0; i < levelItems.length; i++) {
+      const item = levelItems[i]!
+      const node = item.node
+      const w = widths[i]!
+      const dim = makeBlockDimensions(w)
+      const isXkcd = xkcdFlags[i] ?? false
 
-      const node = nodes[nodeIndex]
-      if (!node) break
-
-      const isXkcd = xkcdNode !== null && node.name === xkcdNode.name
-      const dim = calculateBlockDimensions(node.dependentCount, maxDependentCount, isXkcd)
-      const pos = getBlockPosition(i, BLOCKS_PER_LEVEL, dim.width, y, isRotated)
+      // Block center = cursor + half its width
+      const centerOffset = cursor + w / 2
+      const pos = isRotated ? { x: 0, y, z: centerOffset } : { x: centerOffset, y, z: 0 }
 
       blocks.push({
-        id: `block-${node.name}`,
+        id: item.isGrouped ? `grouped-${level}-${i}` : `block-${node.name}`,
         dependency: node,
         position: { x: pos.x, y: pos.y, z: pos.z, rotationY: isRotated ? Math.PI / 2 : 0 },
         dimensions: dim,
         level,
         indexInLevel: i,
-        color: categoryToHex(node.category),
+        color: getBlockColor(node.category, node.name),
         isXkcdBlock: isXkcd,
-        isGrouped: false,
+        isGrouped: item.isGrouped,
+        groupedNames: item.groupedNames,
       })
 
-      _blockIndex++
+      cursor += w + VISUAL_GAP
     }
   }
 
   return {
     blocks,
     levels: totalLevels,
-    totalHeight: BLOCK_HEIGHT / 2 + totalLevels * (BLOCK_HEIGHT + GAP),
+    totalHeight: BLOCK_HEIGHT / 2 + totalLevels * (BLOCK_HEIGHT + VISUAL_GAP),
     xkcdBlockId: xkcdNode ? `block-${xkcdNode.name}` : null,
   }
-}
-
-function getBlockPosition(
-  index: number,
-  total: number,
-  _blockWidth: number,
-  y: number,
-  isRotated: boolean,
-): { x: number; y: number; z: number } {
-  // Space blocks evenly across the row width
-  const spacing = ROW_WIDTH / total
-  const offset = (index - (total - 1) / 2) * spacing
-
-  if (isRotated) {
-    return { x: 0, y, z: offset }
-  }
-  return { x: offset, y, z: 0 }
 }
