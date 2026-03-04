@@ -18,8 +18,8 @@ interface JengaBlockProps {
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
-const PUSH_FORCE_SCALE = 2.5 // base force (tunable)
-const MAX_SPEED = 0.8 // hard speed limit so blocks never fly
+const PUSH_FORCE_SCALE = 3.5 // base force (tunable)
+const MAX_SPEED = 1.0 // hard speed limit so blocks never fly
 
 export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null)
@@ -199,10 +199,10 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
       type={isKinematic ? 'fixed' : 'dynamic'}
       position={[x, y, z]}
       rotation={[0, rotationY, 0]}
-      friction={0.75}
+      friction={0.35}
       restitution={0.02}
       mass={1}
-      linearDamping={0.4}
+      linearDamping={0.15}
       angularDamping={0.9}
       ccd
     >

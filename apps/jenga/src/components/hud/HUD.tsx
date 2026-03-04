@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { useGameStore } from '@/hooks/useGameState'
 import { BlockInfo } from './BlockInfo'
 import { ConsequencePanel } from './ConsequencePanel'
+import { HelpHint } from './HelpHint'
 import { PowerSlider } from './PowerSlider'
 import { ScoreDisplay } from './ScoreDisplay'
 
@@ -65,6 +66,7 @@ export function HUD() {
       </div>
 
       <ConsequencePanel />
+      {phase === 'PLAYING' && <HelpHint />}
     </div>
   )
 }

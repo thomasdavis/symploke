@@ -781,3 +781,80 @@ body {
   color: var(--color-muted);
   opacity: 0.6;
 }
+
+/* ── Help hint overlay ── */
+.jenga-help-hint {
+  appearance: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(from var(--color-background) l c h / 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 15;
+  cursor: pointer;
+  animation: jenga-help-fade-in 0.3s ease;
+}
+
+@keyframes jenga-help-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.jenga-help-hint-card {
+  background: oklch(from var(--color-background) l c h / 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-6) var(--space-8, 32px);
+  max-width: 380px;
+  width: 90%;
+  pointer-events: none;
+}
+
+.jenga-help-hint-title {
+  font-family: var(--font-sen), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-4);
+}
+
+.jenga-help-hint-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.jenga-help-hint-list li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.jenga-help-hint-key {
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-right: 0.25em;
+}
+
+.jenga-help-hint-dismiss {
+  font-size: 0.7rem;
+  font-family: var(--font-azeret-mono), monospace;
+  color: var(--color-muted);
+  opacity: 0.6;
+  text-align: center;
+}
