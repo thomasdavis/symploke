@@ -148,6 +148,45 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Cousin Projects */}
+      <section className="cousins-section">
+        <div className="cousins-container">
+          <h2 className="cousins-title">Cousin projects</h2>
+          <p className="cousins-subtitle">
+            Tools from the Symploke family that explore how code and developers connect.
+          </p>
+          <div className="cousins-grid">
+            <a
+              href="https://symploke-jenga.vercel.app"
+              className="cousin-card"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="cousin-icon">&#x1F3D7;</div>
+              <h3 className="cousin-name">Jenga</h3>
+              <p className="cousin-description">
+                Your dependency tree as a playable 3D Jenga tower. Paste a GitHub repo and watch its
+                dependencies stack up — then pull blocks to see what breaks. Inspired by XKCD #2347.
+              </p>
+            </a>
+            <a
+              href="https://symploke-mates.vercel.app"
+              className="cousin-card"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="cousin-icon">&#x1F91D;</div>
+              <h3 className="cousin-name">Mates</h3>
+              <p className="cousin-description">
+                Find your coding mates. Mates crawls your GitHub activity, builds a semantic profile
+                of your coding style, and matches you with like-minded developers using AI
+                embeddings.
+              </p>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Etymology */}
       <section className="etymology-section">
         <div className="etymology-content">

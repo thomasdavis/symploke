@@ -172,6 +172,100 @@
   color: var(--color-fg-muted);
 }
 
+/* Cousin Projects */
+
+.cousins-section {
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-subtle) 30%, transparent);
+  padding: 6rem 0;
+}
+
+.cousins-container {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .cousins-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cousins-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.cousins-title {
+  font-family: var(--font-heading);
+  text-align: center;
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--color-fg);
+}
+
+.cousins-subtitle {
+  text-align: center;
+  color: var(--color-fg-muted);
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-12);
+  font-size: var(--text-lg);
+}
+
+.cousins-grid {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .cousins-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cousin-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-8);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out);
+  display: block;
+}
+
+.cousin-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.cousin-icon {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-4);
+}
+
+.cousin-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-fg);
+  margin-bottom: var(--space-3);
+}
+
+.cousin-description {
+  color: var(--color-fg-muted);
+  line-height: 1.6;
+}
+
 .etymology-section {
   border-top: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-bg-subtle) 30%, transparent);
