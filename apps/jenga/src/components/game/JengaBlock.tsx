@@ -74,14 +74,9 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
       e.stopPropagation()
       onBlockGrab(block.id)
       dragStartPos.current = e.point.clone()
-      // Record offset from block center to grab point so holding still = zero force
-      if (rigidBodyRef.current) {
-        const pos = rigidBodyRef.current.translation()
-        grabOffset.current = new THREE.Vector3(e.point.x - pos.x, 0, e.point.z - pos.z)
-      } else {
-        grabOffset.current = new THREE.Vector3(0, 0, 0)
-      }
-      prevIntersection.current = e.point.clone()
+      // grabOffset computed on first useFrame to use the same plane intersection method
+      grabOffset.current = null
+      prevIntersection.current = null
     },
     [phase, block.id, block.isGrouped, eligible, onBlockGrab],
   )
@@ -131,8 +126,7 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
   // Spring-force drag following mouse direction
   useFrame((state) => {
-    if (!isThisGrabbed || !rigidBodyRef.current || !dragStartPos.current || !grabOffset.current)
-      return
+    if (!isThisGrabbed || !rigidBodyRef.current || !dragStartPos.current) return
 
     _raycaster.setFromCamera(state.pointer, state.camera)
 
@@ -142,57 +136,68 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     // Intersect pointer with horizontal plane at block's Y
     _plane.setFromNormalAndCoplanarPoint(_upVector, blockWorldPos)
     const hit = _raycaster.ray.intersectPlane(_plane, _intersection)
+    if (!hit) return
 
-    if (hit) {
-      // Target = mouse intersection minus the initial grab offset
-      // This means holding still produces zero force (target == block center)
-      const targetX = _intersection.x - grabOffset.current.x
-      const targetZ = _intersection.z - grabOffset.current.z
-
-      const vel = rigidBodyRef.current.linvel()
-      const toTargetX = targetX - bodyPos.x
-      const toTargetZ = targetZ - bodyPos.z
-      const distToTarget = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ)
-
-      // Only apply force if mouse has moved meaningfully from grab point
-      if (distToTarget > 0.005) {
-        const force = new THREE.Vector3(
-          toTargetX * SPRING_K - vel.x * DAMPING_K,
-          0,
-          toTargetZ * SPRING_K - vel.z * DAMPING_K,
-        )
-
-        // Cap force magnitude to prevent explosive interactions
-        const forceMag = force.length()
-        if (forceMag > MAX_FORCE) {
-          force.multiplyScalar(MAX_FORCE / forceMag)
-        }
-
-        rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
-      }
-
-      // Only counteract gravity once the block has started sliding out
-      const totalDisplacement = new THREE.Vector3(
-        bodyPos.x - dragStartPos.current.x,
+    // On first frame after grab, record offset using the same plane method
+    // so that holding still produces exactly zero force
+    if (!grabOffset.current) {
+      grabOffset.current = new THREE.Vector3(
+        _intersection.x - bodyPos.x,
         0,
-        bodyPos.z - dragStartPos.current.z,
-      ).length()
-      if (totalDisplacement > 0.05) {
-        rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
-      }
-
-      // Dampen angular velocity to prevent tilting/flipping
-      const angVel = rigidBodyRef.current.angvel()
-      rigidBodyRef.current.setAngvel(
-        { x: angVel.x * 0.8, y: angVel.y * 0.8, z: angVel.z * 0.8 },
-        true,
+        _intersection.z - bodyPos.z,
       )
-
-      const maxPull = block.dimensions.depth * 1.2
-      setPullProgress(Math.min(totalDisplacement / maxPull, 1))
-
       prevIntersection.current = _intersection.clone()
+      return // first frame: just record, don't apply anything
     }
+
+    // Target = mouse plane intersection minus initial grab offset
+    const targetX = _intersection.x - grabOffset.current.x
+    const targetZ = _intersection.z - grabOffset.current.z
+    const toTargetX = targetX - bodyPos.x
+    const toTargetZ = targetZ - bodyPos.z
+    const distToTarget = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ)
+
+    // If mouse hasn't moved meaningfully, don't touch the rigid body at all.
+    // This lets the physics engine keep the block sleeping/stable.
+    if (distToTarget < 0.01) return
+
+    // Spring-damper force toward target
+    const vel = rigidBodyRef.current.linvel()
+    const force = new THREE.Vector3(
+      toTargetX * SPRING_K - vel.x * DAMPING_K,
+      0,
+      toTargetZ * SPRING_K - vel.z * DAMPING_K,
+    )
+
+    // Cap force magnitude
+    const forceMag = force.length()
+    if (forceMag > MAX_FORCE) {
+      force.multiplyScalar(MAX_FORCE / forceMag)
+    }
+
+    rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
+
+    // Only counteract gravity once the block has actually slid out
+    const totalDisplacement = new THREE.Vector3(
+      bodyPos.x - dragStartPos.current.x,
+      0,
+      bodyPos.z - dragStartPos.current.z,
+    ).length()
+    if (totalDisplacement > 0.1) {
+      rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
+    }
+
+    // Dampen angular velocity to keep block flat while dragging
+    const angVel = rigidBodyRef.current.angvel()
+    rigidBodyRef.current.setAngvel(
+      { x: angVel.x * 0.7, y: angVel.y * 0.7, z: angVel.z * 0.7 },
+      true,
+    )
+
+    const maxPull = block.dimensions.depth * 1.2
+    setPullProgress(Math.min(totalDisplacement / maxPull, 1))
+
+    prevIntersection.current = _intersection.clone()
   })
 
   const { width, height, depth } = block.dimensions
