@@ -27,7 +27,7 @@ export default function PlayPage() {
   const setTower = useGameStore((s) => s.setTower)
 
   const [error, setError] = useState<string | null>(null)
-  const [loadingStatus, setLoadingStatus] = useState('Fetching package.json...')
+  const [loadingStatus, setLoadingStatus] = useState('Resolving dependencies...')
   const hasStarted = useRef(false)
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function PlayPage() {
 
     async function load() {
       setPhase('LOADING')
-      setLoadingStatus('Fetching package.json from GitHub...')
+      setLoadingStatus('Resolving dependencies...')
 
       try {
         const res = await fetch('/api/deps', {
