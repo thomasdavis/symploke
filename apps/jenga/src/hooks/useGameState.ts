@@ -42,6 +42,8 @@ interface GameState {
   toggleSound: () => void
   xrayEnabled: boolean
   toggleXray: () => void
+  pushPower: number
+  setPushPower: (power: number) => void
 
   // Reset
   reset: () => void
@@ -158,6 +160,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
   xrayEnabled: false,
   toggleXray: () => set((state) => ({ xrayEnabled: !state.xrayEnabled })),
+  pushPower: 0.35,
+  setPushPower: (power) => set({ pushPower: Math.max(0.1, Math.min(1.0, power)) }),
 
   reset: () =>
     set({

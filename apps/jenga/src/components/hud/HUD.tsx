@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { useGameStore } from '@/hooks/useGameState'
 import { BlockInfo } from './BlockInfo'
 import { ConsequencePanel } from './ConsequencePanel'
+import { PowerSlider } from './PowerSlider'
 import { ScoreDisplay } from './ScoreDisplay'
 
 export function HUD() {
@@ -57,6 +58,10 @@ export function HUD() {
 
       <div className="jenga-hud-bottom">
         <BlockInfo />
+      </div>
+
+      <div className="jenga-hud-bottom-right">
+        <PowerSlider />
       </div>
 
       <ConsequencePanel />

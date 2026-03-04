@@ -2,7 +2,7 @@
 
 import { type ThreeEvent, useFrame } from '@react-three/fiber'
 import { type RapierRigidBody, RigidBody } from '@react-three/rapier'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useBlockInteraction } from '@/hooks/useBlockInteraction'
 import { useGameStore } from '@/hooks/useGameState'
@@ -18,24 +18,15 @@ interface JengaBlockProps {
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
-const SPRING_K = 3 // gentle spring
-const DAMPING_K = 8 // heavy damping — block moves like it's in honey
-const MAX_FORCE = 1.5 // tight force cap
+const PUSH_FORCE_SCALE = 2.5 // base force (tunable)
 const MAX_SPEED = 0.8 // hard speed limit so blocks never fly
-
-// Reusable objects to avoid per-frame allocation
-const _raycaster = new THREE.Raycaster()
-const _plane = new THREE.Plane()
-const _intersection = new THREE.Vector3()
-const _upVector = new THREE.Vector3(0, 1, 0)
 
 export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null)
   const meshRef = useRef<THREE.Mesh>(null)
   const [pullProgress, setPullProgress] = useState(0)
   const dragStartPos = useRef<THREE.Vector3 | null>(null)
-  const grabOffset = useRef<THREE.Vector3 | null>(null) // offset from block center to click point
-  const prevIntersection = useRef<THREE.Vector3 | null>(null)
+  const pushDirection = useRef<THREE.Vector3 | null>(null)
 
   const phase = useGameStore((s) => s.phase)
   const hoveredBlockId = useGameStore((s) => s.hoveredBlockId)
@@ -54,6 +45,19 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
   const roughness = useMemo(() => getBlockRoughness(block.dependency.name), [block.dependency.name])
 
+  // Ctrl+scroll to adjust push power
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      e.preventDefault()
+      const { pushPower, setPushPower } = useGameStore.getState()
+      const delta = e.deltaY > 0 ? -0.05 : 0.05
+      setPushPower(pushPower + delta)
+    }
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [])
+
   const handlePointerOver = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (phase !== 'PLAYING' || grabbedBlockId) return
@@ -71,13 +75,31 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (phase !== 'PLAYING' || block.isGrouped) return
-      if (!eligible) return // Jenga rule: can't grab top completed level
+      if (!eligible) return
+      if (!meshRef.current || !e.face) return
       e.stopPropagation()
+
+      // Get face normal in local space, transform to world space
+      const worldNormal = e.face.normal
+        .clone()
+        .applyMatrix3(new THREE.Matrix3().getNormalMatrix(meshRef.current.matrixWorld))
+        .normalize()
+
+      // Ignore top/bottom face clicks (Y-dominant normals)
+      if (Math.abs(worldNormal.y) > 0.5) return
+
+      // Push direction = negate the normal (push inward from clicked face), horizontal only
+      pushDirection.current = new THREE.Vector3(-worldNormal.x, 0, -worldNormal.z).normalize()
+
       onBlockGrab(block.id)
-      dragStartPos.current = e.point.clone()
-      // grabOffset computed on first useFrame to use the same plane intersection method
-      grabOffset.current = null
-      prevIntersection.current = null
+
+      // Record block position at grab time for displacement tracking
+      if (rigidBodyRef.current) {
+        const pos = rigidBodyRef.current.translation()
+        dragStartPos.current = new THREE.Vector3(pos.x, pos.y, pos.z)
+      } else {
+        dragStartPos.current = e.point.clone()
+      }
     },
     [phase, block.id, block.isGrouped, eligible, onBlockGrab],
   )
@@ -110,8 +132,7 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     setPullProgress(0)
     dragStartPos.current = null
-    grabOffset.current = null
-    prevIntersection.current = null
+    pushDirection.current = null
   }, [
     isThisGrabbed,
     pullProgress,
@@ -125,69 +146,24 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     incrementStreak,
   ])
 
-  // Spring-force drag following mouse direction
-  useFrame((state) => {
-    if (!isThisGrabbed || !rigidBodyRef.current || !dragStartPos.current) return
+  // Constant-direction push force while held
+  useFrame(() => {
+    if (!isThisGrabbed || !rigidBodyRef.current || !dragStartPos.current || !pushDirection.current)
+      return
 
-    _raycaster.setFromCamera(state.pointer, state.camera)
+    const power = useGameStore.getState().pushPower
+    const fx = pushDirection.current.x * power * PUSH_FORCE_SCALE
+    const fz = pushDirection.current.z * power * PUSH_FORCE_SCALE
+    rigidBodyRef.current.addForce({ x: fx, y: 0, z: fz }, true)
 
-    const bodyPos = rigidBodyRef.current.translation()
-    const blockWorldPos = new THREE.Vector3(bodyPos.x, bodyPos.y, bodyPos.z)
-
-    // Intersect pointer with horizontal plane at block's Y
-    _plane.setFromNormalAndCoplanarPoint(_upVector, blockWorldPos)
-    const hit = _raycaster.ray.intersectPlane(_plane, _intersection)
-    if (!hit) return
-
-    // On first frame after grab, record offset using the same plane method
-    // so that holding still produces exactly zero force
-    if (!grabOffset.current) {
-      grabOffset.current = new THREE.Vector3(
-        _intersection.x - bodyPos.x,
-        0,
-        _intersection.z - bodyPos.z,
-      )
-      prevIntersection.current = _intersection.clone()
-      return // first frame: just record, don't apply anything
-    }
-
-    // Target = mouse plane intersection minus initial grab offset
-    const targetX = _intersection.x - grabOffset.current.x
-    const targetZ = _intersection.z - grabOffset.current.z
-    const toTargetX = targetX - bodyPos.x
-    const toTargetZ = targetZ - bodyPos.z
-    const distToTarget = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ)
-
-    // If mouse hasn't moved meaningfully, don't touch the rigid body at all.
-    // This lets the physics engine keep the block sleeping/stable.
-    if (distToTarget < 0.01) return
-
-    // Spring-damper force toward target
+    // Anti-gravity when sinking
     const vel = rigidBodyRef.current.linvel()
-    const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z)
-
-    const force = new THREE.Vector3(
-      toTargetX * SPRING_K - vel.x * DAMPING_K,
-      0,
-      toTargetZ * SPRING_K - vel.z * DAMPING_K,
-    )
-
-    // Cap force magnitude
-    const forceMag = force.length()
-    if (forceMag > MAX_FORCE) {
-      force.multiplyScalar(MAX_FORCE / forceMag)
-    }
-
-    rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
-
-    // Anti-gravity: only when sinking (vel.y < 0), so blocks hover at their
-    // level but never launch upward. Once the block starts rising the upward
-    // force cuts off and gravity pulls it back naturally.
     if (vel.y < -0.05) {
       rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
     }
 
-    // Clamp horizontal speed and cap vertical velocity to a tight range.
+    // Clamp horizontal speed
+    const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z)
     const clampedVx = speed > MAX_SPEED ? (vel.x / speed) * MAX_SPEED : vel.x
     const clampedVz = speed > MAX_SPEED ? (vel.z / speed) * MAX_SPEED : vel.z
     const clampedVy = Math.max(-0.5, Math.min(0.3, vel.y))
@@ -196,6 +172,8 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     // Kill angular velocity so block stays flat
     rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
 
+    // Track displacement for pull progress
+    const bodyPos = rigidBodyRef.current.translation()
     const totalDisplacement = new THREE.Vector3(
       bodyPos.x - dragStartPos.current.x,
       0,
@@ -204,8 +182,6 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     const maxPull = block.dimensions.depth * 1.2
     setPullProgress(Math.min(totalDisplacement / maxPull, 1))
-
-    prevIntersection.current = _intersection.clone()
   })
 
   const { width, height, depth } = block.dimensions
