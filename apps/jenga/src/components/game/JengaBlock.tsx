@@ -18,8 +18,9 @@ interface JengaBlockProps {
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
-const SPRING_K = 12 // spring stiffness for drag
-const DAMPING_K = 6 // velocity damping for drag
+const SPRING_K = 4 // gentle spring — slow, controlled slide
+const DAMPING_K = 5 // high damping relative to spring for smooth motion
+const MAX_FORCE = 3 // cap force magnitude to prevent explosive interactions
 
 // Reusable objects to avoid per-frame allocation
 const _raycaster = new THREE.Raycaster()
@@ -133,15 +134,13 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
     const hit = _raycaster.ray.intersectPlane(_plane, _intersection)
 
     if (hit) {
-      // Target = where the mouse is on the plane
-      const target = _intersection.clone()
-
-      // Constrain Y: block stays at its current height
-      target.y = bodyPos.y
-
       // Spring-damper force: F = (target - pos) * springK - velocity * dampingK
       const vel = rigidBodyRef.current.linvel()
-      const toTarget = new THREE.Vector3(target.x - bodyPos.x, 0, target.z - bodyPos.z)
+      const toTarget = new THREE.Vector3(
+        _intersection.x - bodyPos.x,
+        0,
+        _intersection.z - bodyPos.z,
+      )
 
       const force = new THREE.Vector3(
         toTarget.x * SPRING_K - vel.x * DAMPING_K,
@@ -149,19 +148,23 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
         toTarget.z * SPRING_K - vel.z * DAMPING_K,
       )
 
-      // Track drag speed for tower disturbance — faster drags = more force
-      if (prevIntersection.current) {
-        const dragDelta = _intersection.clone().sub(prevIntersection.current)
-        const dragSpeed = dragDelta.length()
-        // Scale force with drag speed (fast pulls disturb tower more)
-        const speedMultiplier = 1 + Math.min(dragSpeed * 3, 2)
-        force.multiplyScalar(speedMultiplier)
+      // Cap force magnitude to prevent explosive interactions with neighbors
+      const forceMag = force.length()
+      if (forceMag > MAX_FORCE) {
+        force.multiplyScalar(MAX_FORCE / forceMag)
       }
 
       rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
 
-      // Counteract gravity during drag so block doesn't float or sink
+      // Counteract gravity during drag so block doesn't sink
       rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
+
+      // Kill angular velocity to prevent the dragged block from tilting/flipping
+      const angVel = rigidBodyRef.current.angvel()
+      rigidBodyRef.current.setAngvel(
+        { x: angVel.x * 0.8, y: angVel.y * 0.8, z: angVel.z * 0.8 },
+        true,
+      )
 
       // Calculate pull progress based on total displacement from start
       const totalDisplacement = new THREE.Vector3(
@@ -194,8 +197,8 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
       friction={0.75}
       restitution={0.02}
       mass={1}
-      linearDamping={0.3}
-      angularDamping={0.5}
+      linearDamping={0.4}
+      angularDamping={0.9}
       ccd
     >
       <mesh

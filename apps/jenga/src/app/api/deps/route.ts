@@ -47,6 +47,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(graph)
   } catch (err) {
+    // Propagate specific status codes from RepoError
+    if (err instanceof Error && 'statusCode' in err) {
+      const repoErr = err as Error & { statusCode: number }
+      return NextResponse.json({ error: repoErr.message }, { status: repoErr.statusCode })
+    }
     const message = err instanceof Error ? err.message : 'Failed to resolve dependencies'
     return NextResponse.json({ error: message }, { status: 500 })
   }
