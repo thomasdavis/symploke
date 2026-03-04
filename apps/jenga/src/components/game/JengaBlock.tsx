@@ -18,9 +18,10 @@ interface JengaBlockProps {
 }
 
 const PULL_THRESHOLD = 0.8 // 80% pulled out = removed
-const SPRING_K = 4 // gentle spring — slow, controlled slide
-const DAMPING_K = 5 // high damping relative to spring for smooth motion
-const MAX_FORCE = 3 // cap force magnitude to prevent explosive interactions
+const SPRING_K = 3 // gentle spring
+const DAMPING_K = 8 // heavy damping — block moves like it's in honey
+const MAX_FORCE = 1.5 // tight force cap
+const MAX_SPEED = 0.8 // hard speed limit so blocks never fly
 
 // Reusable objects to avoid per-frame allocation
 const _raycaster = new THREE.Raycaster()
@@ -163,6 +164,8 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     // Spring-damper force toward target
     const vel = rigidBodyRef.current.linvel()
+    const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z)
+
     const force = new THREE.Vector3(
       toTargetX * SPRING_K - vel.x * DAMPING_K,
       0,
@@ -177,22 +180,27 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
 
-    // Only counteract gravity once the block has actually slid out
+    // Hard speed limit — clamp velocity if block is moving too fast
+    if (speed > MAX_SPEED) {
+      const scale = MAX_SPEED / speed
+      rigidBodyRef.current.setLinvel({ x: vel.x * scale, y: vel.y, z: vel.z * scale }, true)
+    }
+
+    // Partial gravity compensation once sliding — just enough to prevent
+    // sinking, NOT enough to lift the block into the stack above.
+    // Ramps from 0 to 40% of gravity based on displacement.
     const totalDisplacement = new THREE.Vector3(
       bodyPos.x - dragStartPos.current.x,
       0,
       bodyPos.z - dragStartPos.current.z,
     ).length()
     if (totalDisplacement > 0.1) {
-      rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
+      const gravityFraction = Math.min((totalDisplacement - 0.1) / 0.5, 0.4)
+      rigidBodyRef.current.addForce({ x: 0, y: 9.81 * gravityFraction, z: 0 }, true)
     }
 
-    // Dampen angular velocity to keep block flat while dragging
-    const angVel = rigidBodyRef.current.angvel()
-    rigidBodyRef.current.setAngvel(
-      { x: angVel.x * 0.7, y: angVel.y * 0.7, z: angVel.z * 0.7 },
-      true,
-    )
+    // Kill angular velocity so block stays flat
+    rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
 
     const maxPull = block.dimensions.depth * 1.2
     setPullProgress(Math.min(totalDisplacement / maxPull, 1))
