@@ -180,11 +180,18 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
 
-    // Clamp horizontal speed and zero vertical velocity.
-    // Block slides horizontally only — no flying up or sinking.
+    // Anti-gravity: only when sinking (vel.y < 0), so blocks hover at their
+    // level but never launch upward. Once the block starts rising the upward
+    // force cuts off and gravity pulls it back naturally.
+    if (vel.y < -0.05) {
+      rigidBodyRef.current.addForce({ x: 0, y: 9.81, z: 0 }, true)
+    }
+
+    // Clamp horizontal speed and cap vertical velocity to a tight range.
     const clampedVx = speed > MAX_SPEED ? (vel.x / speed) * MAX_SPEED : vel.x
     const clampedVz = speed > MAX_SPEED ? (vel.z / speed) * MAX_SPEED : vel.z
-    rigidBodyRef.current.setLinvel({ x: clampedVx, y: 0, z: clampedVz }, true)
+    const clampedVy = Math.max(-0.5, Math.min(0.3, vel.y))
+    rigidBodyRef.current.setLinvel({ x: clampedVx, y: clampedVy, z: clampedVz }, true)
 
     // Kill angular velocity so block stays flat
     rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
