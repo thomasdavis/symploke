@@ -180,27 +180,20 @@ export function JengaBlock({ block, isKinematic }: JengaBlockProps) {
 
     rigidBodyRef.current.addForce({ x: force.x, y: 0, z: force.z }, true)
 
-    // Hard speed limit — clamp velocity if block is moving too fast
-    if (speed > MAX_SPEED) {
-      const scale = MAX_SPEED / speed
-      rigidBodyRef.current.setLinvel({ x: vel.x * scale, y: vel.y, z: vel.z * scale }, true)
-    }
+    // Clamp horizontal speed and zero vertical velocity.
+    // Block slides horizontally only — no flying up or sinking.
+    const clampedVx = speed > MAX_SPEED ? (vel.x / speed) * MAX_SPEED : vel.x
+    const clampedVz = speed > MAX_SPEED ? (vel.z / speed) * MAX_SPEED : vel.z
+    rigidBodyRef.current.setLinvel({ x: clampedVx, y: 0, z: clampedVz }, true)
 
-    // Partial gravity compensation once sliding — just enough to prevent
-    // sinking, NOT enough to lift the block into the stack above.
-    // Ramps from 0 to 40% of gravity based on displacement.
+    // Kill angular velocity so block stays flat
+    rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
+
     const totalDisplacement = new THREE.Vector3(
       bodyPos.x - dragStartPos.current.x,
       0,
       bodyPos.z - dragStartPos.current.z,
     ).length()
-    if (totalDisplacement > 0.1) {
-      const gravityFraction = Math.min((totalDisplacement - 0.1) / 0.5, 0.4)
-      rigidBodyRef.current.addForce({ x: 0, y: 9.81 * gravityFraction, z: 0 }, true)
-    }
-
-    // Kill angular velocity so block stays flat
-    rigidBodyRef.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
 
     const maxPull = block.dimensions.depth * 1.2
     setPullProgress(Math.min(totalDisplacement / maxPull, 1))
